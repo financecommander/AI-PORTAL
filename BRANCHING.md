@@ -7,11 +7,11 @@ This repository uses the following branch structure:
 
 ## Setup Commands
 
-The repository has been initialized with the following git commands:
+The repository has been initialized with both branches:
 
 ```bash
 git checkout -b main
 git checkout -b develop
 ```
 
-Both branches are now available for use in the repository.
+Both branches (`main` and `develop`) are now available for use in the repository. The `develop` branch is used for integrating features before they are merged to `main` for production releases.
