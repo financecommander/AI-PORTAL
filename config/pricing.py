@@ -1,6 +1,7 @@
 """Per-model token pricing table.
 
 Prices are in USD per 1K tokens: (input_price, output_price).
+Last verified: 2025-01-15.
 """
 
 MODEL_PRICING: dict[str, tuple[float, float]] = {

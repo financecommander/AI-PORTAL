@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from chat.logger import UsageLogger
+from config.settings import DEFAULT_MODEL, DEFAULT_TEMPERATURE
 from providers.base import BaseProvider, ChatResponse
 from specialists.manager import Specialist
 
@@ -49,12 +50,12 @@ class ChatEngine:
         self.history.append(Message(role="user", content=user_input))
 
         model = (
-            self.specialist.model if self.specialist else "gpt-4o"
+            self.specialist.model if self.specialist else DEFAULT_MODEL
         )
         temperature = (
             self.specialist.temperature
             if self.specialist
-            else 0.7
+            else DEFAULT_TEMPERATURE
         )
 
         response: ChatResponse = self.provider.chat(

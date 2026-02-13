@@ -61,6 +61,10 @@ class TestSpecialistManager:
     def test_update_missing(self, manager):
         assert manager.update("nonexistent", name="X") is None
 
+    def test_update_invalid_attribute(self, manager):
+        with pytest.raises(AttributeError):
+            manager.update("test-1", nonexistent_field="X")
+
     def test_delete(self, manager):
         assert manager.delete("test-1") is True
         assert len(manager.list()) == 0

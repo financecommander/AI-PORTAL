@@ -71,8 +71,11 @@ class SpecialistManager:
         if spec is None:
             return None
         for key, value in kwargs.items():
-            if hasattr(spec, key):
-                setattr(spec, key, value)
+            if not hasattr(spec, key):
+                raise AttributeError(
+                    f"Specialist has no attribute '{key}'"
+                )
+            setattr(spec, key, value)
         self._save()
         return spec
 
