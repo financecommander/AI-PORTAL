@@ -9,7 +9,7 @@ import pytest
 from chat.engine import ChatEngine, Message
 from chat.logger import UsageLogger, _hash_email
 from config.pricing import estimate_cost
-from providers.base import BaseProvider, ChatResponse
+from providers.base import BaseProvider, ProviderResponse
 from specialists.manager import Specialist
 
 
@@ -23,26 +23,44 @@ class FakeProvider(BaseProvider):
         self._content = content
         self._model = model
 
-    def chat(self, messages, model, temperature=0.7, max_tokens=4096):
-        return ChatResponse(
+    async def send_message(
+        self,
+        messages: list[dict],
+        model: str,
+        system_prompt: str,
+        **kwargs
+    ) -> ProviderResponse:
+        return ProviderResponse(
             content=self._content,
             model=self._model,
-            provider="openai",
             input_tokens=10,
             output_tokens=20,
+            latency_ms=100.0,
         )
 
-    def list_models(self):
+    def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    def get_available_models(self) -> list[str]:
         return [self._model]
 
 
 class FailingProvider(BaseProvider):
     """A provider that always raises an exception."""
 
-    def chat(self, messages, model, temperature=0.7, max_tokens=4096):
+    async def send_message(
+        self,
+        messages: list[dict],
+        model: str,
+        system_prompt: str,
+        **kwargs
+    ) -> ProviderResponse:
         raise RuntimeError("provider error")
 
-    def list_models(self):
+    def count_tokens(self, text: str) -> int:
+        return 0
+
+    def get_available_models(self) -> list[str]:
         return []
 
 
@@ -66,9 +84,10 @@ def provider():
 
 
 class TestChatEngine:
-    def test_send_returns_content(self, provider, specialist):
+    @pytest.mark.asyncio
+    async def test_send_returns_content(self, provider, specialist):
         engine = ChatEngine(provider=provider, specialist=specialist)
-        reply = engine.send("Hi")
+        reply = await engine.send("Hi")
         assert reply == "Hello from AI"
 
     def test_history_includes_system_prompt(self, provider, specialist):
@@ -77,26 +96,29 @@ class TestChatEngine:
         assert len(history) == 1
         assert history[0]["role"] == "system"
 
-    def test_history_grows_after_send(self, provider, specialist):
+    @pytest.mark.asyncio
+    async def test_history_grows_after_send(self, provider, specialist):
         engine = ChatEngine(provider=provider, specialist=specialist)
-        engine.send("Hi")
+        await engine.send("Hi")
         history = engine.get_history()
         # system + user + assistant
         assert len(history) == 3
         assert history[1]["role"] == "user"
         assert history[2]["role"] == "assistant"
 
-    def test_reset_clears_history(self, provider, specialist):
+    @pytest.mark.asyncio
+    async def test_reset_clears_history(self, provider, specialist):
         engine = ChatEngine(provider=provider, specialist=specialist)
-        engine.send("Hi")
+        await engine.send("Hi")
         engine.reset()
         history = engine.get_history()
         assert len(history) == 1
         assert history[0]["role"] == "system"
 
-    def test_set_specialist(self, provider, specialist):
+    @pytest.mark.asyncio
+    async def test_set_specialist(self, provider, specialist):
         engine = ChatEngine(provider=provider)
-        engine.send("Hi")
+        await engine.send("Hi")
         assert len(engine.get_history()) == 2  # user + assistant
 
         new_spec = Specialist(
@@ -107,13 +129,15 @@ class TestChatEngine:
         assert len(history) == 1
         assert history[0]["content"] == "New prompt"
 
-    def test_no_specialist(self, provider):
+    @pytest.mark.asyncio
+    async def test_no_specialist(self, provider):
         engine = ChatEngine(provider=provider)
-        reply = engine.send("Hi")
+        reply = await engine.send("Hi")
         assert reply == "Hello from AI"
         assert len(engine.get_history()) == 2
 
-    def test_logger_called_on_send(self, provider, specialist):
+    @pytest.mark.asyncio
+    async def test_logger_called_on_send(self, provider, specialist):
         logger = MagicMock(spec=UsageLogger)
         engine = ChatEngine(
             provider=provider,
@@ -121,20 +145,21 @@ class TestChatEngine:
             logger=logger,
             user_email="test@example.com",
         )
-        engine.send("Hi")
+        await engine.send("Hi")
         logger.log.assert_called_once()
         call_kwargs = logger.log.call_args[1]
         assert call_kwargs["user_email"] == "test@example.com"
         assert call_kwargs["specialist_id"] == "test-spec"
         assert call_kwargs["specialist_name"] == "Test"
-        assert call_kwargs["provider"] == "openai"
+        assert call_kwargs["provider"] == ""
         assert call_kwargs["model"] == "gpt-4o"
         assert call_kwargs["input_tokens"] == 10
         assert call_kwargs["output_tokens"] == 20
         assert call_kwargs["success"] is True
         assert isinstance(call_kwargs["latency_ms"], int)
 
-    def test_logger_called_on_failure(self, specialist):
+    @pytest.mark.asyncio
+    async def test_logger_called_on_failure(self, specialist):
         logger = MagicMock(spec=UsageLogger)
         engine = ChatEngine(
             provider=FailingProvider(),
@@ -143,7 +168,7 @@ class TestChatEngine:
             user_email="fail@example.com",
         )
         with pytest.raises(RuntimeError):
-            engine.send("Hi")
+            await engine.send("Hi")
 
         logger.log.assert_called_once()
         call_kwargs = logger.log.call_args[1]

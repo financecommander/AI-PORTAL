@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from chat.logger import UsageLogger
 from config.settings import DEFAULT_MODEL, DEFAULT_TEMPERATURE
-from providers.base import BaseProvider, ChatResponse
+from providers.base import BaseProvider, ProviderResponse
 from specialists.manager import Specialist
 
 
@@ -46,7 +46,7 @@ class ChatEngine:
 
     # -- public API --
 
-    def send(self, user_input: str) -> str:
+    async def send(self, user_input: str) -> str:
         """Send a user message and return the assistant reply."""
         self.history.append(Message(role="user", content=user_input))
 
@@ -61,15 +61,16 @@ class ChatEngine:
 
         start_ns = time.monotonic_ns()
         success = True
-        response: ChatResponse | None = None
+        response: ProviderResponse | None = None
 
         try:
-            response = self.provider.chat(
+            response = await self.provider.send_message(
                 messages=[
                     {"role": m.role, "content": m.content}
                     for m in self.history
                 ],
                 model=model,
+                system_prompt=self.specialist.system_prompt if self.specialist else "",
                 temperature=temperature,
             )
         except Exception:
@@ -87,9 +88,7 @@ class ChatEngine:
                     specialist_name=(
                         self.specialist.name if self.specialist else ""
                     ),
-                    provider=(
-                        response.provider if response else ""
-                    ),
+                    provider="",  # Provider name not in response anymore
                     model=(
                         response.model if response else model
                     ),

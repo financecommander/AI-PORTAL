@@ -2,23 +2,23 @@
 
 import pytest
 
-from providers.base import BaseProvider, ChatResponse
+from providers.base import BaseProvider, ProviderResponse
 
 
-class TestChatResponse:
+class TestProviderResponse:
     def test_fields(self):
-        resp = ChatResponse(
+        resp = ProviderResponse(
             content="Hello",
             model="gpt-4o",
-            provider="openai",
             input_tokens=10,
             output_tokens=20,
+            latency_ms=100.0,
         )
         assert resp.content == "Hello"
         assert resp.model == "gpt-4o"
-        assert resp.provider == "openai"
         assert resp.input_tokens == 10
         assert resp.output_tokens == 20
+        assert resp.latency_ms == 100.0
 
 
 class TestBaseProvider:
@@ -35,20 +35,35 @@ class TestBaseProvider:
 
     def test_valid_subclass(self):
         class ValidProvider(BaseProvider):
-            def chat(self, messages, model, temperature=0.7, max_tokens=4096):
-                return ChatResponse(
+            async def send_message(
+                self,
+                messages: list[dict],
+                model: str,
+                system_prompt: str,
+                **kwargs
+            ) -> ProviderResponse:
+                return ProviderResponse(
                     content="ok",
                     model=model,
-                    provider="test",
                     input_tokens=0,
                     output_tokens=0,
+                    latency_ms=0.0,
                 )
 
-            def list_models(self):
+            def count_tokens(self, text: str) -> int:
+                return 0
+
+            def get_available_models(self) -> list[str]:
                 return ["test-model"]
 
         provider = ValidProvider()
-        result = provider.chat([], "test-model")
+        # Test that it can be instantiated and has the required methods
+        assert hasattr(provider, 'send_message')
+        assert hasattr(provider, 'count_tokens')
+        assert hasattr(provider, 'get_available_models')
+        # Test the methods work
+        import asyncio
+        result = asyncio.run(provider.send_message([], "test-model", ""))
         assert result.content == "ok"
-        assert result.provider == "test"
-        assert provider.list_models() == ["test-model"]
+        assert result.model == "test-model"
+        assert provider.get_available_models() == ["test-model"]
