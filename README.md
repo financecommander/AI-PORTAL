@@ -20,6 +20,28 @@ A secure, multi-provider AI chat portal designed for financial analysis and deci
 - **Conversation Export**: Download chat history as JSON per specialist
 - **Expanded Model Support**: o1, o3-mini, Claude Opus/Sonnet/Haiku 4, Gemini 2.0, Grok 3
 
+### Week 3 (v0.3)
+- **File Upload Support**: Attach text, CSV, JSON, Python, Markdown, PDF, and image files to messages
+- **Conversation Search**: Case-insensitive search across chat history with recency ranking
+- **Specialist Duplication**: Clone specialist configurations for A/B testing
+- **Specialist Pinning**: Pin frequently-used specialists to the top of the selector
+- **Usage Stats**: Per-specialist request count, token usage, cost, and latency metrics
+- **UI Polish**: Custom theme, relative timestamps, token info per message, regenerate button, status panel
+
+### Week 4 (v0.4)
+- **Test Restructure**: Organised into unit, integration, live, and performance categories
+- **Integration Tests**: End-to-end tests for chat flows, streaming, file upload, and specialist CRUD
+- **Performance Benchmarks**: Timed assertions for search, file processing, and conversation operations
+- **Cost Report Script**: Markdown/CSV reports grouped by date, provider, model, and specialist
+
+### Week 5 (v1.0.0)
+- **Architecture Documentation**: Mermaid diagrams for system, data flow, and test architecture
+- **Deployment Guide**: Local, Docker, and Streamlit Cloud deployment instructions
+- **Docker Support**: `Dockerfile` + `docker-compose.yml` with health checks
+- **Security Hardening**: pip-audit scan, security checklist, input sanitisation audit
+- **Admin Guide**: Specialist management, monitoring, configuration, and troubleshooting
+- **Tech Debt Log**: Prioritised backlog of known improvements
+
 ## Architecture
 
 ### Core Components
@@ -126,37 +148,69 @@ Edit `config/specialists.json` to customize AI specialists:
 
 ### Testing
 
-Run the test suite (154 tests):
+Run the test suite (248 tests):
 ```bash
-pytest tests/ -v
+# All tests (excluding live API tests)
+python -m pytest tests/ -m "not live" -v
+
+# Unit tests only
+python -m pytest tests/unit/ -v
+
+# Integration tests
+python -m pytest tests/integration/ -v
+
+# Performance benchmarks
+python -m pytest tests/performance/ -v
 ```
 
 ### Project Structure
 
 ```
-├── app.py                 # Main Streamlit application
-├── auth/                  # Authentication, session timeout, rate limiter
-│   ├── authenticator.py   # Domain auth + session timeout
-│   └── rate_limiter.py    # Token-bucket rate limiter
-├── chat/                  # Chat engine and logging
-│   ├── engine.py          # Conversation orchestration (streaming + non-streaming)
-│   └── logger.py          # CSV usage logging with email hashing
-├── config/                # Configuration and settings
-│   ├── pricing.py         # Per-model token pricing table
-│   ├── settings.py        # App-wide constants (timeouts, limits, toggles)
-│   └── specialists.json   # Default specialist definitions
-├── providers/             # LLM provider implementations
-│   ├── base.py            # BaseProvider ABC, StreamChunk, ProviderResponse
-│   ├── openai_provider.py # OpenAI + Grok (compatible API)
+├── app.py                    # Main Streamlit application
+├── auth/                     # Authentication, session timeout, rate limiter
+│   ├── authenticator.py      # Domain auth + session timeout
+│   └── rate_limiter.py       # Token-bucket rate limiter
+├── chat/                     # Chat engine, logging, search, file handling
+│   ├── engine.py             # Conversation orchestration (streaming + sync)
+│   ├── file_handler.py       # File upload processing + ChatAttachment
+│   ├── logger.py             # CSV usage logging + specialist stats
+│   └── search.py             # Conversation history search
+├── config/                   # Configuration and settings
+│   ├── pricing.py            # Per-model token pricing table
+│   ├── settings.py           # App-wide constants
+│   └── specialists.json      # Default specialist definitions
+├── docs/                     # Documentation
+│   ├── ADMIN.md              # Administrator guide
+│   ├── ARCHITECTURE.md       # Architecture overview with diagrams
+│   ├── DEPLOYMENT.md         # Deployment guide (local, Docker, Cloud)
+│   ├── SECURITY.md           # Security checklist
+│   └── TECH_DEBT.md          # Technical debt log
+├── ledgerscript/             # Domain-specific language
+│   └── grammar.py            # LedgerScript DSL grammar parser
+├── portal/                   # Core portal types
+│   └── errors.py             # Typed exception hierarchy
+├── providers/                # LLM provider implementations
+│   ├── base.py               # BaseProvider ABC + dataclasses
+│   ├── openai_provider.py    # OpenAI + Grok
 │   ├── anthropic_provider.py # Anthropic Claude
-│   └── google_provider.py # Google Gemini
-├── specialists/           # AI specialist management
-│   └── manager.py         # CRUD + validation for specialists
-├── ui/                    # Streamlit UI components
-│   ├── chat_view.py       # Chat display with streaming support
-│   └── sidebar.py         # Auth, specialist selector, CRUD, export
-├── tests/                 # Test suite (154 tests)
-└── requirements.txt       # Python dependencies
+│   └── google_provider.py    # Google Gemini
+├── scripts/                  # Utility scripts
+│   └── cost_report.py        # Usage cost report generator
+├── specialists/              # AI specialist management
+│   └── manager.py            # CRUD + duplication + pinning
+├── tests/                    # Test suite (248 tests)
+│   ├── conftest.py           # Shared fixtures
+│   ├── unit/                 # Fast, isolated unit tests
+│   ├── integration/          # Multi-component workflow tests
+│   ├── live/                 # Real API tests (require keys)
+│   └── performance/          # Benchmarks with time assertions
+├── ui/                       # Streamlit UI components
+│   ├── chat_view.py          # Chat display, search, file upload, tokens
+│   └── sidebar.py            # Specialist selector, CRUD, pinning, stats
+├── Dockerfile                # Container image
+├── docker-compose.yml        # Docker Compose config
+├── pyproject.toml            # Pytest configuration
+└── requirements.txt          # Python dependencies
 ```
 
 ## Security
