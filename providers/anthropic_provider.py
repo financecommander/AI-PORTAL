@@ -49,6 +49,7 @@ class AnthropicProvider(BaseProvider):
                 model=model,
                 system=system_content,
                 messages=anthropic_messages,
+                max_tokens=kwargs.pop("max_tokens", 4096),
                 **kwargs
             )
 

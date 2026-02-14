@@ -26,6 +26,7 @@ class Specialist:
     description: str = ""
     provider: str = "openai"
     model: str = "gpt-4o"
+    base_url: str = ""
     system_prompt: str = "You are a helpful AI assistant."
     temperature: float = 0.7
     max_tokens: int = 4096

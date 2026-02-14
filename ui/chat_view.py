@@ -26,7 +26,8 @@ def render_chat_view():
     user_email = st.session_state.get("user_email", "")
 
     # Initialize chat engine
-    provider = get_provider(specialist.provider)
+    base_url = getattr(specialist, 'base_url', '') or ''
+    provider = get_provider(specialist.provider, base_url=base_url)
     logger = UsageLogger()
     engine = ChatEngine(
         provider=provider,

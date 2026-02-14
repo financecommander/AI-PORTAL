@@ -65,7 +65,7 @@ def _render_specialist_selector():
         selected_name = st.selectbox(
             "Choose a specialist:",
             specialist_names,
-            key="selected_specialist"
+            key="specialist_selector"
         )
 
         # Store selected specialist in session state
