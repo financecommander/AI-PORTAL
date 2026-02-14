@@ -1,15 +1,20 @@
 """OpenAI provider implementation for FinanceCommander AI Portal."""
 
+from __future__ import annotations
+
 import os
 import time
 from collections.abc import AsyncGenerator
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import openai
 from openai import AsyncOpenAI
 
 from portal.errors import ProviderAPIError
 from providers.base import BaseProvider, ProviderResponse, StreamChunk
+
+if TYPE_CHECKING:
+    from chat.file_handler import ChatAttachment
 
 
 class OpenAIProvider(BaseProvider):
@@ -132,3 +137,18 @@ class OpenAIProvider(BaseProvider):
             "grok-3",
             "grok-2",
         ]
+
+    def format_attachment(self, attachment: ChatAttachment) -> dict:
+        """Format attachment for OpenAI API.
+
+        Images are sent as ``image_url`` content blocks (base64 data URI).
+        Text-based files have their content injected as a text block.
+        """
+        if attachment.content_type and attachment.content_type.startswith("image/"):
+            return {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{attachment.content_type};base64,{attachment.content_b64}",
+                },
+            }
+        return super().format_attachment(attachment)

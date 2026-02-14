@@ -1,15 +1,20 @@
 """Anthropic provider implementation for FinanceCommander AI Portal."""
 
+from __future__ import annotations
+
 import os
 import time
 from collections.abc import AsyncGenerator
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import anthropic
 from anthropic import AsyncAnthropic
 
 from portal.errors import ProviderAPIError
 from providers.base import BaseProvider, ProviderResponse, StreamChunk
+
+if TYPE_CHECKING:
+    from chat.file_handler import ChatAttachment
 
 
 class AnthropicProvider(BaseProvider):
@@ -140,3 +145,30 @@ class AnthropicProvider(BaseProvider):
             "claude-3-sonnet",
             "claude-3-haiku",
         ]
+
+    def format_attachment(self, attachment: ChatAttachment) -> dict:
+        """Format attachment for Anthropic API.
+
+        Images use Anthropic's native ``image`` content block.
+        PDFs use the ``document`` content block.
+        Text files are injected as text.
+        """
+        if attachment.content_type and attachment.content_type.startswith("image/"):
+            return {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": attachment.content_type,
+                    "data": attachment.content_b64,
+                },
+            }
+        if attachment.content_type == "application/pdf":
+            return {
+                "type": "document",
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": attachment.content_b64,
+                },
+            }
+        return super().format_attachment(attachment)

@@ -4,6 +4,7 @@ import csv
 import hashlib
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from config.pricing import estimate_cost
 from config.settings import LOG_DIR
@@ -74,3 +75,61 @@ class UsageLogger:
                     "success": success,
                 }
             )
+
+    def get_specialist_stats(self, specialist_id: str) -> dict:
+        """Aggregate usage stats for a specialist from CSV logs.
+
+        Scans all daily CSV files in the log directory and returns a
+        summary dict with the following keys:
+
+        - ``total_requests`` (int)
+        - ``total_tokens`` (int)  – input + output
+        - ``total_cost`` (float)
+        - ``avg_latency_ms`` (float)
+        - ``success_rate`` (float)  – 0.0 to 1.0
+        - ``last_used`` (str | None)  – ISO timestamp of last request
+        """
+        stats: dict = {
+            "total_requests": 0,
+            "total_tokens": 0,
+            "total_cost": 0.0,
+            "avg_latency_ms": 0.0,
+            "success_rate": 0.0,
+            "last_used": None,
+        }
+
+        total_latency = 0.0
+        successes = 0
+        last_ts: str | None = None
+
+        log_dir = Path(self.log_dir)
+        if not log_dir.exists():
+            return stats
+
+        for csv_path in sorted(log_dir.glob("usage_*.csv")):
+            try:
+                with open(csv_path, newline="", encoding="utf-8") as fh:
+                    reader = csv.DictReader(fh)
+                    for row in reader:
+                        if row.get("specialist_id") != specialist_id:
+                            continue
+                        stats["total_requests"] += 1
+                        inp = int(row.get("input_tokens", 0))
+                        out = int(row.get("output_tokens", 0))
+                        stats["total_tokens"] += inp + out
+                        stats["total_cost"] += float(row.get("estimated_cost_usd", 0))
+                        total_latency += float(row.get("latency_ms", 0))
+                        if row.get("success", "").lower() == "true":
+                            successes += 1
+                        ts = row.get("timestamp")
+                        if ts and (last_ts is None or ts > last_ts):
+                            last_ts = ts
+            except (OSError, csv.Error):
+                continue
+
+        if stats["total_requests"] > 0:
+            stats["avg_latency_ms"] = total_latency / stats["total_requests"]
+            stats["success_rate"] = successes / stats["total_requests"]
+
+        stats["last_used"] = last_ts
+        return stats
