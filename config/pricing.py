@@ -1,24 +1,24 @@
 """Per-model token pricing table.
 
-Prices are in USD per 1K tokens: (input_price, output_price).
+Prices are in USD per 1M tokens: (input_price, output_price).
 Last verified: 2025-01-15.
 """
 
 MODEL_PRICING: dict[str, tuple[float, float]] = {
     # OpenAI
-    "gpt-4o": (0.0025, 0.01),
-    "gpt-4o-mini": (0.00015, 0.0006),
-    "gpt-4-turbo": (0.01, 0.03),
-    "gpt-3.5-turbo": (0.0005, 0.0015),
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4-turbo": (10.00, 30.00),
+    "gpt-3.5-turbo": (0.50, 1.50),
     # Anthropic
-    "claude-3-opus": (0.015, 0.075),
-    "claude-3-sonnet": (0.003, 0.015),
-    "claude-3-haiku": (0.00025, 0.00125),
+    "claude-3-opus": (15.00, 75.00),
+    "claude-3-sonnet": (3.00, 15.00),
+    "claude-3-haiku": (0.25, 1.25),
     # Google
-    "gemini-1.5-pro": (0.00125, 0.005),
-    "gemini-1.5-flash": (0.000075, 0.0003),
+    "gemini-1.5-pro": (1.25, 5.00),
+    "gemini-1.5-flash": (0.075, 0.30),
     # xAI / Grok
-    "grok-2": (0.002, 0.01),
+    "grok-2": (2.00, 10.00),
 }
 
 
@@ -27,6 +27,6 @@ def estimate_cost(
 ) -> float:
     """Return estimated cost in USD for the given token counts."""
     input_price, output_price = MODEL_PRICING.get(model, (0.0, 0.0))
-    return (input_tokens / 1000) * input_price + (
-        output_tokens / 1000
+    return (input_tokens / 1_000_000) * input_price + (
+        output_tokens / 1_000_000
     ) * output_price
