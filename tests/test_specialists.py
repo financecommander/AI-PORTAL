@@ -39,8 +39,6 @@ def manager(tmp_specialists_file):
     return SpecialistManager(filepath=tmp_specialists_file)
 
 
-<<<<<<< HEAD
-=======
 class TestPricing:
     def test_defaults(self):
         p = Pricing()
@@ -96,7 +94,6 @@ class TestSpecialist:
         assert s.pricing.input_per_1m == 2.50
 
 
->>>>>>> origin/main
 class TestSpecialistManager:
     def test_list(self, manager):
         specs = manager.list()
@@ -107,25 +104,17 @@ class TestSpecialistManager:
         spec = manager.get("test-1")
         assert spec is not None
         assert spec.name == "Test Specialist"
-<<<<<<< HEAD
-=======
         assert spec.description == "A test specialist"
         assert spec.provider == "openai"
         assert spec.max_tokens == 2048
         assert isinstance(spec.pricing, Pricing)
         assert spec.pricing.input_per_1m == 2.50
->>>>>>> origin/main
 
     def test_get_missing(self, manager):
         assert manager.get("nonexistent") is None
 
     def test_create(self, manager):
         spec = manager.create(
-<<<<<<< HEAD
-            id="test-2", name="New Spec", system_prompt="Hello"
-        )
-        assert spec.id == "test-2"
-=======
             id="test-2",
             name="New Spec",
             description="A new specialist",
@@ -133,17 +122,12 @@ class TestSpecialistManager:
         )
         assert spec.id == "test-2"
         assert spec.description == "A new specialist"
->>>>>>> origin/main
         assert len(manager.list()) == 2
 
     def test_update(self, manager):
         updated = manager.update("test-1", name="Updated Name")
         assert updated is not None
         assert updated.name == "Updated Name"
-<<<<<<< HEAD
-        assert manager.get("test-1").name == "Updated Name"
-
-=======
         assert updated.version == 2
         assert manager.get("test-1").name == "Updated Name"
 
@@ -155,7 +139,6 @@ class TestSpecialistManager:
         assert updated.prompt_history[0]["prompt"] == "You are a test assistant."
         assert updated.prompt_history[0]["version"] == 1
 
->>>>>>> origin/main
     def test_update_missing(self, manager):
         assert manager.update("nonexistent", name="X") is None
 
@@ -181,8 +164,6 @@ class TestSpecialistManager:
         filepath = tmp_path / "empty.json"
         mgr = SpecialistManager(filepath=str(filepath))
         assert mgr.list() == []
-<<<<<<< HEAD
-=======
 
     def test_load_financial_analyst_config(self):
         """Verify the bundled specialists.json loads correctly."""
@@ -206,4 +187,3 @@ class TestSpecialistManager:
         assert analyst.pricing.output_per_1m == 10.00
         assert analyst.version == 1
         assert analyst.prompt_history == []
->>>>>>> origin/main
