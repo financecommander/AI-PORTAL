@@ -1,11 +1,8 @@
-# Logs
-logs/
-
 # Python
 __pycache__/
-.pytest_cache/
 *.py[cod]
 *$py.class
+*.so
 *.egg-info/
 dist/
 build/
@@ -15,6 +12,7 @@ build/
 .venv/
 venv/
 env/
+ENV/
 
 # IDE
 .idea/
@@ -22,12 +20,22 @@ env/
 *.swp
 *.swo
 
-# Environment
+# Environment & Secrets
 .env
-
-# Streamlit secrets
+.env.local
+.env.production
 .streamlit/secrets.toml
+
+# Logs
+logs/
+*.log
+*.csv
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
