@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 
 from chat.logger import UsageLogger
@@ -58,29 +59,53 @@ class ChatEngine:
             else DEFAULT_TEMPERATURE
         )
 
-        response: ChatResponse = self.provider.chat(
-            messages=[
-                {"role": m.role, "content": m.content}
-                for m in self.history
-            ],
-            model=model,
-            temperature=temperature,
-        )
+        start_ns = time.monotonic_ns()
+        success = True
+        response: ChatResponse | None = None
+
+        try:
+            response = self.provider.chat(
+                messages=[
+                    {"role": m.role, "content": m.content}
+                    for m in self.history
+                ],
+                model=model,
+                temperature=temperature,
+            )
+        except Exception:
+            success = False
+            raise
+        finally:
+            elapsed_ms = (time.monotonic_ns() - start_ns) // 1_000_000
+
+            if self.logger:
+                self.logger.log(
+                    user_email=self.user_email,
+                    specialist_id=(
+                        self.specialist.id if self.specialist else ""
+                    ),
+                    specialist_name=(
+                        self.specialist.name if self.specialist else ""
+                    ),
+                    provider=(
+                        response.provider if response else ""
+                    ),
+                    model=(
+                        response.model if response else model
+                    ),
+                    input_tokens=(
+                        response.input_tokens if response else 0
+                    ),
+                    output_tokens=(
+                        response.output_tokens if response else 0
+                    ),
+                    latency_ms=elapsed_ms,
+                    success=success,
+                )
 
         self.history.append(
             Message(role="assistant", content=response.content)
         )
-
-        if self.logger:
-            self.logger.log(
-                user_email=self.user_email,
-                specialist_id=(
-                    self.specialist.id if self.specialist else ""
-                ),
-                model=response.model,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-            )
 
         return response.content
 

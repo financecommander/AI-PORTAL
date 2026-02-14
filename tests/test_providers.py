@@ -10,11 +10,13 @@ class TestChatResponse:
         resp = ChatResponse(
             content="Hello",
             model="gpt-4o",
+            provider="openai",
             input_tokens=10,
             output_tokens=20,
         )
         assert resp.content == "Hello"
         assert resp.model == "gpt-4o"
+        assert resp.provider == "openai"
         assert resp.input_tokens == 10
         assert resp.output_tokens == 20
 
@@ -35,7 +37,11 @@ class TestBaseProvider:
         class ValidProvider(BaseProvider):
             def chat(self, messages, model, temperature=0.7, max_tokens=4096):
                 return ChatResponse(
-                    content="ok", model=model, input_tokens=0, output_tokens=0
+                    content="ok",
+                    model=model,
+                    provider="test",
+                    input_tokens=0,
+                    output_tokens=0,
                 )
 
             def list_models(self):
@@ -44,4 +50,5 @@ class TestBaseProvider:
         provider = ValidProvider()
         result = provider.chat([], "test-model")
         assert result.content == "ok"
+        assert result.provider == "test"
         assert provider.list_models() == ["test-model"]
