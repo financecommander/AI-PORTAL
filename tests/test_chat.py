@@ -2,6 +2,7 @@
 
 import csv
 import hashlib
+from collections.abc import AsyncGenerator
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,7 +10,7 @@ import pytest
 from chat.engine import ChatEngine, Message
 from chat.logger import UsageLogger, _hash_email
 from config.pricing import estimate_cost
-from providers.base import BaseProvider, ProviderResponse
+from providers.base import BaseProvider, ProviderResponse, StreamChunk
 from specialists.manager import Specialist
 
 
@@ -38,6 +39,32 @@ class FakeProvider(BaseProvider):
             latency_ms=100.0,
         )
 
+    async def stream_message(
+        self,
+        messages: list[dict],
+        model: str,
+        system_prompt: str,
+        **kwargs
+    ) -> AsyncGenerator[StreamChunk, None]:
+        words = self._content.split()
+        for word in words:
+            yield StreamChunk(
+                content=word + " ",
+                is_final=False,
+                input_tokens=0,
+                output_tokens=0,
+                model=self._model,
+                latency_ms=0.0,
+            )
+        yield StreamChunk(
+            content="",
+            is_final=True,
+            input_tokens=10,
+            output_tokens=20,
+            model=self._model,
+            latency_ms=100.0,
+        )
+
     def count_tokens(self, text: str) -> int:
         return len(text.split())
 
@@ -56,6 +83,16 @@ class FailingProvider(BaseProvider):
         **kwargs
     ) -> ProviderResponse:
         raise RuntimeError("provider error")
+
+    async def stream_message(
+        self,
+        messages: list[dict],
+        model: str,
+        system_prompt: str,
+        **kwargs
+    ) -> AsyncGenerator[StreamChunk, None]:
+        raise RuntimeError("stream error")
+        yield  # pragma: no cover
 
     def count_tokens(self, text: str) -> int:
         return 0
@@ -151,7 +188,7 @@ class TestChatEngine:
         assert call_kwargs["user_email"] == "test@example.com"
         assert call_kwargs["specialist_id"] == "test-spec"
         assert call_kwargs["specialist_name"] == "Test"
-        assert call_kwargs["provider"] == ""
+        assert call_kwargs["provider"] == "openai"
         assert call_kwargs["model"] == "gpt-4o"
         assert call_kwargs["input_tokens"] == 10
         assert call_kwargs["output_tokens"] == 20
@@ -174,7 +211,7 @@ class TestChatEngine:
         call_kwargs = logger.log.call_args[1]
         assert call_kwargs["success"] is False
         assert call_kwargs["user_email"] == "fail@example.com"
-        assert call_kwargs["provider"] == ""
+        assert call_kwargs["provider"] == "openai"
         assert call_kwargs["input_tokens"] == 0
         assert call_kwargs["output_tokens"] == 0
 

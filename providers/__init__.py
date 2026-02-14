@@ -1,11 +1,12 @@
 from .anthropic_provider import AnthropicProvider
-from .base import BaseProvider, ProviderResponse
+from .base import BaseProvider, ProviderResponse, StreamChunk
 from .google_provider import GoogleProvider
 from .openai_provider import OpenAIProvider
 
 __all__ = [
     "BaseProvider",
     "ProviderResponse",
+    "StreamChunk",
     "OpenAIProvider",
     "AnthropicProvider",
     "GoogleProvider",

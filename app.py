@@ -2,8 +2,10 @@
 
 import streamlit as st
 
-from ui.sidebar import render_sidebar
+from auth.authenticator import check_session_valid
+from auth.rate_limiter import TokenBucket
 from ui.chat_view import render_chat_view
+from ui.sidebar import render_sidebar
 
 
 def main():
@@ -19,6 +21,13 @@ def main():
         st.session_state.authenticated = False
     if "user_email" not in st.session_state:
         st.session_state.user_email = ""
+    if "portal_rate_bucket" not in st.session_state:
+        st.session_state["portal_rate_bucket"] = TokenBucket()
+
+    # Session timeout check
+    if st.session_state.get("authenticated", False):
+        if not check_session_valid():
+            st.warning("⏰ Session expired due to inactivity. Please log in again.")
 
     # Render UI components
     render_sidebar()

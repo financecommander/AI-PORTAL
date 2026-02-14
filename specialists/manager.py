@@ -1,12 +1,22 @@
 """CRUD operations for specialist configurations."""
 
+from __future__ import annotations
+
 import json
 import os
+import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
-from config.settings import SPECIALISTS_FILE
+from config.settings import (
+    MAX_DESCRIPTION_LENGTH,
+    MAX_MAX_TOKENS,
+    MAX_SPECIALIST_NAME_LENGTH,
+    MAX_SYSTEM_PROMPT_LENGTH,
+    MIN_MAX_TOKENS,
+    SPECIALISTS_FILE,
+)
 
 
 @dataclass
@@ -123,3 +133,82 @@ class SpecialistManager:
                 self._save()
                 return True
         return False
+
+    # -- validation --
+
+    VALID_PROVIDERS = {"openai", "anthropic", "google"}
+
+    def validate_specialist(
+        self,
+        *,
+        name: str,
+        provider: str,
+        model: str,
+        system_prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        base_url: str = "",
+        description: str = "",
+        exclude_id: str | None = None,
+    ) -> list[str]:
+        """Validate specialist fields.
+
+        Returns a list of error strings.  An empty list means valid.
+        *exclude_id* is the id of the specialist being edited (so its own
+        name doesn't conflict with itself).
+        """
+        errors: list[str] = []
+
+        # name
+        if not name or not name.strip():
+            errors.append("Name is required.")
+        elif len(name) > MAX_SPECIALIST_NAME_LENGTH:
+            errors.append(
+                f"Name must be {MAX_SPECIALIST_NAME_LENGTH} characters or fewer."
+            )
+        else:
+            # unique check
+            for s in self._specialists:
+                if s.name == name.strip() and s.id != exclude_id:
+                    errors.append(f"A specialist named '{name}' already exists.")
+                    break
+
+        # provider
+        if provider not in self.VALID_PROVIDERS:
+            errors.append(
+                f"Provider must be one of: {', '.join(sorted(self.VALID_PROVIDERS))}."
+            )
+
+        # model
+        if not model or not model.strip():
+            errors.append("Model is required.")
+
+        # system_prompt
+        if not system_prompt or not system_prompt.strip():
+            errors.append("System prompt is required.")
+        elif len(system_prompt) > MAX_SYSTEM_PROMPT_LENGTH:
+            errors.append(
+                f"System prompt must be {MAX_SYSTEM_PROMPT_LENGTH} characters or fewer."
+            )
+
+        # description
+        if description and len(description) > MAX_DESCRIPTION_LENGTH:
+            errors.append(
+                f"Description must be {MAX_DESCRIPTION_LENGTH} characters or fewer."
+            )
+
+        # temperature
+        if not (0.0 <= temperature <= 2.0):
+            errors.append("Temperature must be between 0.0 and 2.0.")
+
+        # max_tokens
+        if not (MIN_MAX_TOKENS <= max_tokens <= MAX_MAX_TOKENS):
+            errors.append(
+                f"Max tokens must be between {MIN_MAX_TOKENS} and {MAX_MAX_TOKENS}."
+            )
+
+        # base_url
+        if base_url and not base_url.startswith("https://"):
+            errors.append("Base URL must start with https://.")
+
+        return errors
