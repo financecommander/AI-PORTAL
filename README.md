@@ -1,14 +1,24 @@
 # FinanceCommander AI Portal
 
-A secure, multi-provider AI chat portal designed for financial analysis and decision-making. Built with Streamlit and supporting OpenAI, Anthropic Claude, and Google Gemini models.
+A secure, multi-provider AI chat portal designed for financial analysis and decision-making. Built with Streamlit and supporting OpenAI, Anthropic Claude, Google Gemini, and Grok models.
 
 ## Features
 
-- **Multi-Provider Support**: Choose from OpenAI GPT, Anthropic Claude, or Google Gemini models
+### Core (v0.1)
+- **Multi-Provider Support**: Choose from OpenAI GPT, Anthropic Claude, Google Gemini, or Grok models
 - **Specialist Roles**: Pre-configured AI specialists for different financial domains
 - **Secure Authentication**: Domain-based email authentication with SHA-256 hashing
 - **Usage Logging**: Comprehensive CSV logging with cost estimation and performance metrics
 - **Real-time Chat**: Interactive chat interface with conversation history
+
+### Week 2 (v0.2)
+- **Streaming Responses**: Real-time token-by-token streaming for all providers with markdown cursor
+- **Specialist CRUD Management**: Add, edit, and delete specialists from the sidebar UI
+- **Input Validation**: Comprehensive validation for specialist fields (name, provider, model, temperature, max_tokens, etc.)
+- **Session Timeout**: 30-minute inactivity timeout with automatic logout
+- **Rate Limiting**: Token-bucket rate limiter (60 requests/hour) with remaining count display
+- **Conversation Export**: Download chat history as JSON per specialist
+- **Expanded Model Support**: o1, o3-mini, Claude Opus/Sonnet/Haiku 4, Gemini 2.0, Grok 3
 
 ## Architecture
 
@@ -116,22 +126,36 @@ Edit `config/specialists.json` to customize AI specialists:
 
 ### Testing
 
-Run the test suite:
+Run the test suite (154 tests):
 ```bash
-pytest tests/
+pytest tests/ -v
 ```
 
 ### Project Structure
 
 ```
 ├── app.py                 # Main Streamlit application
-├── auth/                  # Authentication module
+├── auth/                  # Authentication, session timeout, rate limiter
+│   ├── authenticator.py   # Domain auth + session timeout
+│   └── rate_limiter.py    # Token-bucket rate limiter
 ├── chat/                  # Chat engine and logging
+│   ├── engine.py          # Conversation orchestration (streaming + non-streaming)
+│   └── logger.py          # CSV usage logging with email hashing
 ├── config/                # Configuration and settings
+│   ├── pricing.py         # Per-model token pricing table
+│   ├── settings.py        # App-wide constants (timeouts, limits, toggles)
+│   └── specialists.json   # Default specialist definitions
 ├── providers/             # LLM provider implementations
+│   ├── base.py            # BaseProvider ABC, StreamChunk, ProviderResponse
+│   ├── openai_provider.py # OpenAI + Grok (compatible API)
+│   ├── anthropic_provider.py # Anthropic Claude
+│   └── google_provider.py # Google Gemini
 ├── specialists/           # AI specialist management
+│   └── manager.py         # CRUD + validation for specialists
 ├── ui/                    # Streamlit UI components
-├── tests/                 # Test suite
+│   ├── chat_view.py       # Chat display with streaming support
+│   └── sidebar.py         # Auth, specialist selector, CRUD, export
+├── tests/                 # Test suite (154 tests)
 └── requirements.txt       # Python dependencies
 ```
 

@@ -1,17 +1,19 @@
 """OpenAI provider implementation for FinanceCommander AI Portal."""
 
 import os
+import time
+from collections.abc import AsyncGenerator
 from typing import List
 
 import openai
 from openai import AsyncOpenAI
 
 from portal.errors import ProviderAPIError
-from providers.base import BaseProvider, ProviderResponse
+from providers.base import BaseProvider, ProviderResponse, StreamChunk
 
 
 class OpenAIProvider(BaseProvider):
-    """OpenAI API provider supporting GPT models."""
+    """OpenAI API provider supporting GPT models and OpenAI-compatible APIs (Grok)."""
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -32,24 +34,21 @@ class OpenAIProvider(BaseProvider):
         **kwargs
     ) -> ProviderResponse:
         """Send message to OpenAI API."""
-        import time
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         try:
-            # Add system prompt if not already present
-            if messages and messages[0].get("role") != "system":
-                messages.insert(0, {"role": "system", "content": system_prompt})
+            full_messages = self._build_messages(messages, system_prompt)
 
             response = await self.client.chat.completions.create(
                 model=model,
-                messages=messages,
+                messages=full_messages,
                 **kwargs
             )
 
             content = response.choices[0].message.content
             input_tokens = response.usage.prompt_tokens
             output_tokens = response.usage.completion_tokens
-            latency_ms = (time.time() - start_time) * 1000
+            latency_ms = (time.perf_counter() - start_time) * 1000
 
             return ProviderResponse(
                 content=content,
@@ -64,9 +63,62 @@ class OpenAIProvider(BaseProvider):
         except Exception as e:
             raise ProviderAPIError("openai", 500, str(e)) from e
 
+    async def stream_message(
+        self,
+        messages: list[dict],
+        model: str,
+        system_prompt: str,
+        **kwargs
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Yield response chunks as they arrive from OpenAI."""
+        start = time.perf_counter()
+
+        try:
+            full_messages = self._build_messages(messages, system_prompt)
+            kwargs.pop("stream", None)
+
+            stream = await self.client.chat.completions.create(
+                model=model,
+                messages=full_messages,
+                stream=True,
+                stream_options={"include_usage": True},
+                **kwargs
+            )
+
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield StreamChunk(
+                        content=chunk.choices[0].delta.content,
+                        is_final=False,
+                        input_tokens=0,
+                        output_tokens=0,
+                        model=model,
+                        latency_ms=0,
+                    )
+
+                if chunk.usage:
+                    yield StreamChunk(
+                        content="",
+                        is_final=True,
+                        input_tokens=chunk.usage.prompt_tokens,
+                        output_tokens=chunk.usage.completion_tokens,
+                        model=model,
+                        latency_ms=(time.perf_counter() - start) * 1000,
+                    )
+
+        except openai.APIError as e:
+            raise ProviderAPIError("openai", e.status_code or 500, str(e)) from e
+        except Exception as e:
+            raise ProviderAPIError("openai", 500, str(e)) from e
+
+    def _build_messages(self, messages: list[dict], system_prompt: str) -> list[dict]:
+        """Prepend system prompt if not already present."""
+        if system_prompt and (not messages or messages[0].get("role") != "system"):
+            return [{"role": "system", "content": system_prompt}] + messages
+        return list(messages)
+
     def count_tokens(self, text: str) -> int:
         """Estimate token count for text."""
-        # Simple estimation: ~4 characters per token
         return len(text) // 4
 
     def get_available_models(self) -> List[str]:
@@ -75,6 +127,8 @@ class OpenAIProvider(BaseProvider):
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-4-turbo",
-            "gpt-3.5-turbo",
-            "grok-2"  # Via OpenAI-compatible API
+            "o1",
+            "o3-mini",
+            "grok-3",
+            "grok-2",
         ]
