@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -133,6 +134,56 @@ class SpecialistManager:
                 self._save()
                 return True
         return False
+
+    def duplicate(self, specialist_id: str) -> Specialist | None:
+        """Duplicate a specialist with a new UUID and appended ' (Copy)' name.
+
+        Returns the new specialist, or ``None`` if the source was not found.
+        """
+        source = self.get(specialist_id)
+        if source is None:
+            return None
+
+        data = asdict(source)
+        data["id"] = str(uuid.uuid4())
+        data["name"] = f"{source.name} (Copy)"
+        data["created_at"] = datetime.now(timezone.utc).isoformat()
+        data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        data["version"] = 1
+        data["prompt_history"] = []
+
+        clone = Specialist(**data)
+        self._specialists.append(clone)
+        self._save()
+        return clone
+
+    # -- pinning --
+
+    @staticmethod
+    def toggle_pin(specialist_id: str, pinned: set[str]) -> bool:
+        """Pin or unpin a specialist. Modifies *pinned* in place.
+
+        Returns the new pin state (``True`` if now pinned).
+        """
+        if specialist_id in pinned:
+            pinned.discard(specialist_id)
+            return False
+        pinned.add(specialist_id)
+        return True
+
+    def list_sorted(self, pinned: set[str] | None = None) -> list[Specialist]:
+        """Return specialists with pinned items first, then alphabetical.
+
+        Args:
+            pinned: Set of specialist IDs that are pinned.
+        """
+        pinned = pinned or set()
+        pinned_specs = [s for s in self._specialists if s.id in pinned]
+        unpinned_specs = [s for s in self._specialists if s.id not in pinned]
+        return (
+            sorted(pinned_specs, key=lambda s: s.name)
+            + sorted(unpinned_specs, key=lambda s: s.name)
+        )
 
     # -- validation --
 

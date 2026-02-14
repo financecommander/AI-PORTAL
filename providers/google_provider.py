@@ -1,14 +1,20 @@
 """Google provider implementation for FinanceCommander AI Portal."""
 
+from __future__ import annotations
+
+import base64
 import os
 import time
 from collections.abc import AsyncGenerator
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import google.generativeai as genai
 
 from portal.errors import ProviderAPIError
 from providers.base import BaseProvider, ProviderResponse, StreamChunk
+
+if TYPE_CHECKING:
+    from chat.file_handler import ChatAttachment
 
 
 class GoogleProvider(BaseProvider):
@@ -147,3 +153,14 @@ class GoogleProvider(BaseProvider):
             "gemini-1.5-pro",
             "gemini-1.5-flash",
         ]
+
+    def format_attachment(self, attachment: ChatAttachment) -> dict:
+        """Format attachment for Google Generative AI API.
+
+        Google supports native multimodal via ``Part.from_data()``.
+        Returns a dict with ``mime_type`` and ``data`` keys.
+        """
+        return {
+            "mime_type": attachment.content_type,
+            "data": base64.b64decode(attachment.content_b64),
+        }
