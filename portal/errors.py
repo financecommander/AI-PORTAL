@@ -19,3 +19,8 @@ class AuthenticationError(PortalError):
 class RateLimitError(PortalError):
     """Raised when user exceeds rate limits."""
     pass
+
+
+class ValidationError(PortalError):
+    """Raised when user input fails validation."""
+    pass
