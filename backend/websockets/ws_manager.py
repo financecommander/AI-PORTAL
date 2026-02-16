@@ -107,7 +107,7 @@ class WebSocketManager:
         event = WSEvent(
             type=event_type,
             pipeline_id=pipeline_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             data=data
         )
         await self.broadcast(event)
