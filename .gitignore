@@ -40,3 +40,8 @@ Thumbs.db
 htmlcov/
 .coverage
 test.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3

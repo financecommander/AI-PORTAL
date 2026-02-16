@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.config.settings import settings
 from backend.errors import PortalError
 from backend.database import init_db
+from backend.middleware.rate_limiter import RateLimitMiddleware
 from backend.routes import auth, chat, specialists, pipelines, usage
 
 
@@ -35,6 +36,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
 
 
 # Global exception handler for PortalError

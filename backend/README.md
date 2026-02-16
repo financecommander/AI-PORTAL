@@ -4,13 +4,19 @@ FastAPI-based backend for FinanceCommander AI Portal v2.0 with database persiste
 
 ## Features
 
-### Phase 1A (Current)
+### Phase 1A
 - **Database Models**: SQLModel-based models for usage tracking and pipeline runs
 - **Authentication**: JWT-based authentication with domain validation
 - **FastAPI Application**: CORS middleware, global exception handling, and health checks
-- **Route Stubs**: Auth, chat, specialists, pipelines, and usage routes
 - **Database Logging**: Usage and pipeline run tracking with SHA-256 email hashing
 - **Comprehensive Tests**: 42 unit and integration tests
+
+### Phase 1B (Current)
+- **Chat Endpoints**: Non-streaming and SSE-based streaming chat
+- **Rate Limiting**: Token bucket rate limiter (60 req/hour per IP)
+- **Specialist CRUD**: Error-raising CRUD methods for specialist management
+- **Usage Tracking**: Comprehensive PostgreSQL logging with cost estimation
+- **Multi-Provider Support**: OpenAI, Anthropic, Google via factory pattern
 
 ## Setup
 
@@ -89,6 +95,27 @@ Content-Type: application/json
 }
 ```
 
+### Chat
+```bash
+# Non-streaming
+POST /chat/send
+Content-Type: application/json
+{
+  "specialist_id": "uuid",
+  "message": "Your query",
+  "conversation_history": []
+}
+
+# Streaming (SSE)
+POST /chat/stream
+Content-Type: application/json
+{
+  "specialist_id": "uuid",
+  "message": "Your query",
+  "conversation_history": []
+}
+```
+
 ### Swagger UI
 Access interactive API documentation at:
 ```
@@ -110,9 +137,11 @@ backend/
 │   └── __init__.py         # PortalError hierarchy
 ├── models/                 # Database models
 │   └── __init__.py         # UsageLog, PipelineRun
+├── middleware/             # Middleware
+│   └── rate_limiter.py     # Token bucket rate limiting
 ├── routes/                 # API routes
 │   ├── auth.py             # Authentication routes
-│   ├── chat.py             # Chat routes (stub)
+│   ├── chat.py             # Chat endpoints (streaming & non-streaming)
 │   ├── specialists.py      # Specialist routes (stub)
 │   ├── pipelines.py        # Pipeline routes (stub)
 │   └── usage.py            # Usage routes (stub)
