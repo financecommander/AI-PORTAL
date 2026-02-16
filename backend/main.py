@@ -1,13 +1,21 @@
 """
 FastAPI application for FinanceCommander AI Portal v2.0.
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config.settings import settings
 from backend.errors import PortalError
-from backend.logging import init_db
+from backend.database import init_db
 from backend.routes import auth, chat, specialists, pipelines, usage
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database on startup."""
+    init_db()
+    yield
 
 
 # Create FastAPI app
@@ -15,6 +23,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for FinanceCommander AI Portal",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -58,10 +67,3 @@ app.include_router(chat.router)
 app.include_router(specialists.router)
 app.include_router(pipelines.router)
 app.include_router(usage.router)
-
-
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup."""
-    init_db()

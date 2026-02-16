@@ -62,7 +62,7 @@ def log_pipeline_run(
     total_cost_usd: float = 0.0,
     duration_ms: int = 0,
     error_message: Optional[str] = None,
-    metadata: Optional[str] = None,
+    metadata_json: Optional[str] = None,
 ):
     """Log pipeline run metadata to database."""
     # Hash email for privacy
@@ -76,7 +76,7 @@ def log_pipeline_run(
         total_cost_usd=total_cost_usd,
         duration_ms=duration_ms,
         error_message=error_message,
-        metadata=metadata,
+        metadata_json=metadata_json,
     )
     
     with Session(engine) as session:
