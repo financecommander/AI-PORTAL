@@ -1,7 +1,7 @@
 {
   "specialists": [
     {
-      "id": "financial_analyst",
+      "id": "financial-analyst",
       "name": "Financial Analyst",
       "description": "Analyzes financial data and trends",
       "provider": "openai",
@@ -16,28 +16,30 @@
       "created_at": "2026-02-13T22:00:00+00:00",
       "updated_at": "2026-02-13T22:00:00+00:00",
       "version": 1,
-      "prompt_history": []
+      "prompt_history": [],
+      "base_url": ""
     },
     {
-      "id": "general",
-      "name": "General Assistant",
-      "description": "General purpose AI assistant",
+      "id": "research-assistant",
+      "name": "Research Assistant",
+      "description": "Comprehensive research and information gathering specialist",
       "provider": "openai",
       "model": "gpt-4o",
-      "system_prompt": "You are a helpful AI assistant.",
-      "temperature": 0.7,
-      "max_tokens": 2048,
+      "system_prompt": "You are a thorough research assistant. Gather, synthesize, and present information from multiple perspectives. Provide well-sourced, objective analysis with proper citations.",
+      "temperature": 0.5,
+      "max_tokens": 4096,
       "pricing": {
         "input_per_1m": 2.50,
         "output_per_1m": 10.00
       },
-      "created_at": "2026-02-14T00:00:00+00:00",
-      "updated_at": "2026-02-14T00:00:00+00:00",
+      "created_at": "2026-02-16T03:45:00+00:00",
+      "updated_at": "2026-02-16T03:45:00+00:00",
       "version": 1,
-      "prompt_history": []
+      "prompt_history": [],
+      "base_url": ""
     },
     {
-      "id": "code_reviewer",
+      "id": "code-reviewer",
       "name": "Code Reviewer",
       "description": "Expert code reviewer for bugs and improvements",
       "provider": "anthropic",
@@ -52,26 +54,27 @@
       "created_at": "2026-02-14T00:00:00+00:00",
       "updated_at": "2026-02-14T00:00:00+00:00",
       "version": 1,
-      "prompt_history": []
+      "prompt_history": [],
+      "base_url": ""
     },
     {
-      "id": "grok_analyst",
-      "name": "Grok Analyst",
-      "description": "xAI Grok-powered financial reasoning",
+      "id": "legal-quick",
+      "name": "Legal Quick Reference",
+      "description": "Fast legal guidance and compliance checks",
       "provider": "openai",
-      "model": "grok-2",
-      "base_url": "https://api.x.ai/v1",
-      "system_prompt": "You are FinanceCommander's Grok analyst. Provide bold, data-driven financial insights with clear reasoning.",
-      "temperature": 0.4,
+      "model": "gpt-4o",
+      "system_prompt": "You are a legal assistant specializing in quick reference and compliance guidance. Provide clear, concise legal information and highlight key compliance considerations. Always include disclaimers that this is not formal legal advice.",
+      "temperature": 0.2,
       "max_tokens": 2048,
       "pricing": {
-        "input_per_1m": 2.00,
+        "input_per_1m": 2.50,
         "output_per_1m": 10.00
       },
-      "created_at": "2026-02-14T00:00:00+00:00",
-      "updated_at": "2026-02-14T00:00:00+00:00",
+      "created_at": "2026-02-16T03:45:00+00:00",
+      "updated_at": "2026-02-16T03:45:00+00:00",
       "version": 1,
-      "prompt_history": []
+      "prompt_history": [],
+      "base_url": ""
     }
   ]
 }
