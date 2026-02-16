@@ -74,7 +74,7 @@ class TestSpecialistManagerCRUD:
         
         # Verify the expected default specialist IDs
         specialist_ids = {s.id for s in specialists}
-        expected_ids = {"financial_analyst", "general", "code_reviewer", "grok_analyst"}
+        expected_ids = {"financial-analyst", "research-assistant", "code-reviewer", "legal-quick"}
         assert specialist_ids == expected_ids, f"Expected {expected_ids}, got {specialist_ids}"
 
     def test_get_specialist_by_valid_id(self, manager):

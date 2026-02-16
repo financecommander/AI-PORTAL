@@ -36,3 +36,10 @@ def db_session(test_db):
     """Create a database session for testing."""
     with Session(test_db) as session:
         yield session
+
+
+@pytest.fixture
+def session(test_db):
+    """Alias for db_session to support different naming conventions."""
+    with Session(test_db) as session:
+        yield session

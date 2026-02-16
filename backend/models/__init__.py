@@ -21,7 +21,7 @@ class UsageLog(SQLModel, table=True):
     input_tokens: int = Field(default=0)
     output_tokens: int = Field(default=0)
     estimated_cost_usd: float = Field(default=0.0)
-    latency_ms: int = Field(default=0)
+    latency_ms: float = Field(default=0.0)
     success: bool = Field(default=True)
 
 
