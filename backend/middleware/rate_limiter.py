@@ -1,7 +1,8 @@
 """Token bucket rate limiter middleware for FastAPI."""
 
 import time
-from collections import defaultdict
+import threading
+from collections import defaultdict, OrderedDict
 from typing import Callable
 
 from fastapi import HTTPException, Request, Response
@@ -11,22 +12,22 @@ from backend.config.settings import settings
 
 
 class TokenBucketRateLimiter:
-    """Thread-safe token bucket rate limiter."""
+    """Token bucket rate limiter with thread safety and memory management."""
     
-    def __init__(self, capacity: int, refill_rate: float):
+    def __init__(self, capacity: int, refill_rate: float, max_buckets: int = 10000):
         """
         Initialize rate limiter.
         
         Args:
             capacity: Maximum number of tokens in bucket (max requests)
             refill_rate: Tokens added per second
+            max_buckets: Maximum number of buckets to keep in memory (LRU eviction)
         """
         self.capacity = capacity
         self.refill_rate = refill_rate
-        self.buckets: dict[str, dict] = defaultdict(lambda: {
-            "tokens": capacity,
-            "last_refill": time.time()
-        })
+        self.max_buckets = max_buckets
+        self.buckets: OrderedDict[str, dict] = OrderedDict()
+        self.lock = threading.Lock()
     
     def _refill(self, bucket: dict) -> None:
         """Refill tokens based on elapsed time."""
@@ -38,9 +39,14 @@ class TokenBucketRateLimiter:
         )
         bucket["last_refill"] = now
     
+    def _evict_old_buckets(self) -> None:
+        """Remove oldest buckets if we exceed max_buckets limit."""
+        while len(self.buckets) > self.max_buckets:
+            self.buckets.popitem(last=False)  # Remove oldest (FIFO)
+    
     def consume(self, key: str, tokens: int = 1) -> tuple[bool, dict]:
         """
-        Try to consume tokens from bucket.
+        Try to consume tokens from bucket (thread-safe).
         
         Args:
             key: Identifier for the bucket (e.g., user ID, IP address)
@@ -52,26 +58,38 @@ class TokenBucketRateLimiter:
                 - limit: total capacity
                 - reset: seconds until bucket is full
         """
-        bucket = self.buckets[key]
-        self._refill(bucket)
-        
-        if bucket["tokens"] >= tokens:
-            bucket["tokens"] -= tokens
-            success = True
-        else:
-            success = False
-        
-        # Calculate time until bucket is full
-        tokens_needed = self.capacity - bucket["tokens"]
-        reset_seconds = tokens_needed / self.refill_rate if self.refill_rate > 0 else 0
-        
-        info = {
-            "remaining": int(bucket["tokens"]),
-            "limit": self.capacity,
-            "reset": int(reset_seconds)
-        }
-        
-        return success, info
+        with self.lock:
+            # Get or create bucket
+            if key not in self.buckets:
+                self.buckets[key] = {
+                    "tokens": self.capacity,
+                    "last_refill": time.time()
+                }
+                self._evict_old_buckets()
+            else:
+                # Move to end (mark as recently used)
+                self.buckets.move_to_end(key)
+            
+            bucket = self.buckets[key]
+            self._refill(bucket)
+            
+            if bucket["tokens"] >= tokens:
+                bucket["tokens"] -= tokens
+                success = True
+            else:
+                success = False
+            
+            # Calculate time until bucket is full
+            tokens_needed = self.capacity - bucket["tokens"]
+            reset_seconds = tokens_needed / self.refill_rate if self.refill_rate > 0 else 0
+            
+            info = {
+                "remaining": int(bucket["tokens"]),
+                "limit": self.capacity,
+                "reset": int(reset_seconds)
+            }
+            
+            return success, info
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -86,8 +104,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Apply rate limiting to request."""
-        # Extract identifier (IP address or user ID from headers)
-        client_id = request.client.host if request.client else "unknown"
+        # TODO: Extract user ID from JWT token for per-user rate limiting
+        # For now, use client IP with X-Forwarded-For support
+        client_id = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if not client_id:
+            client_id = request.client.host if request.client else "unknown"
         
         # Try to consume a token
         allowed, info = self.limiter.consume(client_id)

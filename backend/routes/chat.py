@@ -64,7 +64,10 @@ async def _log_usage(
 async def send_chat(
     request: ChatRequest,
     session: Session = Depends(get_session),
-    user_email: str = "anonymous@example.com"  # TODO: Extract from auth
+    # TODO: Implement JWT authentication to extract real user email
+    # This should be replaced with a proper auth dependency that validates
+    # the JWT token and extracts the user's email for accurate usage tracking
+    user_email: str = "anonymous@example.com"
 ) -> ChatResponse:
     """
     Non-streaming chat endpoint.
@@ -160,7 +163,10 @@ async def send_chat(
 @router.post("/stream")
 async def stream_chat(
     request: ChatRequest,
-    user_email: str = "anonymous@example.com"  # TODO: Extract from auth
+    # TODO: Implement JWT authentication to extract real user email
+    # This should be replaced with a proper auth dependency that validates
+    # the JWT token and extracts the user's email for accurate usage tracking
+    user_email: str = "anonymous@example.com"
 ) -> EventSourceResponse:
     """
     Streaming chat endpoint with Server-Sent Events (SSE).
@@ -220,9 +226,15 @@ async def stream_chat(
             if final_chunk:
                 latency_ms = (time.perf_counter() - start_time) * 1000
                 
-                # Note: Can't use async session in event generator easily
-                # For now, we'll skip database logging in streaming mode
-                # or implement a background task queue
+                # TODO: Implement background task queue for streaming usage logging
+                # Current limitation: SQLModel async sessions don't work well in
+                # event generators. Options:
+                # 1. Use FastAPI BackgroundTasks to log after stream completes
+                # 2. Use a message queue (Redis, RabbitMQ) for async processing
+                # 3. Use a sync session with thread executor
+                # For now, streaming requests are not logged to maintain consistency
+                # with non-blocking SSE behavior
+                pass
                 
         except Exception as e:
             # Send error event
