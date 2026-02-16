@@ -65,7 +65,12 @@ class TestChatEndpoints:
     
     def test_send_message_stub(self):
         """Test chat endpoint returns stub response."""
-        response = client.post("/chat/")
+        payload = {
+            "message": "Test message",
+            "specialist_id": "financial-analyst",
+            "model": "gpt-4o"
+        }
+        response = client.post("/chat/", json=payload)
         
         assert response.status_code == 200
         data = response.json()
@@ -85,7 +90,14 @@ class TestSpecialistEndpoints:
     
     def test_create_specialist_stub(self):
         """Test create specialist endpoint returns stub response."""
-        response = client.post("/specialists/")
+        payload = {
+            "name": "Test Specialist",
+            "system_prompt": "You are a test specialist",
+            "provider": "openai",
+            "model": "gpt-4o",
+            "temperature": 0.7
+        }
+        response = client.post("/specialists/", json=payload)
         
         assert response.status_code == 200
         data = response.json()
@@ -105,7 +117,12 @@ class TestPipelineEndpoints:
     
     def test_run_pipeline_stub(self):
         """Test run pipeline endpoint returns stub response."""
-        response = client.post("/pipelines/")
+        payload = {
+            "pipeline_id": "lex-intelligence",
+            "input_data": {"query": "Analyze market trends"},
+            "specialist_id": "financial-analyst"
+        }
+        response = client.post("/pipelines/", json=payload)
         
         assert response.status_code == 200
         data = response.json()
