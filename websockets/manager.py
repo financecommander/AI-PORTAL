@@ -14,13 +14,13 @@ class ConnectionManager:
     """Manages WebSocket connections grouped by pipeline_id."""
 
     def __init__(self):
-        self._connections: dict[str, list] = {}
+        self._connections: dict[str, list[WebSocket]] = {}
 
-    async def connect(self, pipeline_id: str, websocket) -> None:
+    async def connect(self, pipeline_id: str, websocket: WebSocket) -> None:
         await websocket.accept()
         self._connections.setdefault(pipeline_id, []).append(websocket)
 
-    async def disconnect(self, pipeline_id: str, websocket) -> None:
+    async def disconnect(self, pipeline_id: str, websocket: WebSocket) -> None:
         conns = self._connections.get(pipeline_id, [])
         if websocket in conns:
             conns.remove(websocket)

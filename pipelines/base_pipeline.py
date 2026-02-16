@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Callable, Optional
 
 
 class AgentStatus(str, Enum):
@@ -69,7 +69,8 @@ class BasePipeline(ABC):
 
     @abstractmethod
     async def execute(
-        self, query: str, user_hash: str, on_progress: callable = None,
+        self, query: str, user_hash: str,
+        on_progress: Optional[Callable[[AgentProgress], None]] = None,
     ) -> PipelineResult:
         ...
 
