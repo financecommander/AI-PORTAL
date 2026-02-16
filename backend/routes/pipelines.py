@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Header, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from backend.pipelines.base import AgentProgress
@@ -37,7 +37,7 @@ class PipelineRunResponse(BaseModel):
 
 
 # Mock authentication dependency
-async def verify_token(authorization: str | None = None) -> dict:
+async def verify_token(authorization: str | None = Header(None)) -> dict:
     """Mock token verification.
     
     Args:
