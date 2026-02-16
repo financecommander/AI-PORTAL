@@ -80,7 +80,7 @@ async def send_chat(
     start_time = time.perf_counter()
     
     # 1. Validate specialist
-    specialist = specialist_manager.get_by_id(request.specialist_id)
+    specialist = specialist_manager.get(request.specialist_id)
     if not specialist:
         raise HTTPException(status_code=404, detail="Specialist not found")
     
@@ -169,7 +169,7 @@ async def stream_chat(
     Final chunk contains token counts and latency.
     """
     # Validate specialist
-    specialist = specialist_manager.get_by_id(request.specialist_id)
+    specialist = specialist_manager.get(request.specialist_id)
     if not specialist:
         raise HTTPException(status_code=404, detail="Specialist not found")
     
