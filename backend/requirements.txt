@@ -1,0 +1,24 @@
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+sqlmodel>=0.0.14
+pydantic[email]>=2.6.0
+pydantic-settings>=2.1.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+psycopg2-binary>=2.9.9
+alembic>=1.13.1
+
+# Core dependencies from main app
+anthropic>=0.79.0
+google-generativeai>=0.4.0
+nest-asyncio>=1.6.0
+openai>=2.21.0
+pdfplumber>=0.11.0
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.0
+httpx>=0.26.0
