@@ -39,6 +39,6 @@ class PipelineRun(SQLModel, table=True):
     status: str  # running, completed, failed
     error: Optional[str] = None
     agent_breakdown: str  # JSON string
-    metadata: str  # JSON string
+    extra_metadata: str = Field(default="{}")  # JSON string - renamed from metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None

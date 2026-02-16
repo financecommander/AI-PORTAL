@@ -1,14 +1,14 @@
 """Authentication dependencies for FastAPI routes."""
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.auth.jwt_handler import decode_access_token
 
 
 security = HTTPBearer()
 
 
-async def get_current_user(credentials: HTTPAuthCredentials = Depends(security)) -> dict:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
     Dependency to get current authenticated user from JWT token.
     

@@ -97,7 +97,7 @@ async def execute_pipeline(
         duration_ms=0.0,
         status="running",
         agent_breakdown="[]",
-        metadata="{}"
+        extra_metadata="{}"
     )
     session.add(pipeline_run)
     session.commit()
@@ -122,7 +122,7 @@ async def execute_pipeline(
         pipeline_run.total_cost = result.total_cost
         pipeline_run.duration_ms = result.duration_ms
         pipeline_run.agent_breakdown = json.dumps(result.agent_breakdown)
-        pipeline_run.metadata = json.dumps(result.metadata)
+        pipeline_run.extra_metadata = json.dumps(result.metadata)
         pipeline_run.completed_at = datetime.now(timezone.utc)
         session.add(pipeline_run)
         session.commit()
