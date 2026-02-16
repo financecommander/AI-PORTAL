@@ -2,7 +2,8 @@
 
 import asyncio
 import time
-from typing import Optional, Callable, Any
+import inspect
+from typing import Optional, Callable, Any, Union
 from crewai import Crew, Agent, Task
 from langchain.callbacks.base import BaseCallbackHandler
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
@@ -21,11 +22,12 @@ class ProgressCallback(BaseCallbackHandler):
         
         Args:
             agents: List of agents in the crew
-            on_progress: Callback function for progress updates
+            on_progress: Callback function for progress updates (can be sync or async)
         """
         super().__init__()
         self.agents = agents
         self.on_progress = on_progress
+        self._is_async = on_progress and inspect.iscoroutinefunction(on_progress)
         self._pending_input_tokens: dict[str, int] = {}
         self._agent_metrics: dict[str, dict] = {}
         self._current_agent: Optional[str] = None
@@ -39,6 +41,33 @@ class ProgressCallback(BaseCallbackHandler):
                 "cost": 0.0,
                 "calls": 0
             }
+
+    def _call_progress(self, event_type: str, data: dict):
+        """
+        Call progress callback, handling both sync and async.
+        
+        Args:
+            event_type: Type of event
+            data: Event data
+        """
+        if not self.on_progress:
+            return
+        
+        if self._is_async:
+            # Schedule async callback in the event loop
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(self.on_progress(event_type, data))
+                else:
+                    # If no loop is running, run it synchronously
+                    asyncio.run(self.on_progress(event_type, data))
+            except RuntimeError:
+                # No event loop available, skip
+                pass
+        else:
+            # Call synchronous callback directly
+            self.on_progress(event_type, data)
 
     def on_llm_start(
         self,
@@ -66,11 +95,10 @@ class ProgressCallback(BaseCallbackHandler):
         agent_role = self._resolve_agent_role(kwargs)
         if agent_role:
             self._current_agent = agent_role
-            if self.on_progress:
-                self.on_progress("agent_start", {
-                    "agent": agent_role,
-                    "input_tokens": total_input_tokens
-                })
+            self._call_progress("agent_start", {
+                "agent": agent_role,
+                "input_tokens": total_input_tokens
+            })
 
     def on_llm_end(self, response: Any, **kwargs: Any) -> None:
         """
@@ -107,15 +135,14 @@ class ProgressCallback(BaseCallbackHandler):
         metrics["calls"] += 1
         
         # Notify progress
-        if self.on_progress:
-            self.on_progress("token_update", {
-                "agent": agent_role,
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "cost": cost,
-                "total_tokens": metrics["input_tokens"] + metrics["output_tokens"],
-                "total_cost": metrics["cost"]
-            })
+        self._call_progress("token_update", {
+            "agent": agent_role,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cost": cost,
+            "total_tokens": metrics["input_tokens"] + metrics["output_tokens"],
+            "total_cost": metrics["cost"]
+        })
 
     def on_agent_finish(self, finish: Any, **kwargs: Any) -> None:
         """
@@ -125,9 +152,9 @@ class ProgressCallback(BaseCallbackHandler):
             finish: Agent finish info
             kwargs: Additional arguments
         """
-        if self._current_agent and self.on_progress:
+        if self._current_agent:
             metrics = self._agent_metrics.get(self._current_agent, {})
-            self.on_progress("agent_complete", {
+            self._call_progress("agent_complete", {
                 "agent": self._current_agent,
                 "metrics": metrics
             })
@@ -351,7 +378,7 @@ class CrewPipeline(BasePipeline):
         except Exception as e:
             # Notify error
             if on_progress:
-                on_progress("error", {"message": str(e)})
+                await on_progress("error", {"message": str(e)})
             raise
         
         # Calculate duration
@@ -363,7 +390,7 @@ class CrewPipeline(BasePipeline):
         
         # Notify completion
         if on_progress:
-            on_progress("complete", {
+            await on_progress("complete", {
                 "output": str(output),
                 "total_tokens": total_metrics["total_tokens"],
                 "total_cost": total_metrics["total_cost"],

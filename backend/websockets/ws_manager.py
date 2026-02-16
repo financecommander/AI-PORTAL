@@ -4,7 +4,7 @@ import asyncio
 import json
 from typing import Dict, Set
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import WebSocket
 
 
