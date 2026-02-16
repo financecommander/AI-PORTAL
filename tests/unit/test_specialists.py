@@ -175,7 +175,7 @@ class TestSpecialistManager:
             "specialists.json",
         )
         mgr = SpecialistManager(filepath=config_path)
-        analyst = mgr.get("financial_analyst")
+        analyst = mgr.get("financial-analyst")
         assert analyst is not None
         assert analyst.name == "Financial Analyst"
         assert analyst.description == "Analyzes financial data and trends"
@@ -187,3 +187,151 @@ class TestSpecialistManager:
         assert analyst.pricing.output_per_1m == 10.00
         assert analyst.version == 1
         assert analyst.prompt_history == []
+
+
+class TestNewSpecialistMethods:
+    """Test the new CRUD methods added for Day 2."""
+
+    def test_load_specialists(self, manager):
+        """Test public load_specialists method."""
+        specs = manager.load_specialists()
+        assert len(specs) == 1
+        assert specs[0].id == "test-1"
+
+    def test_get_specialist_existing(self, manager):
+        """Test get_specialist with existing ID."""
+        spec = manager.get_specialist("test-1")
+        assert spec is not None
+        assert spec.name == "Test Specialist"
+
+    def test_get_specialist_missing_raises_error(self, manager):
+        """Test get_specialist raises ValueError for missing ID."""
+        with pytest.raises(ValueError) as exc_info:
+            manager.get_specialist("nonexistent")
+        assert "not found" in str(exc_info.value)
+
+    def test_create_specialist_with_validation(self, manager):
+        """Test create_specialist with validation."""
+        data = {
+            "name": "New Legal Specialist",
+            "description": "Legal guidance specialist",
+            "provider": "openai",
+            "model": "gpt-4o",
+            "system_prompt": "You are a legal assistant.",
+            "temperature": 0.3,
+            "max_tokens": 2048,
+        }
+        spec = manager.create_specialist(data)
+        assert spec.name == "New Legal Specialist"
+        assert len(manager.list()) == 2
+
+    def test_create_specialist_validation_fails(self, manager):
+        """Test create_specialist fails with invalid data."""
+        data = {
+            "name": "",  # Empty name should fail
+            "provider": "openai",
+            "model": "gpt-4o",
+            "system_prompt": "Test",
+        }
+        with pytest.raises(ValueError) as exc_info:
+            manager.create_specialist(data)
+        assert "Validation failed" in str(exc_info.value)
+
+    def test_update_specialist_existing(self, manager):
+        """Test update_specialist with existing ID."""
+        data = {
+            "name": "Updated Test Specialist",
+            "provider": "openai",
+            "model": "gpt-4o",
+            "system_prompt": "Updated prompt",
+            "temperature": 0.5,
+            "max_tokens": 2048,
+        }
+        spec = manager.update_specialist("test-1", data)
+        assert spec.name == "Updated Test Specialist"
+        assert spec.version == 2
+
+    def test_update_specialist_missing_raises_error(self, manager):
+        """Test update_specialist raises ValueError for missing ID."""
+        data = {
+            "name": "Some Name",
+            "provider": "openai",
+            "model": "gpt-4o",
+            "system_prompt": "Test",
+        }
+        with pytest.raises(ValueError) as exc_info:
+            manager.update_specialist("nonexistent", data)
+        assert "not found" in str(exc_info.value)
+
+    def test_update_specialist_validation_fails(self, manager):
+        """Test update_specialist fails with invalid data."""
+        data = {
+            "name": "",  # Empty name should fail
+            "provider": "openai",
+            "model": "gpt-4o",
+            "system_prompt": "Test",
+        }
+        with pytest.raises(ValueError) as exc_info:
+            manager.update_specialist("test-1", data)
+        assert "Validation failed" in str(exc_info.value)
+
+    def test_delete_specialist_existing(self, manager):
+        """Test delete_specialist with existing ID."""
+        assert manager.delete_specialist("test-1") is True
+        assert len(manager.list()) == 0
+
+    def test_delete_specialist_missing_raises_error(self, manager):
+        """Test delete_specialist raises ValueError for missing ID."""
+        with pytest.raises(ValueError) as exc_info:
+            manager.delete_specialist("nonexistent")
+        assert "not found" in str(exc_info.value)
+
+    def test_duplicate_specialist_existing(self, manager):
+        """Test duplicate_specialist with existing ID."""
+        clone = manager.duplicate_specialist("test-1")
+        assert clone.id != "test-1"
+        assert clone.name == "Test Specialist (Copy)"
+        assert len(manager.list()) == 2
+
+    def test_duplicate_specialist_missing_raises_error(self, manager):
+        """Test duplicate_specialist raises ValueError for missing ID."""
+        with pytest.raises(ValueError) as exc_info:
+            manager.duplicate_specialist("nonexistent")
+        assert "not found" in str(exc_info.value)
+
+    def test_all_four_specialists_load(self):
+        """Test that all 4 required specialists load correctly."""
+        import os
+
+        config_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "config",
+            "specialists.json",
+        )
+        mgr = SpecialistManager(filepath=config_path)
+        specs = mgr.list()
+        assert len(specs) == 4
+
+        # Check all required IDs exist
+        ids = {s.id for s in specs}
+        assert "financial-analyst" in ids
+        assert "research-assistant" in ids
+        assert "code-reviewer" in ids
+        assert "legal-quick" in ids
+
+        # Verify each specialist
+        financial = mgr.get("financial-analyst")
+        assert financial.name == "Financial Analyst"
+        assert financial.temperature == 0.3
+
+        research = mgr.get("research-assistant")
+        assert research.name == "Research Assistant"
+        assert research.max_tokens == 4096
+
+        code = mgr.get("code-reviewer")
+        assert code.name == "Code Reviewer"
+        assert code.provider == "anthropic"
+
+        legal = mgr.get("legal-quick")
+        assert legal.name == "Legal Quick Reference"
+        assert legal.temperature == 0.2

@@ -75,6 +75,15 @@ class SpecialistManager:
         specialists_data = data.get("specialists", data) if isinstance(data, dict) else data
         self._specialists = [Specialist(**item) for item in specialists_data]
 
+    def load_specialists(self) -> list[Specialist]:
+        """Public method to reload specialists from disk and return them.
+        
+        This is useful when the JSON file has been modified externally.
+        Returns the list of loaded specialists.
+        """
+        self._load()
+        return self.list()
+
     def _save(self) -> None:
         with open(self.filepath, "w", encoding="utf-8") as fh:
             json.dump(
@@ -96,12 +105,65 @@ class SpecialistManager:
                 return s
         return None
 
+    def get_specialist(self, specialist_id: str) -> Specialist:
+        """Return a specialist by id, or raise ValueError if not found.
+        
+        This method raises an error if the specialist doesn't exist,
+        unlike get() which returns None.
+        
+        Args:
+            specialist_id: The ID of the specialist to retrieve
+            
+        Returns:
+            The Specialist object
+            
+        Raises:
+            ValueError: If no specialist with the given ID exists
+        """
+        spec = self.get(specialist_id)
+        if spec is None:
+            raise ValueError(f"Specialist with ID '{specialist_id}' not found")
+        return spec
+
     def create(self, **kwargs) -> Specialist:
         """Create and persist a new specialist."""
         spec = Specialist(**kwargs)
         self._specialists.append(spec)
         self._save()
         return spec
+
+    def create_specialist(self, data: dict) -> Specialist:
+        """Create and persist a new specialist from a dictionary.
+        
+        This method validates the data, generates UUID and timestamps,
+        then creates the specialist.
+        
+        Args:
+            data: Dictionary containing specialist fields
+            
+        Returns:
+            The newly created Specialist
+            
+        Raises:
+            ValueError: If validation fails
+        """
+        # Validate the data first
+        errors = self.validate_specialist(
+            name=data.get("name", ""),
+            provider=data.get("provider", "openai"),
+            model=data.get("model", ""),
+            system_prompt=data.get("system_prompt", ""),
+            temperature=data.get("temperature", 0.7),
+            max_tokens=data.get("max_tokens", 2048),
+            base_url=data.get("base_url", ""),
+            description=data.get("description", ""),
+        )
+        
+        if errors:
+            raise ValueError(f"Validation failed: {'; '.join(errors)}")
+        
+        # Create with auto-generated UUID and timestamps
+        return self.create(**data)
 
     def update(self, specialist_id: str, **kwargs) -> Specialist | None:
         """Update an existing specialist. Returns None if not found."""
@@ -126,6 +188,48 @@ class SpecialistManager:
         self._save()
         return spec
 
+    def update_specialist(self, specialist_id: str, data: dict) -> Specialist:
+        """Update an existing specialist from a dictionary.
+        
+        This method validates the data and updates the specialist while
+        preserving key fields like id, created_at, and incrementing version.
+        
+        Args:
+            specialist_id: The ID of the specialist to update
+            data: Dictionary containing fields to update
+            
+        Returns:
+            The updated Specialist
+            
+        Raises:
+            ValueError: If specialist not found or validation fails
+        """
+        # Check if specialist exists
+        if self.get(specialist_id) is None:
+            raise ValueError(f"Specialist with ID '{specialist_id}' not found")
+        
+        # Validate the data
+        errors = self.validate_specialist(
+            name=data.get("name", ""),
+            provider=data.get("provider", "openai"),
+            model=data.get("model", ""),
+            system_prompt=data.get("system_prompt", ""),
+            temperature=data.get("temperature", 0.7),
+            max_tokens=data.get("max_tokens", 2048),
+            base_url=data.get("base_url", ""),
+            description=data.get("description", ""),
+            exclude_id=specialist_id,
+        )
+        
+        if errors:
+            raise ValueError(f"Validation failed: {'; '.join(errors)}")
+        
+        # Update (will not return None since we already checked existence)
+        result = self.update(specialist_id, **data)
+        if result is None:
+            raise ValueError(f"Failed to update specialist '{specialist_id}'")
+        return result
+
     def delete(self, specialist_id: str) -> bool:
         """Delete a specialist by id. Returns True if found and deleted."""
         for i, s in enumerate(self._specialists):
@@ -134,6 +238,23 @@ class SpecialistManager:
                 self._save()
                 return True
         return False
+
+    def delete_specialist(self, specialist_id: str) -> bool:
+        """Delete a specialist by id, raising error if not found.
+        
+        Args:
+            specialist_id: The ID of the specialist to delete
+            
+        Returns:
+            True if successfully deleted
+            
+        Raises:
+            ValueError: If specialist not found
+        """
+        result = self.delete(specialist_id)
+        if not result:
+            raise ValueError(f"Specialist with ID '{specialist_id}' not found")
+        return True
 
     def duplicate(self, specialist_id: str) -> Specialist | None:
         """Duplicate a specialist with a new UUID and appended ' (Copy)' name.
@@ -156,6 +277,23 @@ class SpecialistManager:
         self._specialists.append(clone)
         self._save()
         return clone
+
+    def duplicate_specialist(self, specialist_id: str) -> Specialist:
+        """Duplicate a specialist with a new UUID and appended ' (Copy)' name.
+        
+        Args:
+            specialist_id: The ID of the specialist to duplicate
+            
+        Returns:
+            The newly created duplicate Specialist
+            
+        Raises:
+            ValueError: If specialist not found
+        """
+        result = self.duplicate(specialist_id)
+        if result is None:
+            raise ValueError(f"Specialist with ID '{specialist_id}' not found")
+        return result
 
     # -- pinning --
 
