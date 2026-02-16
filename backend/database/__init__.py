@@ -25,7 +25,7 @@ def log_usage(
     input_tokens: int,
     output_tokens: int,
     estimated_cost_usd: float,
-    latency_ms: int,
+    latency_ms: float,
     success: bool = True,
     specialist_id: Optional[str] = None,
     specialist_name: Optional[str] = None,
