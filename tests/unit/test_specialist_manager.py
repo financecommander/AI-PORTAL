@@ -241,7 +241,7 @@ class TestSpecialistManagerCRUD:
         assert len(errors) == 0, f"Min boundaries should be valid, got {errors}"
         
         errors = manager.validate_specialist(
-            name="Test2",
+            name="MaxBoundaryTest",
             provider="openai",
             model="gpt-4o",
             system_prompt="Test",
@@ -252,7 +252,7 @@ class TestSpecialistManagerCRUD:
         
         # Invalid temperature - too low
         errors = manager.validate_specialist(
-            name="Test3",
+            name="InvalidLowTemp",
             provider="openai",
             model="gpt-4o",
             system_prompt="Test",
@@ -263,7 +263,7 @@ class TestSpecialistManagerCRUD:
         
         # Invalid temperature - too high
         errors = manager.validate_specialist(
-            name="Test4",
+            name="InvalidHighTemp",
             provider="openai",
             model="gpt-4o",
             system_prompt="Test",
@@ -274,7 +274,7 @@ class TestSpecialistManagerCRUD:
         
         # Invalid max_tokens - too low
         errors = manager.validate_specialist(
-            name="Test5",
+            name="InvalidLowTokens",
             provider="openai",
             model="gpt-4o",
             system_prompt="Test",
@@ -285,7 +285,7 @@ class TestSpecialistManagerCRUD:
         
         # Invalid max_tokens - too high
         errors = manager.validate_specialist(
-            name="Test6",
+            name="InvalidHighTokens",
             provider="openai",
             model="gpt-4o",
             system_prompt="Test",
