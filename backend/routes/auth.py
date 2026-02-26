@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from backend.auth.jwt_handler import create_access_token
 
 router = APIRouter()
-ALLOWED_DOMAINS = ["gradesolutions.com", "calculusresearch.io"]
+ALLOWED_DOMAINS = ["gradeesolutions.com", "calculusresearch.io"]
 
 class LoginRequest(BaseModel):
     email: str
