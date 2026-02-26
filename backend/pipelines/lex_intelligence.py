@@ -3,7 +3,7 @@
 import os
 import requests
 from typing import Optional
-from crewai import Agent, Task
+from crewai import Agent, Task, LLM
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -81,33 +81,30 @@ def create_lex_intelligence() -> CrewPipeline:
         CrewPipeline instance with 6 agents
     """
     # Initialize LLMs
-    # TODO: verify model string - grok-4-1-fast-reasoning
+    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
     grok_llm = ChatOpenAI(
         model="xai/grok-3-mini-beta",  # Using available model instead
         api_key=settings.xai_api_key or "dummy",
         base_url="https://api.x.ai/v1",
-        temperature=0.3
     )
     
-    # TODO: verify model string - claude-opus-4-6
+    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
     claude_llm = ChatAnthropic(
         model="gpt-4o",  # Using latest available
         api_key=settings.anthropic_api_key or "dummy",
         temperature=0.2
     )
     
-    # TODO: verify model string - gpt-5.3-codex
+    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
     gpt_llm = ChatOpenAI(
         model="gpt-4o",  # Using available model instead
         api_key=settings.openai_api_key or "dummy",
         temperature=0.4
     )
     
-    # TODO: verify model string - gemini-3-pro
-    gemini_llm = ChatGoogleGenerativeAI(
+    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
+    gemini_llm = LLM(model="gemini/gemini-2.5-flash", api_key=settings.google_api_key or "dummy", temperature=0.3)
         model="gemini-2.5-flash",  # Using available model instead
-        google_api_key=settings.google_api_key or "dummy",
-        temperature=0.3
     )
     
     # Initialize legal search tool
