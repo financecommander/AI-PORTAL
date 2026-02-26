@@ -83,7 +83,7 @@ def create_lex_intelligence() -> CrewPipeline:
     # Initialize LLMs
     # TODO: verify model string - grok-4-1-fast-reasoning
     grok_llm = ChatOpenAI(
-        model="grok-beta",  # Using available model instead
+        model="grok-3-mini",  # Using available model instead
         api_key=settings.xai_api_key or "dummy",
         base_url="https://api.x.ai/v1",
         temperature=0.3
@@ -105,7 +105,7 @@ def create_lex_intelligence() -> CrewPipeline:
     
     # TODO: verify model string - gemini-3-pro
     gemini_llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-exp",  # Using available model instead
+        model="gemini-2.5-flash",  # Using available model instead
         google_api_key=settings.google_api_key or "dummy",
         temperature=0.3
     )
