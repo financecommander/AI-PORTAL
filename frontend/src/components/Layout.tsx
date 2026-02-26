@@ -26,7 +26,7 @@ export default function Layout() {
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white p-1">
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-        <h1 className="text-white font-bold ml-3 text-sm">FinanceCommander</h1>
+        <h1 className="text-lime-400 font-bold ml-3 text-sm">CALCULUS LABS</h1>
       </div>
 
       {/* Mobile overlay */}

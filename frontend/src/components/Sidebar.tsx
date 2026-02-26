@@ -32,7 +32,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       style={{ width: 'var(--sidebar-width)', background: 'var(--navy)' }}
     >
       <div className="px-5 py-5 border-b" style={{ borderColor: '#2A3A5C' }}>
-        <h1 className="text-lg font-bold text-white tracking-tight">FinanceCommander</h1>
+        <h1 className="text-lg font-bold text-lime-400 tracking-tight">CALCULUS LABS</h1>
         <p className="text-xs mt-0.5" style={{ color: '#667788' }}>AI Portal v2.0</p>
       </div>
 
