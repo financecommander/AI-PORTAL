@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../api/client';
 import type { Specialist } from '../types';
 import { useChat } from '../hooks/useChat';
@@ -34,6 +34,7 @@ const DEFAULT_PROMPTS = [
 export default function ChatPage() {
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [selected, setSelected] = useState<Specialist | null>(null);
+  const [showSpecialistPanel, setShowSpecialistPanel] = useState(false);
 
   const { messages, isStreaming, error, sendMessage, stopStreaming } = useChat(
     selected?.id ?? null,
@@ -59,7 +60,6 @@ export default function ChatPage() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   }, []);
 
-  // Auto-scroll when messages change if user is near bottom
   useEffect(() => {
     if (isAtBottom()) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -84,9 +84,9 @@ export default function ChatPage() {
 
   return (
     <div className="flex" style={{ height: '100vh' }}>
-      {/* Specialist selector */}
+      {/* Desktop specialist sidebar */}
       <div
-        className="p-4 overflow-y-auto"
+        className="hidden md:block p-4 overflow-y-auto"
         style={{
           width: 256,
           borderRight: '1px solid #2A3A5C',
@@ -105,25 +105,57 @@ export default function ChatPage() {
             }}
           >
             <div className="font-medium">{s.name}</div>
-            <div className="text-xs mt-0.5 opacity-60">
-              {s.provider} / {s.model}
-            </div>
+            <div className="text-xs mt-0.5 opacity-60">{s.provider} / {s.model}</div>
           </button>
         ))}
       </div>
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col" style={{ minWidth: 0, overflow: 'hidden' }}>
+        {/* Mobile specialist selector */}
+        <div className="md:hidden" style={{ borderBottom: '1px solid #2A3A5C' }}>
+          <button
+            onClick={() => setShowSpecialistPanel(!showSpecialistPanel)}
+            className="w-full flex items-center justify-between px-4 py-3"
+            style={{ color: '#FFFFFF' }}
+          >
+            <span className="text-sm font-medium">
+              {selected?.name ?? 'Select Specialist'}
+            </span>
+            {showSpecialistPanel ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+          {showSpecialistPanel && (
+            <div className="px-3 pb-3 space-y-1">
+              {specialists.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelected(s); setShowSpecialistPanel(false); }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all"
+                  style={{
+                    background: selected?.id === s.id ? 'var(--navy-light)' : 'transparent',
+                    color: selected?.id === s.id ? '#FFFFFF' : '#8899AA',
+                  }}
+                >
+                  <div className="font-medium">{s.name}</div>
+                  <div className="text-xs mt-0.5 opacity-60">{s.provider} / {s.model}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {selected ? (
           <>
-            <SpecialistHeader specialist={selected} messageCount={messages.length} />
+            <div className="hidden md:block">
+              <SpecialistHeader specialist={selected} messageCount={messages.length} />
+            </div>
 
             {/* Messages */}
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto"
-              style={{ padding: '16px 24px' }}
+              style={{ padding: '16px 16px' }}
             >
               {messages.length === 0 ? (
                 <div
@@ -185,7 +217,6 @@ export default function ChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* New messages scroll pill */}
             {showScrollPill && (
               <div style={{ position: 'relative' }}>
                 <button
@@ -214,11 +245,10 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div
                 style={{
-                  margin: '0 24px 8px',
+                  margin: '0 16px 8px',
                   padding: '8px 12px',
                   background: '#3A1A1A',
                   border: '1px solid var(--red)',
