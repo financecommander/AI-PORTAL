@@ -1,1 +1,1 @@
-"""AI specialist management"""
+"""Specialist management module."""

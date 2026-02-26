@@ -1,1 +1,1 @@
-"""LLM provider integrations"""
+"""LLM provider abstraction layer."""
