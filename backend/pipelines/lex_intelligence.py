@@ -3,7 +3,7 @@
 import os
 import requests
 from typing import Optional
-from crewai import Agent, Task, LLM
+from crewai import Agent, Task
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -103,7 +103,7 @@ def create_lex_intelligence() -> CrewPipeline:
     )
     
     # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
-    gemini_llm = LLM(model="gemini/gemini-2.5-flash", api_key=settings.google_api_key or "dummy", temperature=0.3)
+    gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=settings.google_api_key or "dummy", temperature=0.3)
     
     # Initialize legal search tool
     legal_search = LegalSearchTool(api_key=settings.courtlistener_api_key)
