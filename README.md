@@ -1,53 +1,170 @@
-# FinanceCommander AI Portal
+# FinanceCommander AI Intelligence Portal v2.0
 
-A secure, multi-provider AI chat portal designed for financial analysis and decision-making. Built with Streamlit and supporting OpenAI, Anthropic Claude, Google Gemini, and Grok models.
-
-## Features
-
-### Core (v0.1)
-- **Multi-Provider Support**: Choose from OpenAI GPT, Anthropic Claude, Google Gemini, or Grok models
-- **Specialist Roles**: Pre-configured AI specialists for different financial domains
-- **Secure Authentication**: Domain-based email authentication with SHA-256 hashing
-- **Usage Logging**: Comprehensive CSV logging with cost estimation and performance metrics
-- **Real-time Chat**: Interactive chat interface with conversation history
-
-### Week 2 (v0.2)
-- **Streaming Responses**: Real-time token-by-token streaming for all providers with markdown cursor
-- **Specialist CRUD Management**: Add, edit, and delete specialists from the sidebar UI
-- **Input Validation**: Comprehensive validation for specialist fields (name, provider, model, temperature, max_tokens, etc.)
-- **Session Timeout**: 30-minute inactivity timeout with automatic logout
-- **Rate Limiting**: Token-bucket rate limiter (60 requests/hour) with remaining count display
-- **Conversation Export**: Download chat history as JSON per specialist
-- **Expanded Model Support**: o1, o3-mini, Claude Opus/Sonnet/Haiku 4, Gemini 2.0, Grok 3
-
-### Week 3 (v0.3)
-- **File Upload Support**: Attach text, CSV, JSON, Python, Markdown, PDF, and image files to messages
-- **Conversation Search**: Case-insensitive search across chat history with recency ranking
-- **Specialist Duplication**: Clone specialist configurations for A/B testing
-- **Specialist Pinning**: Pin frequently-used specialists to the top of the selector
-- **Usage Stats**: Per-specialist request count, token usage, cost, and latency metrics
-- **UI Polish**: Custom theme, relative timestamps, token info per message, regenerate button, status panel
-
-### Week 4 (v0.4)
-- **Test Restructure**: Organised into unit, integration, live, and performance categories
-- **Integration Tests**: End-to-end tests for chat flows, streaming, file upload, and specialist CRUD
-- **Performance Benchmarks**: Timed assertions for search, file processing, and conversation operations
-- **Cost Report Script**: Markdown/CSV reports grouped by date, provider, model, and specialist
-
-### Week 5 (v1.0.0)
-- **Architecture Documentation**: Mermaid diagrams for system, data flow, and test architecture
-- **Deployment Guide**: Local, Docker, and Streamlit Cloud deployment instructions
-- **Docker Support**: `Dockerfile` + `docker-compose.yml` with health checks
-- **Security Hardening**: pip-audit scan, security checklist, input sanitisation audit
-- **Admin Guide**: Specialist management, monitoring, configuration, and troubleshooting
-- **Tech Debt Log**: Prioritised backlog of known improvements
+> Private AI-powered legal and financial intelligence platform for the Calculus Holdings team.
 
 ## Architecture
 
-### Core Components
+```
+┌─────────────────────────────────────────────┐
+│              React 19 Frontend               │
+│  Auth │ Chat (SSE) │ Pipeline (WS) │ Usage  │
+├─────────────────────────────────────────────┤
+│                nginx reverse proxy           │
+├─────────────────────────────────────────────┤
+│              FastAPI Backend                  │
+│  JWT Auth │ Specialists │ Pipelines │ Usage  │
+├──────┬──────┬──────┬──────┬─────────────────┤
+│Claude│GPT-4o│Gemini│ Grok │  Lex Pipeline   │
+├──────┴──────┴──────┴──────┴─────────────────┤
+│              PostgreSQL 16                    │
+└─────────────────────────────────────────────┘
+```
 
-- **Authentication**: Domain-based user validation
-- **Specialists**: Configurable AI roles with custom prompts and model settings
+## Quick Start
+
+### Prerequisites
+- Docker & Docker Compose
+- API keys for at least one LLM provider
+
+### Run with Docker
+```bash
+cp .env.example .env
+# Edit .env with your API keys and secrets
+docker compose -f docker-compose.v2.yml up --build
+```
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+
+### Run Locally (Development)
+```bash
+# Backend
+cd backend
+pip install -r ../requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+## Features
+
+### Specialist Chat Agents
+| Specialist | Provider | Model | Purpose |
+|-----------|----------|-------|---------|
+| Financial Analyst | Anthropic | Claude Sonnet 4.5 | Market analysis, financial modeling |
+| Research Assistant | OpenAI | GPT-4o | Research synthesis, data analysis |
+| Code Reviewer | Anthropic | Claude Opus 4.6 | Code review, architecture guidance |
+| Legal Quick Consult | xAI | Grok | Legal research, regulatory questions |
+
+### Lex Intelligence Pipeline
+6-agent multi-LLM pipeline for comprehensive legal/financial analysis:
+1. Lead Researcher (GPT-4o) — primary research
+2. Contrarian Analyst (Claude Sonnet) — counter-arguments
+3. Regulatory Scanner (Gemini 2.0 Flash) — compliance check
+4. Quantitative Modeler (GPT-4o) — numerical analysis
+5. Convergence Synthesizer (Claude Opus) — synthesis
+6. Final Editor (Claude Opus) — publication-quality output
+
+Real-time agent progress via WebSocket streaming.
+
+### Security
+- JWT authentication with domain validation (@financecommander.com)
+- Token-bucket rate limiting (60 req/hour)
+- No data persistence of chat content (privacy-first)
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript, Vite 7, Tailwind CSS |
+| Backend | FastAPI, Python 3.12, Pydantic v2 |
+| Database | PostgreSQL 16 |
+| LLM Providers | Anthropic, OpenAI, Google, xAI |
+| Pipeline | CrewAI (agent orchestration) |
+| Infrastructure | Docker Compose, nginx |
+| Testing | pytest (backend), Playwright (E2E) |
+
+## Project Structure
+```
+├── backend/           # FastAPI application
+│   ├── auth/         # JWT authentication
+│   ├── config/       # Settings, pricing, specialist definitions
+│   ├── errors/       # Custom exception hierarchy
+│   ├── middleware/    # Rate limiter
+│   ├── models/       # Pydantic models
+│   ├── pipelines/    # Lex Intelligence, CrewAI wrapper
+│   ├── providers/    # LLM provider abstraction layer
+│   ├── routes/       # API endpoints
+│   ├── specialists/  # Specialist manager
+│   ├── tests/        # Backend test suite
+│   ├── utils/        # Token estimator
+│   └── websockets/   # WebSocket connection manager
+├── frontend/          # React application
+│   ├── src/
+│   │   ├── api/          # API client with JWT injection
+│   │   ├── components/   # Chat, Pipeline, Usage components
+│   │   ├── contexts/     # Auth context
+│   │   ├── hooks/        # useChat, usePipeline
+│   │   ├── pages/        # Route pages
+│   │   └── types/        # TypeScript interfaces
+│   └── e2e/              # Playwright E2E tests
+├── docs/              # Documentation
+│   ├── agents/       # Agent READMEs (specialists, coding, pipeline)
+│   ├── directives/   # Copilot Agent execution directives
+│   └── planning/     # v2.2 planning spec, team summary
+├── docker-compose.v2.yml  # Production stack
+├── Dockerfile.backend
+└── frontend/Dockerfile.frontend
+```
+
+## Testing
+
+```bash
+# Backend unit tests
+cd backend && python -m pytest tests/ -v
+
+# Frontend E2E tests
+cd frontend && npx playwright test
+
+# Frontend build check
+cd frontend && npm run build
+```
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|------------|
+| POST | /auth/login | Authenticate with email |
+| GET | /auth/verify | Verify JWT token |
+| GET | /specialists/ | List all specialists |
+| GET | /specialists/{id} | Get specialist details |
+| POST | /chat/send | Send chat message |
+| POST | /chat/stream | Stream chat response (SSE) |
+| GET | /api/v2/pipelines/ | List available pipelines |
+| POST | /api/v2/pipelines/run | Execute pipeline |
+| WS | /api/v2/pipelines/ws/{run_id} | Pipeline progress stream |
+| GET | /usage/ | Get usage logs |
+| GET | /health | Health check |
+
+## Roadmap
+
+| Version | Target | Focus |
+|---------|--------|-------|
+| v2.0.0 | Feb 2026 | ✅ Full-stack portal (current) |
+| v2.1.0 | May 2026 | Team deployment, RBAC, model upgrades |
+| v2.2.0 | Oct 2026 | Multi-jurisdiction, governance agents |
+| v2.3.0 | Mar 2027 | Public SaaS launch |
+
+## Documentation
+
+See [`docs/README.md`](docs/README.md) for full documentation index.
+
+## License
+
+Proprietary — Calculus Holdings LLC. All rights reserved.
 - **Providers**: Unified interface for multiple LLM providers
 - **Chat Engine**: Conversation orchestration with history management
 - **Usage Logger**: Performance and cost tracking

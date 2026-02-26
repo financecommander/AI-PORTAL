@@ -1,0 +1,66 @@
+name: Docker Smoke Test
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create test env
+        run: |
+          cat > .env << EOF
+          DB_USER=portal
+          DB_PASSWORD=testpassword123
+          JWT_SECRET_KEY=smoke-test-secret-key
+          ANTHROPIC_API_KEY=test-key
+          OPENAI_API_KEY=test-key
+          XAI_API_KEY=test-key
+          GOOGLE_API_KEY=test-key
+          EOF
+      
+      - name: Start Docker Compose stack
+        run: docker compose -f docker-compose.v2.yml up -d --build
+      
+      - name: Wait for services
+        run: |
+          echo "Waiting for PostgreSQL..."
+          timeout 60 bash -c 'until docker compose -f docker-compose.v2.yml exec -T db pg_isready -U portal; do sleep 2; done'
+          echo "Waiting for backend..."
+          timeout 60 bash -c 'until curl -sf http://localhost:8000/health; do sleep 2; done'
+          echo "Waiting for frontend..."
+          timeout 60 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'
+      
+      - name: Verify backend health
+        run: |
+          STATUS=$(curl -sf http://localhost:8000/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','unknown'))")
+          echo "Backend health: $STATUS"
+          [ "$STATUS" = "ok" ] || [ "$STATUS" = "healthy" ] || exit 1
+      
+      - name: Verify frontend serves
+        run: |
+          HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000)
+          echo "Frontend HTTP: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || exit 1
+      
+      - name: Verify API proxy through frontend
+        run: |
+          HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health)
+          echo "API proxy HTTP: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || exit 1
+      
+      - name: Check container logs for errors
+        if: always()
+        run: |
+          echo "=== Backend logs ==="
+          docker compose -f docker-compose.v2.yml logs backend --tail=50
+          echo "=== Frontend logs ==="
+          docker compose -f docker-compose.v2.yml logs frontend --tail=20
+      
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.v2.yml down -v
