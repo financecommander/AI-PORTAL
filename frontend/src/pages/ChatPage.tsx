@@ -105,7 +105,7 @@ export default function ChatPage() {
             }}
           >
             <div className="font-medium">{s.name}</div>
-            <div className="text-xs mt-0.5 opacity-60">{s.provider} / {s.model}</div>
+            <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
           </button>
         ))}
       </div>
@@ -137,7 +137,7 @@ export default function ChatPage() {
                   }}
                 >
                   <div className="font-medium">{s.name}</div>
-                  <div className="text-xs mt-0.5 opacity-60">{s.provider} / {s.model}</div>
+                  <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
                 </button>
               ))}
             </div>
