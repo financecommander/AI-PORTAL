@@ -53,14 +53,14 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@financecommander.com"
+            placeholder="you@calculusresearch.io"
             required
             className="w-full px-4 py-3 rounded-lg text-white text-sm outline-none transition-all
                        focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
             style={{ background: 'var(--navy-dark)', border: '1px solid #2A3A5C' }}
           />
           <p className="text-xs mt-2" style={{ color: '#667788' }}>
-            Domain-restricted access: @financecommander.com only
+            Domain-restricted access: @calculusresearch.io
           </p>
 
           <button
