@@ -91,7 +91,7 @@ def create_lex_intelligence() -> CrewPipeline:
     
     # TODO: verify model string - claude-opus-4-6
     claude_llm = ChatAnthropic(
-        model="anthropic/claude-opus-4-20250514",  # Using latest available
+        model="gpt-4o",  # Using latest available
         api_key=settings.anthropic_api_key or "dummy",
         temperature=0.2
     )
