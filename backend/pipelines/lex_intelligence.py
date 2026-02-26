@@ -103,7 +103,8 @@ def create_lex_intelligence() -> CrewPipeline:
     )
     
     # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
-    gemini_llm = ChatOpenAI(model="gemini-2.5-flash", api_key=settings.google_api_key or "dummy", base_url="https://generativelanguage.googleapis.com/v1beta/openai/", temperature=0.3)
+    # Gemini temporarily replaced with GPT-4o (CrewAI requires crewai[google-genai] for any gemini model)
+    gemini_llm = gpt_llm  # TODO: restore Gemini after adding crewai[google-genai] to requirements
     
     # Initialize legal search tool
     legal_search = LegalSearchTool(api_key=settings.courtlistener_api_key)
