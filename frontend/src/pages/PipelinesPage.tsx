@@ -1,50 +1,149 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { api } from '../api/client';
-import { Brain } from 'lucide-react';
+import PipelineCard from '../components/pipeline/PipelineCard';
+import PipelineProgress from '../components/pipeline/PipelineProgress';
+import QueryInput from '../components/pipeline/QueryInput';
+import { usePipeline } from '../hooks/usePipeline';
 
-interface Pipeline {
+interface PipelineInfo {
   name: string;
+  display_name: string;
   description: string;
   agents: string[];
+  type: string;
+  estimated_cost?: number;
 }
 
 export default function PipelinesPage() {
-  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [pipelines, setPipelines] = useState<PipelineInfo[]>([]);
+  const [selectedPipeline, setSelectedPipeline] = useState<PipelineInfo | null>(null);
+  const [activeQuery, setActiveQuery] = useState<string>('');
+  const progressRef = useRef<HTMLDivElement>(null);
+
+  const { agents, status, output, totalCost, totalTokens, durationMs, error, runPipeline, reset } =
+    usePipeline();
 
   useEffect(() => {
-    api.request<{ pipelines: Pipeline[] }>('/api/v2/pipelines/list')
+    api.request<{ pipelines: PipelineInfo[] }>('/api/v2/pipelines/list')
       .then(data => setPipelines(data.pipelines))
       .catch(console.error);
   }, []);
 
+  // Auto-scroll to running agent
+  useEffect(() => {
+    if (status === 'running' && progressRef.current) {
+      progressRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [agents, status]);
+
+  const handleRun = async (query: string) => {
+    if (!selectedPipeline) return;
+    setActiveQuery(query);
+    await runPipeline(selectedPipeline.name, selectedPipeline.agents, query);
+  };
+
+  const handleBack = () => {
+    reset();
+    setActiveQuery('');
+  };
+
+  const isRunning = status !== 'idle';
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-white mb-6">Intelligence Pipelines</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {pipelines.map(p => (
-          <div key={p.name} className="p-5 rounded-xl" style={{ background: 'var(--navy)' }}>
-            <div className="flex items-center gap-3 mb-3">
-              <Brain className="w-5 h-5" style={{ color: 'var(--blue)' }} />
-              <h3 className="font-semibold text-white">{p.name}</h3>
-            </div>
-            <p className="text-sm mb-3" style={{ color: '#8899AA' }}>{p.description}</p>
-            <div className="flex flex-wrap gap-1">
-              {p.agents.map(a => (
-                <span key={a} className="px-2 py-0.5 rounded text-xs"
-                      style={{ background: 'var(--navy-dark)', color: '#8899AA' }}>
-                  {a}
-                </span>
-              ))}
-            </div>
-            <p className="text-xs mt-3" style={{ color: '#556677' }}>
-              Pipeline execution coming in Phase 3C
-            </p>
-          </div>
-        ))}
-        {pipelines.length === 0 && (
-          <p style={{ color: '#667788' }}>Loading pipelines...</p>
+    <div style={{ padding: '32px', maxWidth: '900px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        {isRunning && (
+          <button
+            onClick={handleBack}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'none',
+              border: '1px solid #2A3A5C',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              color: '#8899AA',
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'color 150ms',
+            }}
+          >
+            <ArrowLeft style={{ width: 14, height: 14 }} />
+            Back
+          </button>
         )}
+        <h1 style={{ color: 'white', fontSize: '22px', fontWeight: 700, margin: 0 }}>
+          {isRunning && selectedPipeline
+            ? selectedPipeline.display_name
+            : 'Intelligence Pipelines'}
+        </h1>
       </div>
+
+      {/* Pipeline Selection (idle state) */}
+      {!isRunning && (
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px',
+            }}
+          >
+            {pipelines.map(p => (
+              <PipelineCard
+                key={p.name}
+                pipeline={p}
+                isSelected={selectedPipeline?.name === p.name}
+                onSelect={name => {
+                  const found = pipelines.find(pl => pl.name === name) ?? null;
+                  setSelectedPipeline(found);
+                }}
+              />
+            ))}
+            {pipelines.length === 0 && (
+              <p style={{ color: '#667788' }}>Loading pipelines...</p>
+            )}
+          </div>
+
+          {selectedPipeline && (
+            <QueryInput
+              onSubmit={handleRun}
+              isRunning={false}
+              estimatedCost={selectedPipeline.estimated_cost}
+            />
+          )}
+        </>
+      )}
+
+      {/* Execution state */}
+      {isRunning && (
+        <>
+          <div style={{ marginBottom: '20px' }}>
+            <QueryInput
+              onSubmit={() => {}}
+              isRunning={true}
+              readOnly
+              value={activeQuery}
+            />
+          </div>
+
+          <div ref={progressRef}>
+            <PipelineProgress
+              agents={agents}
+              status={status}
+              totalCost={totalCost ?? undefined}
+              totalTokens={totalTokens ?? undefined}
+              durationMs={durationMs ?? undefined}
+              output={output ?? undefined}
+              error={error ?? undefined}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
