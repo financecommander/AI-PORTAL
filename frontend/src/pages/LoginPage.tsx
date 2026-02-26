@@ -31,7 +31,7 @@ export default function LoginPage() {
                style={{ background: 'var(--blue)', opacity: 0.9 }}>
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">FinanceCommander</h1>
+          <h1 className="text-2xl font-bold text-lime-400">CALCULUS LABS</h1>
           <p className="text-sm mt-1" style={{ color: '#8899AA' }}>AI Intelligence Portal v2.0</p>
         </div>
 
