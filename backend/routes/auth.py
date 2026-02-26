@@ -1,7 +1,7 @@
 """Authentication routes."""
 
 import hashlib
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from backend.auth.jwt_handler import create_access_token
