@@ -35,7 +35,7 @@ class LegalSearchTool(BaseTool):
         
         try:
             response = requests.get(
-                "https://www.courtlistener.com/api/rest/v3/search/",
+                "https://www.courtlistener.com/api/rest/v4/search/",
                 params={"q": query, "type": "o"},
                 headers={"Authorization": f"Token {self.api_key}"},
                 timeout=10
