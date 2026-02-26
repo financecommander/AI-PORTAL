@@ -31,3 +31,8 @@ async def login(request: LoginRequest):
     email_hash = hashlib.sha256(email.encode()).hexdigest()
     token = create_access_token({"sub": email_hash, "domain": domain})
     return LoginResponse(access_token=token)
+
+
+@router.get("/verify")
+async def verify_token(user: dict = Depends(get_current_user)):
+    return {"user": user}
