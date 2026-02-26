@@ -26,7 +26,13 @@ export default function PipelinesPage() {
 
   useEffect(() => {
     api.request<{ pipelines: PipelineInfo[] }>('/api/v2/pipelines/list')
-      .then(data => setPipelines(data.pipelines))
+      .then(data => {
+        const normalized = data.pipelines.map((p: any) => ({
+          ...p,
+          agents: p.agents.map((a: any) => typeof a === 'string' ? a : a.name),
+        }));
+        setPipelines(normalized);
+      })
       .catch(console.error);
   }, []);
 
