@@ -105,7 +105,7 @@ def create_lex_intelligence() -> CrewPipeline:
     
     # TODO: verify model string - gemini-3-pro
     gemini_llm = ChatGoogleGenerativeAI(
-        model="gemini/gemini-2.5-flash",  # Using available model instead
+        model="gemini-2.5-flash",  # Using available model instead
         google_api_key=settings.google_api_key or "dummy",
         temperature=0.3
     )
