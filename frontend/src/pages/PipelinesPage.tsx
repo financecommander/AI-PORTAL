@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '../api/client';
 import PipelineCard from '../components/pipeline/PipelineCard';
-import PipelineProgress from '../components/pipeline/PipelineProgress';
+import AgentTraceVisualizer from '../components/pipeline/AgentTraceVisualizer';
 import QueryInput from '../components/pipeline/QueryInput';
 import { usePipeline } from '../hooks/usePipeline';
 
@@ -10,7 +10,13 @@ interface PipelineInfo {
   name: string;
   display_name: string;
   description: string;
-  agents: string[];
+  agents: Array<{
+    name: string;
+    goal: string;
+    backstory: string;
+    model: string;
+  }>;
+  agentNames: string[]; // For display components
   type: string;
   estimated_cost?: number;
 }
@@ -27,9 +33,9 @@ export default function PipelinesPage() {
   useEffect(() => {
     api.request<{ pipelines: PipelineInfo[] }>('/api/v2/pipelines/list')
       .then(data => {
-        const normalized = data.pipelines.map((p: any) => ({
+        const normalized = data.pipelines.map(p => ({
           ...p,
-          agents: p.agents.map((a: any) => typeof a === 'string' ? a : a.name),
+          agentNames: p.agents.map(a => a.name),
         }));
         setPipelines(normalized);
       })
@@ -46,7 +52,7 @@ export default function PipelinesPage() {
   const handleRun = async (query: string) => {
     if (!selectedPipeline) return;
     setActiveQuery(query);
-    await runPipeline(selectedPipeline.name, selectedPipeline.agents, query);
+    await runPipeline(selectedPipeline.name, selectedPipeline.agents.map(a => a.name), query);
   };
 
   const handleBack = () => {
@@ -102,7 +108,10 @@ export default function PipelinesPage() {
             {pipelines.map(p => (
               <PipelineCard
                 key={p.name}
-                pipeline={p}
+                pipeline={{
+                  ...p,
+                  agents: p.agentNames,
+                }}
                 isSelected={selectedPipeline?.name === p.name}
                 onSelect={name => {
                   const found = pipelines.find(pl => pl.name === name) ?? null;
@@ -138,8 +147,11 @@ export default function PipelinesPage() {
           </div>
 
           <div ref={progressRef}>
-            <PipelineProgress
-              agents={agents}
+            <AgentTraceVisualizer
+              agents={agents.map(a => {
+                const pipelineAgent = selectedPipeline?.agents.find(pa => pa.name === a.name);
+                return { ...a, model: pipelineAgent?.model };
+              })}
               status={status}
               totalCost={totalCost ?? undefined}
               totalTokens={totalTokens ?? undefined}
