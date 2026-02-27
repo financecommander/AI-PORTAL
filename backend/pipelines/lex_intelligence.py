@@ -3,10 +3,8 @@
 import os
 import requests
 from typing import Optional
-from crewai import Agent, Task
+from crewai import Agent, Task, LLM
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai.tools import BaseTool
 from pydantic import Field
 from backend.pipelines.crew_pipeline import CrewPipeline
@@ -22,14 +20,7 @@ class LegalSearchTool(BaseTool):
     
     def _run(self, query: str) -> str:
         """
-        Execute legal search.
-        
-        Args:
-            query: Search query
-        
-        Returns:
-            Search results as formatted string
-        """
+        Execute legal search via CourtListener v4 API."""
         if not self.api_key:
             return "Error: CourtListener API key not configured"
         
@@ -48,7 +39,6 @@ class LegalSearchTool(BaseTool):
             if not results:
                 return f"No legal cases found for query: {query}"
             
-            # Format results
             formatted = []
             for i, result in enumerate(results[:5], 1):
                 case_name = result.get("caseName", "Unknown")
@@ -77,39 +67,46 @@ def create_lex_intelligence() -> CrewPipeline:
     """
     Create Lex Intelligence Ultimate pipeline.
     
-    Returns:
-        CrewPipeline instance with 6 agents
+    Model assignments:
+      Agent 1 (Legal Research)      -> GPT-4o  (has tools; Anthropic incompatible with CrewAI tool_use)
+      Agent 2 (Statutory)           -> GPT-4o
+      Agent 3 (Constitutional)      -> GPT-4o  (Anthropic tool_use history conflict in sequential crew)
+      Agent 4 (Contract/Commercial) -> Grok 3 Mini Beta via xAI
+      Agent 5 (Litigation Strategy) -> Gemini 2.5 Flash via LiteLLM (use_native=False)
+      Agent 6 (Synthesis/Drafting)  -> GPT-4o
     """
-    # Initialize LLMs
-    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
-    grok_llm = ChatOpenAI(
-        model="xai/grok-3-mini-beta",  # Using available model instead
-        api_key=settings.xai_api_key or "dummy",
-        base_url="https://api.x.ai/v1",
-    )
+    # --- LLM Configuration ---
     
-    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
-    claude_llm = ChatAnthropic(
-        model="gpt-4o",  # Using latest available
-        api_key=settings.anthropic_api_key or "dummy",
-        temperature=0.2
-    )
-    
-    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
+    # GPT-4o: primary workhorse for most agents
     gpt_llm = ChatOpenAI(
-        model="gpt-4o",  # Using available model instead
+        model="gpt-4o",
         api_key=settings.openai_api_key or "dummy",
         temperature=0.4
     )
     
-    # Gemini via CrewAI native LLM (bypasses langchain models/ prefix issue)
-    # Gemini temporarily replaced with GPT-4o (CrewAI requires crewai[google-genai] for any gemini model)
-    gemini_llm = gpt_llm  # TODO: restore Gemini after adding crewai[google-genai] to requirements
+    # Grok 3 Mini Beta: cost-effective for contract analysis (Agent 4)
+    grok_llm = ChatOpenAI(
+        model="xai/grok-3-mini-beta",
+        api_key=settings.xai_api_key or "dummy",
+        base_url="https://api.x.ai/v1",
+    )
+    
+    # Gemini 2.5 Flash: fast + cheap for litigation strategy (Agent 5)
+    # use_native=False skips CrewAI's native Gemini provider (needs google-genai pkg)
+    # Falls back to LiteLLM routing which works with existing google-generativeai
+    gemini_llm = LLM(
+        model="gemini/gemini-2.5-flash",
+        api_key=settings.google_api_key or "dummy",
+        temperature=0.3,
+        use_native=False,
+    )
     
     # Initialize legal search tool
     legal_search = LegalSearchTool(api_key=settings.courtlistener_api_key)
     
-    # Agent 1: Legal Research Specialist
+    # --- Agent Definitions ---
+    
+    # Agent 1: Legal Research Specialist (GPT-4o - needs tool calling)
     legal_researcher = Agent(
         role="Legal Research Specialist",
         goal="Find relevant case law, statutes, and legal precedents",
@@ -119,13 +116,13 @@ def create_lex_intelligence() -> CrewPipeline:
             "You always cite specific case names, court jurisdictions, and dates. "
             "You never fabricate case citations or legal references."
         ),
-        llm=claude_llm,
+        llm=gpt_llm,
         tools=[legal_search],
         verbose=True,
         allow_delegation=False
     )
     
-    # Agent 2: Statutory Analyst
+    # Agent 2: Statutory Analyst (GPT-4o)
     statutory_analyst = Agent(
         role="Statutory Analyst",
         goal="Analyze statutes, regulations, and legislative intent",
@@ -140,7 +137,7 @@ def create_lex_intelligence() -> CrewPipeline:
         allow_delegation=False
     )
     
-    # Agent 3: Constitutional Law Expert
+    # Agent 3: Constitutional Law Expert (GPT-4o)
     constitutional_expert = Agent(
         role="Constitutional Law Expert",
         goal="Evaluate constitutional implications and civil rights issues",
@@ -150,12 +147,12 @@ def create_lex_intelligence() -> CrewPipeline:
             "You always ground your analysis in specific constitutional provisions and landmark cases. "
             "You never fabricate Supreme Court opinions or constitutional interpretations."
         ),
-        llm=claude_llm,
+        llm=gpt_llm,
         verbose=True,
         allow_delegation=False
     )
     
-    # Agent 4: Contract & Commercial Law Specialist
+    # Agent 4: Contract & Commercial Law Specialist (Grok 3 Mini)
     contract_specialist = Agent(
         role="Contract & Commercial Law Specialist",
         goal="Analyze contracts, business transactions, and commercial disputes",
@@ -170,7 +167,7 @@ def create_lex_intelligence() -> CrewPipeline:
         allow_delegation=False
     )
     
-    # Agent 5: Litigation Strategy Advisor
+    # Agent 5: Litigation Strategy Advisor (Gemini 2.5 Flash)
     litigation_advisor = Agent(
         role="Litigation Strategy Advisor",
         goal="Develop litigation strategies and assess case strengths",
@@ -185,7 +182,7 @@ def create_lex_intelligence() -> CrewPipeline:
         allow_delegation=False
     )
     
-    # Agent 6: Legal Synthesis & Opinion Drafter
+    # Agent 6: Legal Synthesis & Opinion Drafter (GPT-4o)
     synthesis_drafter = Agent(
         role="Legal Synthesis & Opinion Drafter",
         goal="Synthesize research into comprehensive legal opinions",
@@ -195,12 +192,13 @@ def create_lex_intelligence() -> CrewPipeline:
             "You write in formal legal style with proper citations and logical organization. "
             "You never add sources or arguments not provided by the research team."
         ),
-        llm=claude_llm,
+        llm=gpt_llm,
         verbose=True,
         allow_delegation=False
     )
     
-    # Task 1: Legal Research
+    # --- Task Definitions ---
+    
     task1 = Task(
         description=(
             "Conduct comprehensive legal research on the user's query. "
@@ -215,7 +213,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=legal_researcher
     )
     
-    # Task 2: Statutory Analysis
     task2 = Task(
         description=(
             "Analyze applicable statutes and regulations related to the legal issue. "
@@ -229,7 +226,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=statutory_analyst
     )
     
-    # Task 3: Constitutional Review
     task3 = Task(
         description=(
             "Evaluate any constitutional law implications of the legal issue. "
@@ -243,7 +239,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=constitutional_expert
     )
     
-    # Task 4: Contract/Commercial Analysis
     task4 = Task(
         description=(
             "If the query involves contracts or commercial transactions, analyze the legal issues. "
@@ -257,7 +252,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=contract_specialist
     )
     
-    # Task 5: Litigation Strategy
     task5 = Task(
         description=(
             "Based on all prior research, assess the strength of legal positions available. "
@@ -271,7 +265,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=litigation_advisor
     )
     
-    # Task 6: Final Opinion
     task6 = Task(
         description=(
             "Synthesize all research from Tasks 1-5 into a comprehensive legal opinion. "
@@ -287,7 +280,6 @@ def create_lex_intelligence() -> CrewPipeline:
         agent=synthesis_drafter
     )
     
-    # Create pipeline
     return CrewPipeline(
         name="Lex Intelligence Ultimate",
         description="6-agent legal research and opinion drafting pipeline",
