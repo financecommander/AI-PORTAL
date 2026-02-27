@@ -34,6 +34,8 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "claude-3-haiku": (0.25, 1.25),
     
     # Google
+    "gemini-2.5-flash": (0.15, 0.60),
+    "gemini-2.5-pro": (1.25, 10.00),
     "gemini-2.0-flash": (0.10, 0.40),
     "gemini-2.0-flash-exp": (0.10, 0.40),
     "gemini-2.0-pro": (1.25, 10.00),
@@ -41,6 +43,8 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "gemini-1.5-flash": (0.075, 0.30),
     
     # xAI / Grok
+    "grok-3-mini-beta": (0.30, 0.50),
+    "grok-3-mini": (0.30, 0.50),
     "grok-beta": (5.00, 15.00),
     "grok-3": (5.00, 15.00),
     "grok-2": (2.00, 10.00),
