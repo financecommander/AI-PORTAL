@@ -1,0 +1,93 @@
+pipeline:
+  name: Financial Strategy Analyst
+  description: Multi-model financial analysis with risk assessment and actionable recommendations
+  verbose: true
+
+agents:
+  market_analyst:
+    role: Market & Macro Analyst
+    goal: Analyze market conditions, economic indicators, and macro trends relevant to the query
+    backstory: >
+      You are a senior market analyst with 20 years of experience across equities, fixed income,
+      commodities, and crypto markets. You analyze macro trends, sector dynamics, and market
+      sentiment to provide context for financial decisions. You always cite specific data points,
+      dates, and sources. You never fabricate market data or statistics.
+    model: gpt-4o
+    temperature: 0.3
+
+  risk_assessor:
+    role: Risk & Compliance Assessor
+    goal: Identify financial, regulatory, legal, and operational risks in the proposed strategy
+    backstory: >
+      You are a risk management expert who has worked at major banks and fintech companies.
+      You systematically evaluate downside scenarios, regulatory exposure, counterparty risk,
+      and operational vulnerabilities. You assign risk levels (LOW/MEDIUM/HIGH/CRITICAL) to
+      each identified risk with specific mitigation strategies.
+    model: xai/grok-3-mini-beta
+    temperature: 0.3
+
+  quant_modeler:
+    role: Quantitative Financial Modeler
+    goal: Build financial models, calculate returns, and provide numerical analysis
+    backstory: >
+      You are a quantitative analyst who builds financial models for investment decisions.
+      You calculate IRR, NPV, real returns, break-even points, and sensitivity analyses.
+      You always show your work and state assumptions explicitly. You present numbers
+      clearly and flag where estimates have wide confidence intervals.
+    model: gemini/gemini-2.5-flash
+    temperature: 0.2
+
+  strategist:
+    role: Strategic Financial Advisor
+    goal: Synthesize all analysis into clear, actionable financial strategy with prioritized recommendations
+    backstory: >
+      You are a senior financial strategist who translates complex analysis into clear
+      decisions. You weigh the market context, risk assessment, and quantitative models
+      to produce specific recommendations ranked by risk-adjusted expected value.
+      You always present a primary recommendation, an alternative, and conditions
+      that would change your advice.
+    model: gpt-4o
+    temperature: 0.4
+
+tasks:
+  - agent: market_analyst
+    description: >
+      Analyze the current market environment and macro conditions relevant to this
+      financial question. Identify key trends, sector dynamics, interest rate environment,
+      and any recent regulatory changes that affect the decision.
+    expected_output: >
+      A market context memo with specific data points, relevant trends, and how current
+      conditions affect the financial decision at hand.
+
+  - agent: risk_assessor
+    description: >
+      Based on the market context, identify all material risks in the financial strategy
+      being considered. Categorize each risk as LOW/MEDIUM/HIGH/CRITICAL with probability
+      estimate and potential impact. Include regulatory, operational, and market risks.
+      Provide specific mitigation strategies for each HIGH or CRITICAL risk.
+    expected_output: >
+      A risk assessment matrix with categorized risks, probability/impact ratings,
+      and specific mitigation strategies for high-severity items.
+
+  - agent: quant_modeler
+    description: >
+      Build a quantitative model for the financial scenario. Calculate expected returns,
+      risk-adjusted returns, break-even analysis, and sensitivity to key variables
+      (interest rates, inflation, market movements). Compare against relevant benchmarks.
+      Show all assumptions and calculations.
+    expected_output: >
+      A quantitative analysis with calculations, scenarios (base/bull/bear),
+      sensitivity analysis, and benchmark comparisons. All assumptions stated explicitly.
+
+  - agent: strategist
+    description: >
+      Synthesize the market analysis, risk assessment, and quantitative model into
+      a clear strategic recommendation. Structure as:
+      (1) PRIMARY RECOMMENDATION with specific actions and timeline,
+      (2) ALTERNATIVE STRATEGY if conditions change,
+      (3) KEY RISKS to monitor with trigger points,
+      (4) EXPECTED OUTCOMES with confidence levels.
+      Write in clear, direct prose for a CEO audience.
+    expected_output: >
+      A 500-1000 word strategic recommendation with primary and alternative paths,
+      specific actions, risk triggers, and expected outcomes with confidence levels.
