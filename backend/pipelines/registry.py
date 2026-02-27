@@ -1,29 +1,21 @@
 """Pipeline registry for managing available pipelines."""
 
 from backend.pipelines.base_pipeline import BasePipeline
-from backend.pipelines.lex_pipeline import create_lex_pipeline
+from backend.pipelines.lex_intelligence import create_lex_intelligence
+from backend.pipelines.calculus_intelligence import CalculusIntelligence
+from backend.pipelines.forge_intelligence import ForgeIntelligence
 
 
 _REGISTRY: dict[str, callable] = {
-    "lex-intelligence": create_lex_pipeline,
+    "lex_intelligence": create_lex_intelligence,
+    "calculus_intelligence": lambda: CalculusIntelligence(),
+    "forge_intelligence": lambda: ForgeIntelligence(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
 
 
 def get_pipeline(name: str) -> BasePipeline:
-    """
-    Get a pipeline instance by name.
-    
-    Args:
-        name: Pipeline name
-    
-    Returns:
-        Pipeline instance
-    
-    Raises:
-        KeyError: If pipeline not found
-    """
     if name not in _INSTANCES:
         if name not in _REGISTRY:
             raise KeyError(
@@ -35,12 +27,6 @@ def get_pipeline(name: str) -> BasePipeline:
 
 
 def list_pipelines() -> list[dict]:
-    """
-    List all available pipelines.
-    
-    Returns:
-        List of pipeline metadata dictionaries
-    """
     result = []
     for name in _REGISTRY:
         pipeline = get_pipeline(name)
