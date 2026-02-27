@@ -4,7 +4,6 @@ import os
 import requests
 from typing import Optional
 from crewai import Agent, Task, LLM
-from langchain_openai import ChatOpenAI
 from crewai.tools import BaseTool
 from pydantic import Field
 from backend.pipelines.crew_pipeline import CrewPipeline
@@ -76,24 +75,24 @@ def create_lex_intelligence() -> CrewPipeline:
       Agent 6 (Synthesis/Drafting)  -> GPT-4o
     """
     # --- LLM Configuration ---
+    # All LLMs use crewai.LLM (not langchain wrappers) so LiteLLM tracks tokens
     
-    # GPT-4o: primary workhorse for most agents
-    gpt_llm = ChatOpenAI(
+    # GPT-4o: primary workhorse for agents 1, 2, 3, 6
+    gpt_llm = LLM(
         model="gpt-4o",
         api_key=settings.openai_api_key or "dummy",
-        temperature=0.4
+        temperature=0.4,
     )
     
     # Grok 3 Mini Beta: cost-effective for contract analysis (Agent 4)
-    grok_llm = ChatOpenAI(
+    grok_llm = LLM(
         model="xai/grok-3-mini-beta",
         api_key=settings.xai_api_key or "dummy",
-        base_url="https://api.x.ai/v1",
+        use_native=False,
     )
     
     # Gemini 2.5 Flash: fast + cheap for litigation strategy (Agent 5)
-    # use_native=False skips CrewAI's native Gemini provider (needs google-genai pkg)
-    # Falls back to LiteLLM routing which works with existing google-generativeai
+    # use_native=False bypasses native Gemini provider (needs google-genai pkg)
     gemini_llm = LLM(
         model="gemini/gemini-2.5-flash",
         api_key=settings.google_api_key or "dummy",
