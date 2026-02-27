@@ -23,7 +23,11 @@ def get_provider(provider_name: str) -> BaseProvider:
             return GoogleProvider(api_key=settings.google_api_key)
         case "local" | "ternary" | "local-ternary":
             from backend.providers.local_ternary_provider import LocalTernaryProvider
-            model_path = os.getenv("TERNARY_MODEL_PATH", "checkpoints/risk-model-ternary")
+            # Prefer Triton checkpoint dir, fall back to generic path
+            model_path = os.getenv(
+                "TERNARY_MODEL_PATH",
+                os.getenv("TRITON_CHECKPOINT_DIR", "checkpoints/credit_risk"),
+            )
             return LocalTernaryProvider(model_path=model_path)
         case _:
             raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, local")
