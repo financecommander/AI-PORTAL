@@ -7,14 +7,17 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from pydantic import BaseModel
-from sqlmodel import Session
+from sqlmodel import Session, select
 from backend.auth.authenticator import get_current_user
 from backend.auth.jwt_handler import decode_access_token
-from backend.database import get_session
+from backend.database import get_session, engine
 from backend.models import PipelineRun
 from backend.pipelines.registry import list_pipelines, get_pipeline
 from backend.websockets.ws_manager import ws_manager
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -41,12 +44,7 @@ class PipelineExecuteResponse(BaseModel):
 async def get_pipelines_list(
     current_user: dict = Depends(get_current_user)
 ):
-    """
-    List all available pipelines.
-    
-    Returns:
-        List of pipeline metadata
-    """
+    """List all available pipelines."""
     try:
         pipelines = list_pipelines()
         return {
@@ -57,6 +55,72 @@ async def get_pipelines_list(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def _run_pipeline_background(
+    pipeline_name: str,
+    pipeline_id: str,
+    query: str,
+    user_hash: str,
+):
+    """Execute pipeline in background and stream progress via WebSocket."""
+    # Small delay to let WebSocket connect before first event
+    await asyncio.sleep(0.5)
+
+    try:
+        pipeline = get_pipeline(pipeline_name)
+    except KeyError as e:
+        await ws_manager.send_event(pipeline_id, "error", {"message": str(e)})
+        return
+
+    async def on_progress(event_type: str, data: dict):
+        """Broadcast progress updates via WebSocket."""
+        await ws_manager.send_event(pipeline_id, event_type, data)
+
+    try:
+        result = await pipeline.execute(
+            query=query,
+            user_hash=user_hash,
+            on_progress=on_progress
+        )
+
+        # Update database record
+        with Session(engine) as session:
+            statement = select(PipelineRun).where(PipelineRun.pipeline_id == pipeline_id)
+            run = session.exec(statement).first()
+            if run:
+                run.status = "completed"
+                run.output = result.output
+                run.total_tokens = result.total_tokens
+                run.total_cost = result.total_cost
+                run.duration_ms = result.duration_ms
+                run.agent_breakdown = json.dumps(result.agent_breakdown)
+                run.extra_metadata = json.dumps(result.metadata)
+                run.completed_at = datetime.now(timezone.utc)
+                session.add(run)
+                session.commit()
+
+        # Send final complete event with full data
+        await ws_manager.send_event(pipeline_id, "complete", {
+            "output": result.output,
+            "total_tokens": result.total_tokens,
+            "total_cost": result.total_cost,
+            "duration_ms": result.duration_ms,
+            "agent_breakdown": result.agent_breakdown,
+        })
+
+    except Exception as e:
+        logger.exception(f"Pipeline {pipeline_id} failed: {e}")
+        # Update database record as failed
+        with Session(engine) as session:
+            statement = select(PipelineRun).where(PipelineRun.pipeline_id == pipeline_id)
+            run = session.exec(statement).first()
+            if run:
+                run.status = "failed"
+                session.add(run)
+                session.commit()
+
+        await ws_manager.send_event(pipeline_id, "error", {"message": str(e)})
+
+
 @router.post("/pipelines/run", response_model=PipelineExecuteResponse)
 async def execute_pipeline(
     request: PipelineExecuteRequest,
@@ -64,27 +128,19 @@ async def execute_pipeline(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Execute a pipeline and return results.
-    Streams progress via WebSocket.
-    
-    Args:
-        request: Pipeline execution request
-        session: Database session
-        current_user: Authenticated user
-    
-    Returns:
-        Pipeline execution response with results
+    Start a pipeline execution.
+    Returns immediately with pipeline_id. Progress streams via WebSocket.
     """
     # Validate pipeline exists
     try:
         pipeline = get_pipeline(request.pipeline_name)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    
+
     # Generate pipeline ID
     pipeline_id = str(uuid.uuid4())
     user_hash = current_user.get("user_hash", "unknown")
-    
+
     # Create database record (status: running)
     pipeline_run = PipelineRun(
         pipeline_id=pipeline_id,
@@ -101,64 +157,22 @@ async def execute_pipeline(
     )
     session.add(pipeline_run)
     session.commit()
-    
-    # Define progress callback for WebSocket streaming
-    async def on_progress(event_type: str, data: dict):
-        """Broadcast progress updates via WebSocket."""
-        await ws_manager.send_event(pipeline_id, event_type, data)
-    
-    # Execute pipeline
-    try:
-        result = await pipeline.execute(
+
+    # Launch background execution — returns immediately
+    asyncio.create_task(
+        _run_pipeline_background(
+            pipeline_name=request.pipeline_name,
+            pipeline_id=pipeline_id,
             query=request.query,
             user_hash=user_hash,
-            on_progress=on_progress
         )
-        
-        # Update database record (status: completed)
-        pipeline_run.status = "completed"
-        pipeline_run.output = result.output
-        pipeline_run.total_tokens = result.total_tokens
-        pipeline_run.total_cost = result.total_cost
-        pipeline_run.duration_ms = result.duration_ms
-        pipeline_run.agent_breakdown = json.dumps(result.agent_breakdown)
-        pipeline_run.extra_metadata = json.dumps(result.metadata)
-        pipeline_run.completed_at = datetime.now(timezone.utc)
-        session.add(pipeline_run)
-        session.commit()
-        
-        # Return response
-        return PipelineExecuteResponse(
-            pipeline_id=pipeline_id,
-            status="completed",
-            output=result.output,
-            total_tokens=result.total_tokens,
-            total_cost=result.total_cost,
-            duration_ms=result.duration_ms,
-            agent_breakdown=result.agent_breakdown,
-            ws_url=f"/api/v2/pipelines/ws/{pipeline_id}"
-        )
-        
-    except NotImplementedError as e:
-        # Pipeline not yet implemented
-        pipeline_run.status = "failed"
-        pipeline_run.error = str(e)
-        session.add(pipeline_run)
-        session.commit()
-        
-        raise HTTPException(status_code=501, detail=str(e))
-        
-    except Exception as e:
-        # Pipeline execution failed
-        pipeline_run.status = "failed"
-        pipeline_run.error = str(e)
-        session.add(pipeline_run)
-        session.commit()
-        
-        # Notify via WebSocket
-        await ws_manager.send_event(pipeline_id, "error", {"message": str(e)})
-        
-        raise HTTPException(status_code=500, detail=f"Pipeline execution failed: {str(e)}")
+    )
+
+    return PipelineExecuteResponse(
+        pipeline_id=pipeline_id,
+        status="running",
+        ws_url=f"/api/v2/pipelines/ws/{pipeline_id}"
+    )
 
 
 @router.websocket("/pipelines/ws/{pipeline_id}")
@@ -167,37 +181,21 @@ async def pipeline_websocket(
     pipeline_id: str,
     token: Optional[str] = Query(None)
 ):
-    """
-    WebSocket endpoint for real-time pipeline progress.
-    
-    Args:
-        websocket: WebSocket connection
-        pipeline_id: Pipeline execution ID
-        token: Optional JWT token for authentication
-    """
-    # Optional authentication via query parameter
+    """WebSocket endpoint for real-time pipeline progress."""
     if token:
         payload = decode_access_token(token)
         if not payload:
             await websocket.close(code=1008, reason="Invalid authentication token")
             return
-    
-    # Connect to WebSocket manager
+
     await ws_manager.connect(pipeline_id, websocket)
-    
+
     try:
-        # Keep connection alive
         while True:
-            # Wait for client messages (ping/pong)
             data = await websocket.receive_text()
-            
-            # Echo ping/pong for keep-alive
             if data == "ping":
                 await websocket.send_text("pong")
-                
     except WebSocketDisconnect:
-        # Client disconnected
         await ws_manager.disconnect(pipeline_id, websocket)
-    except Exception as e:
-        # Unexpected error
+    except Exception:
         await ws_manager.disconnect(pipeline_id, websocket)

@@ -1,15 +1,11 @@
 """Pipeline registry for managing available pipelines."""
 
 from backend.pipelines.base_pipeline import BasePipeline
-from backend.pipelines.lex_intelligence import create_lex_intelligence
-from backend.pipelines.calculus_intelligence import CalculusIntelligence
-from backend.pipelines.forge_intelligence import ForgeIntelligence
+from backend.pipelines.lex_pipeline import create_lex_pipeline
 
 
 _REGISTRY: dict[str, callable] = {
-    "lex_intelligence": create_lex_intelligence,
-    "calculus_intelligence": lambda: CalculusIntelligence(),
-    "forge_intelligence": lambda: ForgeIntelligence(),
+    "lex-intelligence": create_lex_pipeline,
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}

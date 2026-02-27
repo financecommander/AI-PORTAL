@@ -215,4 +215,6 @@ class TestTokenEstimator:
 
     def test_estimate_pipeline_cost_unknown_model(self):
         cost = estimate_pipeline_cost("unknown-model", 1000, 1000)
-        assert cost == 0.0
+        # Unknown models now use default mid-tier pricing: $3/M input + $15/M output
+        # (1000 * 3.0 + 1000 * 15.0) / 1_000_000 = 0.018
+        assert cost == pytest.approx(0.018)

@@ -153,10 +153,56 @@ class CrewPipeline(BasePipeline):
         
         self._inject_query(query)
         
+        # Track per-agent timing
+        agent_start_times: dict[str, float] = {}
+        completed_count = 0
+        loop = asyncio.get_event_loop()
+
+        def _send_event_sync(event_type: str, data: dict):
+            """Bridge sync callback -> async WebSocket event."""
+            if on_progress:
+                try:
+                    future = asyncio.run_coroutine_threadsafe(
+                        on_progress(event_type, data), loop
+                    )
+                    future.result(timeout=5)
+                except Exception:
+                    pass
+
+        def task_callback(task_output):
+            """Called by CrewAI after each task completes."""
+            nonlocal completed_count
+            
+            # Determine which agent just completed
+            agent_name = None
+            if hasattr(task_output, 'agent') and task_output.agent:
+                agent_name = str(task_output.agent)
+            elif completed_count < len(self.agents):
+                agent_name = self.agents[completed_count].role
+            
+            if agent_name:
+                duration = (time.perf_counter() - agent_start_times.get(agent_name, start_time)) * 1000
+                raw_output = getattr(task_output, 'raw', '') or str(task_output)
+                
+                _send_event_sync("agent_complete", {
+                    "agent": agent_name,
+                    "duration_ms": round(duration, 1),
+                    "output": raw_output[:500],  # Truncate for WS
+                })
+            
+            completed_count += 1
+            
+            # Signal next agent starting
+            if completed_count < len(self.agents):
+                next_agent = self.agents[completed_count].role
+                agent_start_times[next_agent] = time.perf_counter()
+                _send_event_sync("agent_start", {"agent": next_agent})
+        
         self._crew = Crew(
             agents=self.agents,
             tasks=self.tasks,
             verbose=self.verbose,
+            task_callback=task_callback,
         )
         
         if on_progress:
@@ -168,7 +214,15 @@ class CrewPipeline(BasePipeline):
             except Exception:
                 pass
         
-        loop = asyncio.get_event_loop()
+        # Signal first agent starting
+        if self.agents and on_progress:
+            first_agent = self.agents[0].role
+            agent_start_times[first_agent] = time.perf_counter()
+            try:
+                await on_progress("agent_start", {"agent": first_agent})
+            except Exception:
+                pass
+        
         try:
             output = await loop.run_in_executor(None, self._crew.kickoff)
         except Exception as e:
@@ -192,16 +246,7 @@ class CrewPipeline(BasePipeline):
             f"{duration_ms:.0f}ms, {total_usage.get('successful_requests', 0)} API calls"
         )
         
-        if on_progress:
-            try:
-                await on_progress("complete", {
-                    "output": str(output),
-                    "total_tokens": total_tokens,
-                    "total_cost": total_cost,
-                    "duration_ms": duration_ms,
-                })
-            except Exception:
-                pass
+        # Note: 'complete' event is sent by the route handler with full agent_breakdown
         
         return PipelineResult(
             output=str(output),

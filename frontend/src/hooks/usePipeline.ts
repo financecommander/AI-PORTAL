@@ -119,6 +119,32 @@ export function usePipeline(): UsePipelineReturn {
         setTotalCost((event.data.total_cost as number) ?? null);
         setTotalTokens((event.data.total_tokens as number) ?? null);
         setDurationMs((event.data.duration_ms as number) ?? null);
+        
+        // Update all agents with breakdown data
+        const breakdown = event.data.agent_breakdown as Array<{
+          agent: string;
+          input_tokens: number;
+          output_tokens: number;
+          cost: number;
+        }> | undefined;
+        
+        if (breakdown) {
+          setAgents(prev =>
+            prev.map(a => {
+              const match = breakdown.find(b => b.agent === a.name);
+              return {
+                ...a,
+                status: 'complete' as const,
+                tokens: match ? { input: match.input_tokens, output: match.output_tokens } : a.tokens,
+                cost: match ? match.cost : a.cost,
+              };
+            })
+          );
+        } else {
+          // Mark all agents complete even without breakdown
+          setAgents(prev => prev.map(a => ({ ...a, status: 'complete' as const })));
+        }
+        
         setStatus('complete');
         statusRef.current = 'complete';
       } else if (event.type === 'error') {
@@ -138,9 +164,7 @@ export function usePipeline(): UsePipelineReturn {
     };
 
     try {
-      // The backend POST is synchronous — it runs the full pipeline and returns results.
-      // We POST first to get the pipeline_id, then open the WebSocket to receive any
-      // replayed progress events. The POST response is used as fallback for the final state.
+      // POST now returns immediately with pipeline_id (execution is async)
       const runResponse = await api.post<RunResponse>('/api/v2/pipelines/run', {
         pipeline_name: pipelineName,
         query,
@@ -148,19 +172,11 @@ export function usePipeline(): UsePipelineReturn {
 
       const pipelineId = runResponse.pipeline_id;
 
-      // Connect WebSocket for real-time progress (may get events replayed or empty if already done)
+      // Connect WebSocket immediately — backend sends events as agents execute
       const ws = api.connectPipelineWS(pipelineId, handleEvent, handleClose);
       wsRef.current = ws;
 
-      // Use POST response as fallback to ensure final state is set
-      if (!finishedRef.current) {
-        setOutput(runResponse.output ?? null);
-        setTotalCost(runResponse.total_cost ?? null);
-        setTotalTokens(runResponse.total_tokens ?? null);
-        setDurationMs(runResponse.duration_ms ?? null);
-        setStatus('complete');
-        statusRef.current = 'complete';
-      }
+      // No fallback needed — all state comes from WebSocket events
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Pipeline failed';
       setError(message);
