@@ -222,7 +222,7 @@ class LeadRankingPipeline(BasePipeline):
         return [
             {"name": "Data Validator", "goal": "Parse and validate CSV lead data", "model": "gpt-4o-mini"},
             {"name": "Lead Scorer", "goal": "Apply composite scoring (0-100) and assign Tier 1-4", "model": "deterministic"},
-            {"name": "Risk Analyzer", "goal": "Generate AI risk memos for Tier 1/2 leads", "model": "gemini-2.5-flash"},
+            {"name": "Risk Analyzer", "goal": "Generate AI risk memos for Tier 1/2 leads", "model": "local-ternary / gemini-2.5-flash"},
             {"name": "Report Generator", "goal": "Synthesize executive lead ranking report", "model": "gpt-4o"},
         ]
 
@@ -323,7 +323,7 @@ class LeadRankingPipeline(BasePipeline):
             "total_tokens": a3_tokens.get("input", 0) + a3_tokens.get("output", 0),
             "cost": a3_tokens.get("cost", 0.0),
             "calls": a3_tokens.get("calls", 0),
-            "model": "gemini-2.5-flash",
+            "model": a3_tokens.get("model", "unknown"),
         })
         total_input_tokens += a3_tokens.get("input", 0)
         total_output_tokens += a3_tokens.get("output", 0)
@@ -474,7 +474,13 @@ class LeadRankingPipeline(BasePipeline):
     async def _run_risk_analyzer(
         self, leads: list[dict],
     ) -> tuple[list[dict], str, dict]:
-        """Agent 3: Generate AI risk memos for Tier 1/2 leads via Gemini."""
+        """Agent 3: Generate AI risk memos for Tier 1/2 leads.
+
+        Provider priority:
+          1. Local ternary model (zero cost, on-device)
+          2. Google Gemini API (cloud fallback)
+          3. Skip analysis (if both unavailable)
+        """
         tokens: dict[str, Any] = {"input": 0, "output": 0, "cost": 0.0, "calls": 0}
 
         tier12 = [l for l in leads if l.get("Institutional_Rating") in ("Tier 1", "Tier 2")]
@@ -485,14 +491,24 @@ class LeadRankingPipeline(BasePipeline):
                 lead["Audit_Memo"] = "N/A - Below Tier 2"
             return leads, "No Tier 1/2 leads to analyze.", tokens
 
+        # Try local ternary model first (zero cost), fall back to Gemini
+        provider = None
+        model_name = "gemini-2.5-flash"
+
         try:
-            provider = get_provider("google")
-        except Exception as e:
-            logger.warning(f"Google provider unavailable: {e}")
-            for lead in leads:
-                lead["Risk_Flag"] = "Not Analyzed"
-                lead["Audit_Memo"] = "Google API key not configured"
-            return leads, "Risk analysis skipped (Google API unavailable).", tokens
+            provider = get_provider("local")
+            model_name = "local-ternary"
+            logger.info("Risk Analyzer: using local ternary model")
+        except Exception:
+            try:
+                provider = get_provider("google")
+                logger.info("Risk Analyzer: using Google Gemini")
+            except Exception as e:
+                logger.warning(f"No risk analysis provider available: {e}")
+                for lead in leads:
+                    lead["Risk_Flag"] = "Not Analyzed"
+                    lead["Audit_Memo"] = "No risk analysis provider configured"
+                return leads, "Risk analysis skipped (no provider available).", tokens
 
         system_prompt = (
             "You are an independent credit risk auditor. Review these borrower notes. "
@@ -517,7 +533,7 @@ class LeadRankingPipeline(BasePipeline):
             try:
                 response = await provider.send_message(
                     messages=[{"role": "user", "content": f"Borrower Notes:\n{notes}"}],
-                    model="gemini-2.5-flash",
+                    model=model_name,
                     temperature=0.2,
                     max_tokens=512,
                     system_prompt=system_prompt,
@@ -544,7 +560,8 @@ class LeadRankingPipeline(BasePipeline):
                 lead["Risk_Flag"] = "Error"
                 lead["Audit_Memo"] = f"Analysis failed: {str(e)[:100]}"
 
-        summary = f"Analyzed {analyzed_count}/{len(tier12)} Tier 1/2 leads."
+        summary = f"Analyzed {analyzed_count}/{len(tier12)} Tier 1/2 leads via {model_name}."
+        tokens["model"] = model_name
         return leads, summary, tokens
 
     async def _run_report_generator(
