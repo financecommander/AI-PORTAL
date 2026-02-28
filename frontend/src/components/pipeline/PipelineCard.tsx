@@ -11,17 +11,17 @@ export default function PipelineCard({ pipeline, onSelect, isSelected }: Pipelin
     <div
       onClick={() => onSelect(pipeline.name)}
       style={{
-        background: 'var(--navy)',
-        border: `1px solid ${isSelected ? 'var(--blue)' : 'transparent'}`,
-        boxShadow: isSelected ? '0 0 12px rgba(46, 117, 182, 0.3)' : undefined,
-        borderRadius: '12px',
+        background: 'var(--cr-charcoal-deep)',
+        border: `1px solid ${isSelected ? 'var(--cr-green-600)' : 'transparent'}`,
+        boxShadow: isSelected ? '0 0 12px rgba(34, 197, 94, 0.2)' : undefined,
+        borderRadius: 'var(--cr-radius)',
         padding: '20px',
         cursor: 'pointer',
         transition: 'border-color 200ms, box-shadow 200ms',
       }}
       onMouseEnter={e => {
         if (!isSelected) {
-          (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--blue)';
+          (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--cr-green-600)';
         }
       }}
       onMouseLeave={e => {
@@ -31,13 +31,13 @@ export default function PipelineCard({ pipeline, onSelect, isSelected }: Pipelin
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-        <Brain style={{ width: 20, height: 20, color: 'var(--blue)', flexShrink: 0 }} />
-        <span style={{ color: 'white', fontWeight: 600, fontSize: '15px' }}>{pipeline.display_name}</span>
+        <Brain style={{ width: 20, height: 20, color: 'var(--cr-green-600)', flexShrink: 0 }} />
+        <span style={{ color: 'var(--cr-text)', fontWeight: 600, fontSize: '15px' }}>{pipeline.display_name}</span>
       </div>
 
       <p
         style={{
-          color: '#8899AA',
+          color: 'var(--cr-text-muted)',
           fontSize: '13px',
           marginBottom: '12px',
           display: '-webkit-box',
@@ -54,10 +54,10 @@ export default function PipelineCard({ pipeline, onSelect, isSelected }: Pipelin
           <span
             key={agent}
             style={{
-              background: 'var(--navy-dark)',
-              color: '#8899AA',
+              background: 'var(--cr-charcoal-dark)',
+              color: 'var(--cr-text-muted)',
               fontSize: '11px',
-              borderRadius: '4px',
+              borderRadius: 'var(--cr-radius-xs)',
               padding: '2px 6px',
             }}
           >
@@ -68,7 +68,7 @@ export default function PipelineCard({ pipeline, onSelect, isSelected }: Pipelin
 
       <div
         style={{
-          color: isSelected ? 'var(--blue)' : '#556677',
+          color: isSelected ? 'var(--cr-green-600)' : 'var(--cr-text-dim)',
           fontSize: '13px',
           fontWeight: 500,
           transition: 'color 200ms',

@@ -7,6 +7,7 @@ Architecture:
   Agent 4 (Contract Specialist)       -> Grok     : Contract interpretation
   Agent 5 (Litigation Advisor)        -> Gemini   : Strategy and risk assessment
   Agent 6 (Master Synthesizer)        -> Scout    : Final opinion with all outputs + raw documents
+"""
 
 import requests
 from typing import Optional

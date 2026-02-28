@@ -18,8 +18,21 @@ from backend.pipelines.investor_reporting_pipeline import InvestorReportingPipel
 
 logger = logging.getLogger(__name__)
 
+
+def _create_lex():
+    from backend.pipelines.lex_intelligence import create_lex_intelligence
+    return create_lex_intelligence()
+
+
+def _create_calculus():
+    from backend.pipelines.calculus_intelligence import create_calculus_intelligence
+    return create_calculus_intelligence()
+
+
 # Hand-coded pipeline factories (always available)
 _REGISTRY: dict[str, callable] = {
+    "lex_intelligence": _create_lex,
+    "calculus_intelligence": _create_calculus,
     "forge_intelligence": lambda: ForgeIntelligence(),
     "lead_ranking": lambda: LeadRankingPipeline(),
     "underwriting": lambda: UnderwritingPipeline(),
@@ -112,3 +125,5 @@ def list_pipelines() -> list[dict]:
         except Exception as e:
             logger.error(f"Failed to load pipeline '{name}': {e}")
             continue
+
+    return result

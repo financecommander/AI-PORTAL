@@ -33,8 +33,8 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
   return (
     <div
       style={{
-        background: 'var(--navy)',
-        borderRadius: '12px',
+        background: 'var(--cr-charcoal-deep)',
+        borderRadius: 'var(--cr-radius)',
         padding: '16px',
       }}
     >
@@ -48,11 +48,11 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
           rows={3}
           style={{
             width: '100%',
-            background: 'var(--navy-dark)',
-            border: '1px solid #2A3A5C',
-            borderRadius: '8px',
+            background: 'var(--cr-charcoal-dark)',
+            border: '1px solid var(--cr-border)',
+            borderRadius: 'var(--cr-radius-sm)',
             padding: '12px 50px 12px 14px',
-            color: readOnly ? '#8899AA' : 'white',
+            color: readOnly ? 'var(--cr-text-muted)' : 'var(--cr-text)',
             fontSize: '14px',
             resize: 'vertical',
             outline: 'none',
@@ -69,9 +69,9 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
               position: 'absolute',
               right: '10px',
               bottom: '10px',
-              background: isRunning || !query.trim() ? '#2A3A5C' : 'var(--blue)',
+              background: isRunning || !query.trim() ? 'var(--cr-border)' : 'var(--cr-green-600)',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: 'var(--cr-radius-xs)',
               padding: '6px 8px',
               cursor: isRunning || !query.trim() ? 'not-allowed' : 'pointer',
               display: 'flex',
@@ -80,7 +80,7 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
               transition: 'background 200ms',
             }}
           >
-            <Send style={{ width: 16, height: 16, color: 'white' }} />
+            <Send style={{ width: 16, height: 16, color: 'var(--cr-text)' }} />
           </button>
         )}
       </div>
@@ -93,17 +93,17 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
                 key={prompt}
                 onClick={() => setQuery(prompt)}
                 style={{
-                  background: 'var(--navy-dark)',
-                  border: '1px solid #2A3A5C',
-                  borderRadius: '4px',
+                  background: 'var(--cr-charcoal-dark)',
+                  border: '1px solid var(--cr-border)',
+                  borderRadius: 'var(--cr-radius-xs)',
                   padding: '3px 8px',
-                  color: '#667788',
+                  color: 'var(--cr-text-dim)',
                   fontSize: '11px',
                   cursor: 'pointer',
                   transition: 'color 150ms',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#8899AA'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#667788'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-dim)'; }}
               >
                 {prompt.length > 40 ? prompt.slice(0, 40) + '…' : prompt}
               </button>
@@ -113,10 +113,10 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
         {estimatedCost != null && (
           <span
             style={{
-              background: 'var(--navy-dark)',
-              color: 'var(--orange)',
+              background: 'var(--cr-charcoal-dark)',
+              color: 'var(--cr-gold-500)',
               fontSize: '11px',
-              borderRadius: '4px',
+              borderRadius: 'var(--cr-radius-xs)',
               padding: '3px 8px',
               fontWeight: 500,
               whiteSpace: 'nowrap',
@@ -126,7 +126,7 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
           </span>
         )}
         {!readOnly && (
-          <span style={{ color: '#445566', fontSize: '11px', whiteSpace: 'nowrap' }}>⌘↵ to run</span>
+          <span style={{ color: 'var(--cr-text-dim)', fontSize: '11px', whiteSpace: 'nowrap' }}>⌘↵ to run</span>
         )}
       </div>
     </div>

@@ -38,19 +38,19 @@ export default function PipelineProgress({
       {/* Progress summary bar */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ color: '#8899AA', fontSize: '13px' }}>
+          <span style={{ color: 'var(--cr-text-muted)', fontSize: '13px' }}>
             {status === 'complete'
               ? 'All agents complete'
               : status === 'error'
               ? 'Pipeline failed'
               : `Agent ${currentIndex + 1} / ${agents.length}`}
           </span>
-          <span style={{ color: '#8899AA', fontSize: '13px' }}>{Math.round(progressPct)}%</span>
+          <span style={{ color: 'var(--cr-text-muted)', fontSize: '13px' }}>{Math.round(progressPct)}%</span>
         </div>
         <div
           style={{
             height: '3px',
-            background: 'var(--navy)',
+            background: 'var(--cr-charcoal-deep)',
             borderRadius: '2px',
             overflow: 'hidden',
           }}
@@ -58,7 +58,7 @@ export default function PipelineProgress({
           <div
             style={{
               height: '100%',
-              background: status === 'error' ? 'var(--red)' : 'var(--blue)',
+              background: status === 'error' ? 'var(--cr-danger)' : 'var(--cr-green-600)',
               width: `${progressPct}%`,
               transition: 'width 400ms ease',
               borderRadius: '2px',
@@ -89,14 +89,14 @@ export default function PipelineProgress({
         <div
           style={{
             marginTop: '16px',
-            background: 'var(--navy)',
-            borderLeft: '4px solid var(--red)',
+            background: 'var(--cr-charcoal-deep)',
+            borderLeft: '4px solid var(--cr-danger)',
             borderRadius: '8px',
             padding: '14px 16px',
           }}
         >
-          <p style={{ color: 'var(--red)', fontSize: '13px', margin: 0, fontWeight: 500 }}>Error</p>
-          <p style={{ color: '#8899AA', fontSize: '13px', margin: '4px 0 0 0' }}>{error}</p>
+          <p style={{ color: 'var(--cr-danger)', fontSize: '13px', margin: 0, fontWeight: 500 }}>Error</p>
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: '4px 0 0 0' }}>{error}</p>
         </div>
       )}
 
@@ -105,32 +105,32 @@ export default function PipelineProgress({
         <div
           style={{
             marginTop: '16px',
-            background: 'var(--navy)',
-            borderLeft: '4px solid var(--green)',
+            background: 'var(--cr-charcoal-deep)',
+            borderLeft: '4px solid var(--cr-green-600)',
             borderRadius: '8px',
             padding: '14px 16px',
           }}
         >
-          <p style={{ color: 'var(--green)', fontSize: '13px', margin: '0 0 8px 0', fontWeight: 500 }}>
+          <p style={{ color: 'var(--cr-green-600)', fontSize: '13px', margin: '0 0 8px 0', fontWeight: 500 }}>
             Pipeline Complete
           </p>
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             {totalCost != null && (
               <div>
-                <span style={{ color: '#556677', fontSize: '11px', display: 'block' }}>Total Cost</span>
-                <span style={{ color: 'white', fontSize: '15px', fontWeight: 600 }}>${totalCost.toFixed(4)}</span>
+                <span style={{ color: 'var(--cr-text-dim)', fontSize: '11px', display: 'block' }}>Total Cost</span>
+                <span style={{ color: 'var(--cr-text)', fontSize: '15px', fontWeight: 600 }}>${totalCost.toFixed(4)}</span>
               </div>
             )}
             {totalTokens != null && (
               <div>
-                <span style={{ color: '#556677', fontSize: '11px', display: 'block' }}>Total Tokens</span>
-                <span style={{ color: 'white', fontSize: '15px', fontWeight: 600 }}>{totalTokens.toLocaleString()}</span>
+                <span style={{ color: 'var(--cr-text-dim)', fontSize: '11px', display: 'block' }}>Total Tokens</span>
+                <span style={{ color: 'var(--cr-text)', fontSize: '15px', fontWeight: 600 }}>{totalTokens.toLocaleString()}</span>
               </div>
             )}
             {durationMs != null && (
               <div>
-                <span style={{ color: '#556677', fontSize: '11px', display: 'block' }}>Duration</span>
-                <span style={{ color: 'white', fontSize: '15px', fontWeight: 600 }}>
+                <span style={{ color: 'var(--cr-text-dim)', fontSize: '11px', display: 'block' }}>Duration</span>
+                <span style={{ color: 'var(--cr-text)', fontSize: '15px', fontWeight: 600 }}>
                   {(durationMs / 1000).toFixed(1)}s
                 </span>
               </div>
@@ -144,15 +144,15 @@ export default function PipelineProgress({
         <div
           style={{
             marginTop: '12px',
-            background: 'var(--navy)',
+            background: 'var(--cr-charcoal-deep)',
             borderRadius: '8px',
             padding: '16px',
           }}
         >
-          <p style={{ color: '#8899AA', fontSize: '12px', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '12px', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Final Output
           </p>
-          <p style={{ color: '#D0D8E8', fontSize: '14px', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+          <p style={{ color: 'var(--cr-text)', fontSize: '14px', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
             {output}
           </p>
         </div>

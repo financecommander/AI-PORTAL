@@ -69,9 +69,9 @@ export default function AgentTraceVisualizer({
 
   const getStatusColor = (agentStatus: string) => {
     switch (agentStatus) {
-      case 'complete': return 'var(--green)';
-      case 'error': return 'var(--red)';
-      case 'running': return 'var(--blue)';
+      case 'complete': return 'var(--cr-green-600)';
+      case 'error': return 'var(--cr-danger)';
+      case 'running': return 'var(--cr-green-600)';
       default: return '#445566';
     }
   };
@@ -92,12 +92,12 @@ export default function AgentTraceVisualizer({
           justifyContent: 'center',
           fontSize: '12px',
           fontWeight: 'bold',
-          color: agent.status === 'pending' ? '#8899AA' : '#FFFFFF',
-          backgroundColor: isComplete ? 'var(--green)' : isError ? 'var(--red)' : 'transparent',
+          color: agent.status === 'pending' ? 'var(--cr-text-muted)' : 'var(--cr-text)',
+          backgroundColor: isComplete ? 'var(--cr-green-600)' : isError ? 'var(--cr-danger)' : 'transparent',
           border: agent.status === 'pending'
             ? '2px dashed #1E2E4A'
             : isRunning
-              ? '2px solid var(--blue)'
+              ? '2px solid var(--cr-green-600)'
               : 'none',
           animation: isRunning ? 'animate-pulse-glow' : 'none',
           position: 'relative',
@@ -153,7 +153,7 @@ export default function AgentTraceVisualizer({
             }}
           />
         </div>
-        <span style={{ fontSize: '11px', color: '#8899AA' }}>{seconds}s</span>
+        <span style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>{seconds}s</span>
       </div>
     );
   };
@@ -163,7 +163,7 @@ export default function AgentTraceVisualizer({
       {/* Header bar */}
       <div
         style={{
-          backgroundColor: 'var(--navy)',
+          backgroundColor: 'var(--cr-charcoal-deep)',
           borderRadius: '10px',
           padding: '12px 16px',
           display: 'flex',
@@ -178,10 +178,10 @@ export default function AgentTraceVisualizer({
               height: '8px',
               borderRadius: '50%',
               backgroundColor: status === 'complete'
-                ? 'var(--green)'
+                ? 'var(--cr-green-600)'
                 : status === 'error'
-                  ? 'var(--red)'
-                  : 'var(--blue)',
+                  ? 'var(--cr-danger)'
+                  : 'var(--cr-green-600)',
               animation: status === 'running' ? 'animate-pulse-glow' : 'none',
             }}
           />
@@ -195,7 +195,7 @@ export default function AgentTraceVisualizer({
                   : 'Initializing...'}
           </span>
         </div>
-        <span style={{ color: '#8899AA', fontSize: '13px' }}>
+        <span style={{ color: 'var(--cr-text-muted)', fontSize: '13px' }}>
           {completedCount} / {agents.length} agents
         </span>
       </div>
@@ -213,7 +213,7 @@ export default function AgentTraceVisualizer({
           style={{
             height: '100%',
             width: `${agents.length > 0 ? (completedCount / agents.length) * 100 : 0}%`,
-            background: 'linear-gradient(90deg, var(--blue), var(--blue-light))',
+            background: 'linear-gradient(90deg, var(--cr-green-600), var(--cr-green-400))',
             transition: 'width 0.5s ease',
           }}
         />
@@ -229,9 +229,9 @@ export default function AgentTraceVisualizer({
                 alignItems: 'flex-start',
                 gap: '12px',
                 padding: '12px',
-                backgroundColor: 'var(--navy)',
+                backgroundColor: 'var(--cr-charcoal-deep)',
                 borderRadius: '8px',
-                border: agent.status === 'running' ? '1px solid var(--blue)' : '1px solid transparent',
+                border: agent.status === 'running' ? '1px solid var(--cr-green-600)' : '1px solid transparent',
               }}
             >
               {getStatusNode(agent, index)}
@@ -249,10 +249,10 @@ export default function AgentTraceVisualizer({
                     style={{
                       fontSize: '12px',
                       color: agent.status === 'error'
-                        ? 'var(--red)'
+                        ? 'var(--cr-danger)'
                         : agent.status === 'running'
-                          ? 'var(--blue-light)'
-                          : '#8899AA',
+                          ? 'var(--cr-green-400)'
+                          : 'var(--cr-text-muted)',
                     }}
                   >
                     {agent.status === 'pending' && 'Waiting'}
@@ -264,13 +264,13 @@ export default function AgentTraceVisualizer({
                   {agent.status === 'complete' && agent.durationMs && getDurationBar(agent.durationMs)}
 
                   {agent.status === 'complete' && agent.tokens && (
-                    <span style={{ fontSize: '11px', color: '#8899AA' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>
                       {(agent.tokens.input + agent.tokens.output).toLocaleString()} tok
                     </span>
                   )}
 
                   {agent.status === 'complete' && agent.cost !== undefined && (
-                    <span style={{ fontSize: '11px', color: '#8899AA' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>
                       ${agent.cost.toFixed(4)}
                     </span>
                   )}
@@ -281,7 +281,7 @@ export default function AgentTraceVisualizer({
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#8899AA',
+                        color: 'var(--cr-text-muted)',
                         cursor: 'pointer',
                         padding: '2px',
                         display: 'flex',
@@ -298,9 +298,9 @@ export default function AgentTraceVisualizer({
                     style={{
                       marginTop: '8px',
                       padding: '8px',
-                      backgroundColor: 'var(--navy-dark)',
+                      backgroundColor: 'var(--cr-charcoal-dark)',
                       borderRadius: '6px',
-                      borderLeft: '3px solid var(--blue)',
+                      borderLeft: '3px solid var(--cr-green-600)',
                       maxHeight: '250px',
                       overflowY: 'auto',
                     }}
@@ -333,10 +333,10 @@ export default function AgentTraceVisualizer({
             padding: '12px',
             backgroundColor: 'rgba(192, 57, 43, 0.1)',
             borderRadius: '8px',
-            borderLeft: '4px solid var(--red)',
+            borderLeft: '4px solid var(--cr-danger)',
           }}
         >
-          <div style={{ color: 'var(--red)', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+          <div style={{ color: 'var(--cr-danger)', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
             Error
           </div>
           <div style={{ color: '#E0E8F0', fontSize: '13px' }}>{error}</div>
@@ -359,7 +359,7 @@ export default function AgentTraceVisualizer({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '8px',
-                backgroundColor: 'var(--navy)',
+                backgroundColor: 'var(--cr-charcoal-deep)',
                 borderRadius: '8px',
               }}
             >
@@ -374,10 +374,10 @@ export default function AgentTraceVisualizer({
                   justifyContent: 'center',
                 }}
               >
-                <DollarSign size={16} color="var(--green)" />
+                <DollarSign size={16} color="var(--cr-green-600)" />
               </div>
               <div>
-                <div style={{ fontSize: '11px', color: '#8899AA' }}>Total Cost</div>
+                <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Total Cost</div>
                 <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
                   ${totalCost.toFixed(4)}
                 </div>
@@ -392,7 +392,7 @@ export default function AgentTraceVisualizer({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '8px',
-                backgroundColor: 'var(--navy)',
+                backgroundColor: 'var(--cr-charcoal-deep)',
                 borderRadius: '8px',
               }}
             >
@@ -407,10 +407,10 @@ export default function AgentTraceVisualizer({
                   justifyContent: 'center',
                 }}
               >
-                <Hash size={16} color="var(--blue)" />
+                <Hash size={16} color="var(--cr-green-600)" />
               </div>
               <div>
-                <div style={{ fontSize: '11px', color: '#8899AA' }}>Total Tokens</div>
+                <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Total Tokens</div>
                 <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
                   {totalTokens.toLocaleString()}
                 </div>
@@ -425,7 +425,7 @@ export default function AgentTraceVisualizer({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '8px',
-                backgroundColor: 'var(--navy)',
+                backgroundColor: 'var(--cr-charcoal-deep)',
                 borderRadius: '8px',
               }}
             >
@@ -443,7 +443,7 @@ export default function AgentTraceVisualizer({
                 <Clock size={16} color="var(--orange)" />
               </div>
               <div>
-                <div style={{ fontSize: '11px', color: '#8899AA' }}>Duration</div>
+                <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Duration</div>
                 <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
                   {(durationMs / 1000).toFixed(1)}s
                 </div>
@@ -457,7 +457,7 @@ export default function AgentTraceVisualizer({
               alignItems: 'center',
               gap: '8px',
               padding: '8px',
-              backgroundColor: 'var(--navy)',
+              backgroundColor: 'var(--cr-charcoal-deep)',
               borderRadius: '8px',
             }}
           >
@@ -472,10 +472,10 @@ export default function AgentTraceVisualizer({
                 justifyContent: 'center',
               }}
             >
-              <Zap size={16} color="var(--blue)" />
+              <Zap size={16} color="var(--cr-green-600)" />
             </div>
             <div>
-              <div style={{ fontSize: '11px', color: '#8899AA' }}>Agents</div>
+              <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Agents</div>
               <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
                 {completedCount} / {agents.length}
               </div>
@@ -488,7 +488,7 @@ export default function AgentTraceVisualizer({
       {status === 'complete' && output && (
         <div
           style={{
-            backgroundColor: 'var(--navy)',
+            backgroundColor: 'var(--cr-charcoal-deep)',
             borderRadius: '8px',
             overflow: 'hidden',
           }}

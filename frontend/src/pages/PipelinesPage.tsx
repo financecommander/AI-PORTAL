@@ -74,10 +74,10 @@ export default function PipelinesPage() {
               alignItems: 'center',
               gap: '6px',
               background: 'none',
-              border: '1px solid #2A3A5C',
-              borderRadius: '6px',
+              border: '1px solid var(--cr-border)',
+              borderRadius: 'var(--cr-radius-xs)',
               padding: '6px 12px',
-              color: '#8899AA',
+              color: 'var(--cr-text-muted)',
               fontSize: '13px',
               cursor: 'pointer',
               transition: 'color 150ms',
@@ -87,7 +87,7 @@ export default function PipelinesPage() {
             Back
           </button>
         )}
-        <h1 style={{ color: 'white', fontSize: '22px', fontWeight: 700, margin: 0 }}>
+        <h1 style={{ color: 'var(--cr-text)', fontSize: '22px', fontWeight: 700, margin: 0 }}>
           {isRunning && selectedPipeline
             ? selectedPipeline.display_name
             : 'Intelligence Pipelines'}
@@ -120,7 +120,7 @@ export default function PipelinesPage() {
               />
             ))}
             {pipelines.length === 0 && (
-              <p style={{ color: '#667788' }}>Loading pipelines...</p>
+              <p style={{ color: 'var(--cr-text-dim)' }}>Loading pipelines...</p>
             )}
           </div>
 

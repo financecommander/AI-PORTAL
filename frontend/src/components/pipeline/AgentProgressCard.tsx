@@ -41,14 +41,14 @@ export default function AgentProgressCard({
 
     if (status === 'complete') {
       return (
-        <div style={{ ...base, background: 'var(--green)', color: 'white' }}>
+        <div style={{ ...base, background: 'var(--cr-green-600)', color: 'var(--cr-text)' }}>
           <Check style={{ width: 16, height: 16 }} />
         </div>
       );
     }
     if (status === 'error') {
       return (
-        <div style={{ ...base, background: 'var(--red)', color: 'white' }}>
+        <div style={{ ...base, background: 'var(--cr-danger)', color: 'var(--cr-text)' }}>
           <X style={{ width: 16, height: 16 }} />
         </div>
       );
@@ -57,7 +57,7 @@ export default function AgentProgressCard({
       return (
         <div
           className="animate-pulse-glow"
-          style={{ ...base, border: '2px solid var(--blue)', color: 'white' }}
+          style={{ ...base, border: '2px solid var(--cr-green-600)', color: 'var(--cr-text)' }}
         >
           {index + 1}
         </div>
@@ -65,20 +65,20 @@ export default function AgentProgressCard({
     }
     // pending
     return (
-      <div style={{ ...base, border: '2px dashed #2A3A5C', color: '#556677' }}>
+      <div style={{ ...base, border: '2px dashed var(--cr-border)', color: 'var(--cr-text-dim)' }}>
         {index + 1}
       </div>
     );
   };
 
   const statusText = () => {
-    if (status === 'pending') return <span style={{ color: '#556677', fontSize: '12px' }}>Waiting...</span>;
+    if (status === 'pending') return <span style={{ color: 'var(--cr-text-dim)', fontSize: '12px' }}>Waiting...</span>;
     if (status === 'running') return <AnimatedDots />;
-    if (status === 'error') return <span style={{ color: 'var(--red)', fontSize: '12px' }}>Failed</span>;
+    if (status === 'error') return <span style={{ color: 'var(--cr-danger)', fontSize: '12px' }}>Failed</span>;
     if (status === 'complete' && tokens && cost != null && durationMs != null) {
       const totalTokens = tokens.input + tokens.output;
       return (
-        <span style={{ color: '#667788', fontSize: '12px' }}>
+        <span style={{ color: 'var(--cr-text-dim)', fontSize: '12px' }}>
           {totalTokens.toLocaleString()} tokens · ${cost.toFixed(4)} · {(durationMs / 1000).toFixed(1)}s
         </span>
       );
@@ -93,7 +93,7 @@ export default function AgentProgressCard({
           display: 'flex',
           alignItems: 'center',
           gap: '14px',
-          background: 'var(--navy)',
+          background: 'var(--cr-charcoal-deep)',
           borderRadius: '8px',
           padding: '16px',
         }}
@@ -103,7 +103,7 @@ export default function AgentProgressCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              color: status === 'pending' ? '#667788' : 'white',
+              color: status === 'pending' ? 'var(--cr-text-dim)' : 'var(--cr-text)',
               fontWeight: 500,
               fontSize: '14px',
               marginBottom: '2px',
@@ -122,7 +122,7 @@ export default function AgentProgressCard({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#667788',
+              color: 'var(--cr-text-dim)',
               padding: '4px',
               display: 'flex',
               alignItems: 'center',
@@ -136,7 +136,7 @@ export default function AgentProgressCard({
       {expanded && output && (
         <div
           style={{
-            background: 'var(--navy-dark)',
+            background: 'var(--cr-charcoal-dark)',
             borderRadius: '0 0 8px 8px',
             padding: '12px 16px',
             maxHeight: '200px',
@@ -144,7 +144,7 @@ export default function AgentProgressCard({
             marginTop: '-4px',
           }}
         >
-          <p style={{ color: '#8899AA', fontSize: '13px', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
             {output}
           </p>
         </div>
@@ -155,7 +155,7 @@ export default function AgentProgressCard({
           style={{
             width: '2px',
             height: '16px',
-            background: status === 'running' ? 'var(--blue)' : '#2A3A5C',
+            background: status === 'running' ? 'var(--cr-green-600)' : 'var(--cr-border)',
             margin: '0 auto',
             transition: 'background 300ms',
           }}
@@ -167,7 +167,7 @@ export default function AgentProgressCard({
 
 function AnimatedDots() {
   return (
-    <span style={{ color: 'var(--blue-light)', fontSize: '12px' }}>
+    <span style={{ color: 'var(--cr-green-400)', fontSize: '12px' }}>
       Analyzing<DotAnimation />
     </span>
   );
