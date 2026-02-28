@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     xai_api_key: str = Field(default="", env="XAI_API_KEY")
     deepseek_api_key: str = Field(default="", env="DEEPSEEK_API_KEY")
     mistral_api_key: str = Field(default="", env="MISTRAL_API_KEY")
+    groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     courtlistener_api_key: str = Field(default="", env="COURTLISTENER_API_KEY")
     
     # CORS Configuration

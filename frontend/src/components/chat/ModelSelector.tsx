@@ -10,6 +10,7 @@ const PROVIDER_COLORS: Record<string, string> = {
   grok: '#EF4444',
   deepseek: '#6366F1',
   mistral: '#F97316',
+  groq: '#F97316',  // orange (Groq brand)
 };
 
 // Tier config

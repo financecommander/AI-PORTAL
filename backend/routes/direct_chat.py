@@ -269,6 +269,28 @@ PROVIDERS_CATALOG = [
             },
         ],
     },
+    {
+        "id": "groq",
+        "name": "Groq (Llama)",
+        "models": [
+            {
+                "id": "meta-llama/llama-4-maverick-17b-128e-instruct",
+                "name": "Llama 4 Maverick",
+                "tier": "top",
+                "context": "128K",
+                "description": "Meta's flagship MoE model via Groq — 562 tok/s, multimodal",
+                "pricing": {"input": 0.20, "output": 0.60}
+            },
+            {
+                "id": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "name": "Llama 4 Scout",
+                "tier": "mid",
+                "context": "128K",
+                "description": "Fast general-purpose MoE via Groq — 594 tok/s, reasoning & code",
+                "pricing": {"input": 0.11, "output": 0.34}
+            },
+        ]
+    },
 ]
 
 # Build a lookup set for validation

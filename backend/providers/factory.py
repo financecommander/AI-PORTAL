@@ -27,6 +27,11 @@ def get_provider(provider_name: str) -> BaseProvider:
                 api_key=settings.mistral_api_key,
                 base_url="https://api.mistral.ai/v1", name="mistral",
             )
+        case "groq" | "llama":
+            return OpenAIProvider(
+                api_key=settings.groq_api_key,
+                base_url="https://api.groq.com/openai/v1", name="groq",
+            )
         case "anthropic":
             return AnthropicProvider(api_key=settings.anthropic_api_key)
         case "google" | "gemini":
@@ -40,4 +45,4 @@ def get_provider(provider_name: str) -> BaseProvider:
             )
             return LocalTernaryProvider(model_path=model_path)
         case _:
-            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, deepseek, mistral, local")
+            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, groq, deepseek, mistral, local")
