@@ -8,7 +8,6 @@ Architecture:
   Agent 5 (Litigation Advisor)        -> Gemini   : Strategy and risk assessment
   Agent 6 (Master Synthesizer)        -> Scout    : Final opinion with all outputs + raw documents
 
-import os
 import requests
 from typing import Optional
 from crewai import Agent, Task, LLM
@@ -82,39 +81,12 @@ def create_lex_intelligence() -> CrewPipeline:
       Agent 5 (Litigation Strategy) -> Gemini 2.5 Flash via LiteLLM (use_native=False)
       Agent 6 (Synthesis/Drafting)  -> GPT-4o
     """
-    # --- LLM Configuration ---
-    # All LLMs use crewai.LLM (not langchain wrappers) so LiteLLM tracks tokens
-    
-    # GPT-4o: primary workhorse for agents 1, 2, 3, 6
-    gpt_llm = LLM(
-        model="gpt-4o",
-        api_key=settings.openai_api_key or "dummy",
-        temperature=0.4,
-    )
-    
-    # Grok 3 Mini Beta: cost-effective for contract analysis (Agent 4)
-    grok_llm = LLM(
-        model="xai/grok-3-mini-beta",
-        api_key=settings.xai_api_key or "dummy",
-        use_native=False,
-    )
-    
-    # Gemini 2.5 Flash: fast + cheap for litigation strategy (Agent 5)
-    # use_native=False bypasses native Gemini provider (needs google-genai pkg)
-    gemini_llm = LLM(
-        model="gemini/gemini-2.5-flash",
-        api_key=settings.google_api_key or "dummy",
-        temperature=0.3,
-        use_native=False,
-    )
-    
-    # Llama Scout: Master Synthesizer for final opinion (hosted on Google VM)
-    scout_llm = LLM(
-        model="openai/llama-4-scout",
-        api_key="dummy",
-        base_url=os.getenv("LLAMA_VM_URL", "http://localhost:8000/v1"),
-        temperature=0.1,
-    )
+    # --- LLM Configuration (v2.2) — 5-provider diversity ---
+    gpt_llm = LLM(model="gpt-5.2", api_key=settings.openai_api_key or "dummy", temperature=0.4)
+    deepseek_llm = LLM(model="deepseek/deepseek-reasoner", api_key=settings.deepseek_api_key or "dummy", temperature=0.3, use_native=False)
+    grok_llm = LLM(model="xai/grok-4-1-fast", api_key=settings.xai_api_key or "dummy", use_native=False)
+    gemini_llm = LLM(model="gemini/gemini-3-flash-preview", api_key=settings.google_api_key or "dummy", temperature=0.3, use_native=False)
+    claude_llm = LLM(model="anthropic/claude-sonnet-4-5-20250929", api_key=settings.anthropic_api_key or "dummy", temperature=0.2, use_native=False)
     
     # Initialize legal search tool
     legal_search = LegalSearchTool(api_key=settings.courtlistener_api_key)
@@ -137,7 +109,7 @@ def create_lex_intelligence() -> CrewPipeline:
         allow_delegation=False
     )
     
-    # Agent 2: Statutory Analyst (GPT-4o)
+    # Agent 2: Statutory Analyst (DeepSeek R1)
     statutory_analyst = Agent(
         role="Statutory Analyst",
         goal="Analyze statutes, regulations, and legislative intent",
@@ -147,12 +119,12 @@ def create_lex_intelligence() -> CrewPipeline:
             "You always reference specific statute sections and regulatory citations. "
             "You never invent statutory provisions or regulatory text."
         ),
-        llm=gpt_llm,
+        llm=deepseek_llm,
         verbose=True,
         allow_delegation=False
     )
     
-    # Agent 3: Constitutional Law Expert (GPT-4o)
+    # Agent 3: Constitutional Law Expert (DeepSeek R1)
     constitutional_expert = Agent(
         role="Constitutional Law Expert",
         goal="Evaluate constitutional implications and civil rights issues",
@@ -162,7 +134,7 @@ def create_lex_intelligence() -> CrewPipeline:
             "You always ground your analysis in specific constitutional provisions and landmark cases. "
             "You never fabricate Supreme Court opinions or constitutional interpretations."
         ),
-        llm=gpt_llm,
+        llm=deepseek_llm,
         verbose=True,
         allow_delegation=False
     )
@@ -197,18 +169,18 @@ def create_lex_intelligence() -> CrewPipeline:
         allow_delegation=False
     )
     
-    # Agent 6: Legal Synthesis & Opinion Drafter (Scout)
+    # Agent 6: Legal Synthesis & Opinion Drafter (Claude)
     synthesis_drafter = Agent(
         role="Master Synthesizer - Legal Opinion Drafter",
         goal="Synthesize all research and source documents into comprehensive legal opinions",
         backstory=(
-            "You are Scout, the Master Synthesizer with access to all outputs from smaller models and raw source documents. "
+            "You are the Master Synthesizer with access to all outputs from the specialist agents and raw source documents. "
             "You process vast amounts of information to produce higher-quality long-form legal opinions. "
             "You integrate research from all prior agents with full document context, ensuring nothing is missed. "
             "You write in formal legal style with proper citations and logical organization. "
-            "You leverage your massive context window to maintain coherence across all sources."
+            "You leverage your large context window to maintain coherence across all sources."
         ),
-        llm=scout_llm,
+        llm=claude_llm,
         verbose=True,
         allow_delegation=False
     )

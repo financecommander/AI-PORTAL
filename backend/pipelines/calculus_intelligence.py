@@ -16,7 +16,6 @@ genuinely different reasoning paths. When they converge, confidence is high.
 When they diverge, the validator catches it. A single model family can't do this.
 """
 
-import os
 from crewai import Agent, Task, LLM
 from backend.pipelines.crew_pipeline import CrewPipeline
 from backend.config.settings import settings
@@ -25,42 +24,17 @@ from backend.config.settings import settings
 def create_calculus_intelligence() -> CrewPipeline:
     """Create Calculus Intelligence deep reasoning pipeline."""
 
-    # --- LLM Configuration ---
-    # All use crewai.LLM for LiteLLM token tracking (not langchain wrappers)
-
-    # GPT-4o: orchestration, validation, synthesis (agents 1, 2, 5, 6)
-    gpt_llm = LLM(
-        model="gpt-4o",
-        api_key=settings.openai_api_key or "dummy",
-        temperature=0.3,
-    )
-
-    # Grok: creative/lateral reasoning (agent 3)
-    grok_llm = LLM(
-        model="xai/grok-3-mini-beta",
-        api_key=settings.xai_api_key or "dummy",
-        use_native=False,
-    )
-
-    # Gemini 2.5 Flash: deep context analysis (agent 4)
-    gemini_llm = LLM(
-        model="gemini/gemini-2.5-flash",
-        api_key=settings.google_api_key or "dummy",
-        temperature=0.3,
-        use_native=False,
-    )
-    
-    # Llama Scout: Master Synthesizer (hosted on Google VM)
-    scout_llm = LLM(
-        model="openai/llama-4-scout",
-        api_key="dummy",
-        base_url=os.getenv("LLAMA_VM_URL", "http://localhost:8000/v1"),
-        temperature=0.1,
-    )
+    # --- LLM Configuration (v2.2) — 6-provider diversity ---
+    groq_llm = LLM(model="groq/meta-llama/llama-4-scout-17b-16e-instruct", api_key=settings.groq_api_key or "dummy", temperature=0.3, use_native=False)
+    gpt_llm = LLM(model="gpt-5.2", api_key=settings.openai_api_key or "dummy", temperature=0.3)
+    grok_llm = LLM(model="xai/grok-4-1-fast", api_key=settings.xai_api_key or "dummy", use_native=False)
+    gemini_llm = LLM(model="gemini/gemini-3-flash-preview", api_key=settings.google_api_key or "dummy", temperature=0.3, use_native=False)
+    deepseek_llm = LLM(model="deepseek/deepseek-reasoner", api_key=settings.deepseek_api_key or "dummy", temperature=0.2, use_native=False)
+    claude_llm = LLM(model="anthropic/claude-sonnet-4-5-20250929", api_key=settings.anthropic_api_key or "dummy", temperature=0.2, use_native=False)
 
     # --- Agent Definitions ---
 
-    # Agent 1: Query Decomposer (GPT-4o)
+    # Agent 1: Query Decomposer (Groq/Llama 4 Scout)
     decomposer = Agent(
         role="Query Decomposer & Router",
         goal="Classify query complexity and break it into clear reasoning subtasks",
@@ -72,7 +46,7 @@ def create_calculus_intelligence() -> CrewPipeline:
             "You rate overall complexity on a 1-10 scale and identify which reasoning approaches will work best. "
             "You always structure your output clearly so downstream reasoners know exactly what to tackle."
         ),
-        llm=gpt_llm,
+        llm=groq_llm,
         verbose=True,
         allow_delegation=False,
     )
@@ -131,7 +105,7 @@ def create_calculus_intelligence() -> CrewPipeline:
         allow_delegation=False,
     )
 
-    # Agent 5: Adversarial Validator (GPT-4o)
+    # Agent 5: Adversarial Validator (DeepSeek R1)
     validator = Agent(
         role="Adversarial Validator",
         goal="Stress-test all reasoning for logical errors, unsupported claims, contradictions, and blind spots",
@@ -146,17 +120,17 @@ def create_calculus_intelligence() -> CrewPipeline:
             "Your output must include: CONFIRMED claims (with confidence), DISPUTED claims (with specific issues), "
             "and MISSING considerations that no agent addressed."
         ),
-        llm=gpt_llm,
+        llm=deepseek_llm,
         verbose=True,
         allow_delegation=False,
     )
 
-    # Agent 6: Master Synthesizer (Scout)
+    # Agent 6: Master Synthesizer (Claude)
     synthesizer = Agent(
-        role="Master Synthesizer - Scout",
-        goal="Produce the single authoritative final answer with confidence scores and reasoning transparency, fed all outputs from smaller models",
+        role="Master Synthesizer",
+        goal="Produce the single authoritative final answer with confidence scores and reasoning transparency, fed all outputs from specialist models",
         backstory=(
-            "You are Scout, the Master Synthesizer with access to all outputs from the smaller models and raw source documents. "
+            "You are the Master Synthesizer with access to all outputs from the specialist models and raw source documents. "
             "You process vast amounts of information from the decomposer, analytical reasoner, creative reasoner, context analyst, and validator. "
             "You produce higher-quality long-form opinions by maintaining full context across all inputs. "
             "Your output must be: "
@@ -165,11 +139,11 @@ def create_calculus_intelligence() -> CrewPipeline:
             "3) TRANSPARENT — note where the reasoning agents agreed vs disagreed and how you resolved it. "
             "4) COMPLETE — address all subtasks from the decomposition. "
             "5) ACTIONABLE — if the query implies a decision, state what you'd recommend and why. "
-            "You leverage your massive context window to ensure nothing is missed from the source materials. "
+            "You leverage your large context window to ensure nothing is missed from the source materials. "
             "You write in clear, direct prose — not academic jargon. "
             "Format with clear sections but prioritize substance over formatting."
         ),
-        llm=scout_llm,
+        llm=claude_llm,
         verbose=True,
         allow_delegation=False,
     )

@@ -12,7 +12,7 @@ agents:
       commodities, and crypto markets. You analyze macro trends, sector dynamics, and market
       sentiment to provide context for financial decisions. You always cite specific data points,
       dates, and sources. You never fabricate market data or statistics.
-    model: gpt-4o
+    model: gpt-5.2
     temperature: 0.3
 
   risk_assessor:
@@ -23,7 +23,7 @@ agents:
       You systematically evaluate downside scenarios, regulatory exposure, counterparty risk,
       and operational vulnerabilities. You assign risk levels (LOW/MEDIUM/HIGH/CRITICAL) to
       each identified risk with specific mitigation strategies.
-    model: xai/grok-3-mini-beta
+    model: xai/grok-4-1-fast
     temperature: 0.3
 
   quant_modeler:
@@ -34,7 +34,7 @@ agents:
       You calculate IRR, NPV, real returns, break-even points, and sensitivity analyses.
       You always show your work and state assumptions explicitly. You present numbers
       clearly and flag where estimates have wide confidence intervals.
-    model: gemini/gemini-2.5-flash
+    model: deepseek/deepseek-reasoner
     temperature: 0.2
 
   strategist:
@@ -46,7 +46,7 @@ agents:
       to produce specific recommendations ranked by risk-adjusted expected value.
       You always present a primary recommendation, an alternative, and conditions
       that would change your advice.
-    model: gpt-4o
+    model: anthropic/claude-sonnet-4-5-20250929
     temperature: 0.4
 
 tasks:
