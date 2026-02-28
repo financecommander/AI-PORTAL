@@ -27,13 +27,11 @@ export default function LLMChatPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollPill, setShowScrollPill] = useState(false);
 
-  // Fetch model catalog on mount
   useEffect(() => {
     api
       .request<{ providers: LLMProvider[] }>('/chat/direct/models')
       .then((data) => {
         setProviders(data.providers);
-        // Default to first provider's top model
         if (data.providers.length > 0) {
           const first = data.providers[0];
           setSelectedProvider(first.id);
@@ -45,7 +43,6 @@ export default function LLMChatPage() {
       .finally(() => setLoadingModels(false));
   }, []);
 
-  // Scroll logic (same pattern as ChatPage)
   const isAtBottom = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return true;
@@ -75,11 +72,6 @@ export default function LLMChatPage() {
     setSelectedModel(model);
   };
 
-  const handleNewChat = () => {
-    clearChat();
-  };
-
-  // Find selected model display name
   let selectedModelName = '';
   for (const prov of providers) {
     for (const m of prov.models) {
@@ -93,137 +85,58 @@ export default function LLMChatPage() {
 
   if (loadingModels) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ color: 'var(--cr-text-dim)', fontSize: 14 }}>Loading models...</div>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cr-surface)' }}>
+        <div style={{ color: 'var(--cr-text-muted)', fontSize: 14 }}>Loading models...</div>
       </div>
     );
   }
 
-  // ── Empty State: Perplexity-style welcome ─────────────────────
   if (!hasMessages) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          gap: '24px',
-          overflow: 'auto',
-        }}
-      >
-        {/* Branding */}
-        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              marginBottom: '8px',
-            }}
-          >
-            <Sparkles style={{ width: 28, height: 28, color: 'var(--cr-green-400)' }} />
-            <span
-              style={{
-                fontSize: '22px',
-                fontWeight: 700,
-                color: 'var(--cr-green-400)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              CALCULUS LABS
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto', background: 'var(--cr-surface)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
+            <Sparkles style={{ width: 24, height: 24, color: 'var(--cr-green-600)' }} />
+            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--cr-text)', letterSpacing: '-0.02em', fontFamily: "'Space Grotesk', sans-serif" }}>
+              Calculus Research
             </span>
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--cr-text-dim)' }}>Direct LLM Access</div>
+          <div style={{ fontSize: 13, color: 'var(--cr-text-muted)' }}>Direct LLM Access</div>
         </div>
 
-        {/* Heading */}
-        <h1
-          style={{
-            fontSize: '26px',
-            fontWeight: 600,
-            color: 'var(--cr-text)',
-            textAlign: 'center',
-            margin: 0,
-          }}
-        >
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--cr-text)', textAlign: 'center', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
           What do you want to know?
         </h1>
 
-        {/* Input */}
-        <div style={{ width: '100%', maxWidth: '700px' }}>
-          <ChatInput
-            onSend={sendMessage}
-            onStop={stopStreaming}
-            isStreaming={isStreaming}
-            disabled={!selectedModel}
-            specialistName={selectedModelName || undefined}
-          />
+        <div style={{ width: '100%', maxWidth: 700 }}>
+          <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={!selectedModel} specialistName={selectedModelName || undefined} />
         </div>
 
-        {/* Model selector grid */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <ModelSelector
-            providers={providers}
-            selectedProvider={selectedProvider}
-            selectedModel={selectedModel}
-            onSelect={handleModelSelect}
-            mode="grid"
-          />
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="grid" />
         </div>
 
-        {/* Suggestion pills */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            justifyContent: 'center',
-            maxWidth: '700px',
-          }}
-        >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
           {SUGGESTION_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               onClick={() => sendMessage(prompt)}
               style={{
-                background: 'var(--cr-charcoal)',
+                background: 'var(--cr-white)',
                 border: '1px solid var(--cr-border)',
-                borderRadius: '20px',
-                color: 'var(--cr-text-muted)',
-                fontSize: '12px',
-                padding: '6px 14px',
+                borderRadius: 20,
+                color: 'var(--cr-text-secondary)',
+                fontSize: 12,
+                padding: '8px 16px',
                 cursor: 'pointer',
-                transition: 'background 200ms, color 200ms',
-                maxWidth: '340px',
+                transition: 'all 150ms',
+                maxWidth: 340,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-mist)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; e.currentTarget.style.color = 'var(--cr-text)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; e.currentTarget.style.color = 'var(--cr-text-secondary)'; }}
             >
               {prompt}
             </button>
@@ -231,18 +144,7 @@ export default function LLMChatPage() {
         </div>
 
         {error && (
-          <div
-            style={{
-              padding: '8px 14px',
-              background: 'rgba(214, 69, 69, 0.08)',
-              border: '1px solid var(--cr-danger)',
-              borderRadius: 8,
-              color: 'var(--cr-danger)',
-              fontSize: 13,
-              maxWidth: '700px',
-              width: '100%',
-            }}
-          >
+          <div style={{ padding: '8px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
             {error}
           </div>
         )}
@@ -250,51 +152,17 @@ export default function LLMChatPage() {
     );
   }
 
-  // ── Active Conversation ───────────────────────────────────────
   return (
-    <div className="flex flex-col" style={{ height: '100vh' }}>
-      {/* Header bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '10px 20px',
-          borderBottom: '1px solid var(--cr-border)',
-          flexShrink: 0,
-          background: 'var(--cr-charcoal-deep)',
-        }}
-      >
-        <ModelSelector
-          providers={providers}
-          selectedProvider={selectedProvider}
-          selectedModel={selectedModel}
-          onSelect={handleModelSelect}
-          mode="compact"
-        />
+    <div className="flex flex-col" style={{ height: '100vh', background: 'var(--cr-surface)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-white)' }}>
+        <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />
         <button
-          onClick={handleNewChat}
+          onClick={() => clearChat()}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '7px 14px',
-            borderRadius: '8px',
-            border: '1px solid var(--cr-border)',
-            background: 'transparent',
-            color: 'var(--cr-text-muted)',
-            fontSize: '13px',
-            cursor: 'pointer',
-            transition: 'all 150ms',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
+            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+            borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)',
+            background: 'var(--cr-white)', color: 'var(--cr-text-secondary)', fontSize: 13, cursor: 'pointer',
           }}
         >
           <Plus style={{ width: 14, height: 14 }} />
@@ -302,79 +170,29 @@ export default function LLMChatPage() {
         </button>
       </div>
 
-      {/* Messages */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
-        style={{ padding: '16px 16px' }}
-      >
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto" style={{ padding: 16 }}>
         {messages.map((msg, idx) => (
-          <MessageBubble
-            key={idx}
-            message={msg}
-            isStreaming={
-              isStreaming && idx === messages.length - 1 && msg.role === 'assistant'
-            }
-          />
+          <MessageBubble key={idx} message={msg} isStreaming={isStreaming && idx === messages.length - 1 && msg.role === 'assistant'} />
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Scroll pill */}
       {showScrollPill && (
         <div style={{ position: 'relative' }}>
-          <button
-            onClick={scrollToBottom}
-            style={{
-              position: 'absolute',
-              bottom: 8,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--cr-green-900)',
-              border: 'none',
-              borderRadius: 20,
-              color: 'var(--cr-text)',
-              fontSize: 12,
-              padding: '5px 14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              zIndex: 10,
-            }}
-          >
-            <ChevronDown size={14} />
-            New messages
+          <button onClick={scrollToBottom} style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', background: 'var(--cr-green-900)', border: 'none', borderRadius: 20, color: '#fff', fontSize: 12, padding: '5px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, zIndex: 10 }}>
+            <ChevronDown size={14} /> New messages
           </button>
         </div>
       )}
 
-      {/* Error */}
       {error && (
-        <div
-          style={{
-            margin: '0 16px 8px',
-            padding: '8px 12px',
-            background: 'rgba(214, 69, 69, 0.08)',
-            border: '1px solid var(--cr-danger)',
-            borderRadius: 8,
-            color: 'var(--cr-danger)',
-            fontSize: 13,
-          }}
-        >
+        <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>
           {error}
         </div>
       )}
 
-      {/* Input */}
-      <ChatInput
-        onSend={sendMessage}
-        onStop={stopStreaming}
-        isStreaming={isStreaming}
-        disabled={!selectedModel}
-        specialistName={selectedModelName || undefined}
-      />
+      <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={!selectedModel} specialistName={selectedModelName || undefined} />
     </div>
   );
 }
+

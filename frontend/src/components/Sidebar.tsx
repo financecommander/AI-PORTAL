@@ -1,212 +1,192 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Sparkles,
   MessageSquare,
-  Brain,
+  Bot,
+  Layers,
   BarChart3,
-  Settings,
   LogOut,
-  ChevronRight,
+  Settings,
 } from 'lucide-react';
-import clsx from 'clsx';
+import { AuthContext } from '../contexts/AuthContext';
 import ConversationList from './ConversationList';
 
-const navItems = [
-  { to: '/', icon: Sparkles, label: 'Chat' },
-  { to: '/specialists', icon: MessageSquare, label: 'Specialists' },
-  { to: '/pipelines', icon: Brain, label: 'Intelligence Pipelines' },
-  { to: '/usage', icon: BarChart3, label: 'Usage & Costs' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
-];
-
 interface SidebarProps {
-  onNavigate?: () => void;
   activeConversationId?: string | null;
-  onSelectConversation?: (uuid: string) => void;
+  onSelectConversation?: (id: string) => void;
   onNewConversation?: () => void;
 }
 
+const NAV_ITEMS = [
+  { label: 'Chat', icon: MessageSquare, path: '/' },
+  { label: 'Specialists', icon: Bot, path: '/specialists' },
+  { label: 'Pipelines', icon: Layers, path: '/pipelines' },
+  { label: 'Usage', icon: BarChart3, path: '/usage' },
+];
+
 export default function Sidebar({
-  onNavigate,
-  activeConversationId = null,
+  activeConversationId,
   onSelectConversation,
   onNewConversation,
 }: SidebarProps) {
-  const { logout, user } = useAuth();
+  const { user, logout } = useContext(AuthContext);
+  const location = useLocation();
   const navigate = useNavigate();
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    onNavigate?.();
-  };
 
   return (
     <aside
-      className="h-screen flex flex-col"
       style={{
         width: 'var(--sidebar-width)',
-        background: 'var(--cr-charcoal)',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--cr-white)',
         borderRight: '1px solid var(--cr-border)',
+        flexShrink: 0,
       }}
     >
       {/* Brand */}
-      <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--cr-border)' }}>
-        <h1
-          style={{
-            fontFamily: "'Space Grotesk', sans-serif",
-            fontSize: '16px',
-            fontWeight: 700,
-            color: 'var(--cr-green-400)',
-            letterSpacing: '0.04em',
-            margin: 0,
-          }}
-        >
-          CALCULUS LABS
-        </h1>
-        <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>
-          AI Portal v2.2
-        </p>
-      </div>
-
-      {/* Nav */}
-      <nav className="py-3 px-3 space-y-1" style={{ borderBottom: '1px solid var(--cr-border)' }}>
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={() => onNavigate?.()}
-            className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-3 px-3 py-2 text-sm transition-all group',
-                isActive ? 'font-medium' : '',
-              )
-            }
-            style={({ isActive }) => ({
-              borderRadius: 'var(--cr-radius-sm)',
-              background: isActive ? 'var(--cr-charcoal-deep)' : 'transparent',
-              color: isActive ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
-              borderLeft: isActive
-                ? '2px solid var(--cr-green-600)'
-                : '2px solid transparent',
-            })}
-          >
-            <Icon className="w-[18px] h-[18px] shrink-0" />
-            <span className="flex-1">{label}</span>
-            <ChevronRight
-              className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity"
-              style={{ color: 'var(--cr-text-dim)' }}
-            />
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Conversation History */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div
-          style={{
-            padding: '10px 14px 4px',
-            fontSize: '10px',
-            fontWeight: 600,
-            color: 'var(--cr-text-dim)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}
-        >
-          Recent chats
-        </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          <ConversationList
-            activeId={activeConversationId}
-            onSelect={(uuid) => {
-              onSelectConversation?.(uuid);
-              navigate('/');
-              onNavigate?.();
-            }}
-            onNew={() => {
-              onNewConversation?.();
-              navigate('/');
-              onNavigate?.();
-            }}
-          />
-        </div>
-      </div>
-
-      {/* User + Sign Out */}
-      <div className="px-3 py-3" style={{ borderTop: '1px solid var(--cr-border)' }}>
-        {user && (
+      <div style={{ padding: '20px 20px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'var(--cr-green-900)',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '4px 8px',
-              marginBottom: '6px',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "'Space Grotesk', sans-serif",
             }}
           >
+            C
+          </div>
+          <div>
+            <div
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 600,
+                fontSize: 15,
+                color: 'var(--cr-text)',
+                lineHeight: 1.2,
+              }}
+            >
+              Calculus Research
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--cr-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Financial Innovations
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav style={{ padding: '0 12px' }}>
+        {NAV_ITEMS.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: '100%',
+                padding: '10px 12px',
+                marginBottom: 2,
+                borderRadius: 'var(--cr-radius-sm)',
+                border: 'none',
+                background: isActive ? 'var(--cr-surface)' : 'transparent',
+                cursor: 'pointer',
+                transition: 'all 120ms',
+                color: isActive ? 'var(--cr-green-900)' : 'var(--cr-text-secondary)',
+                fontWeight: isActive ? 600 : 400,
+                fontSize: 14,
+              }}
+            >
+              <Icon style={{ width: 18, height: 18 }} />
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Recent chats */}
+      {onSelectConversation && (
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', marginTop: 8 }}>
+          <div style={{ padding: '8px 20px 4px', fontSize: 11, fontWeight: 600, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Recent Chats
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+            <ConversationList
+              activeId={activeConversationId ?? null}
+              onSelect={onSelectConversation}
+              onNew={onNewConversation ?? (() => {})}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ padding: '12px 12px', borderTop: '1px solid var(--cr-border)', marginTop: 'auto' }}>
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 8px' }}>
             {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt=""
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  border: '1px solid var(--cr-border)',
-                }}
-              />
+              <img src={user.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
             ) : (
               <div
                 style={{
-                  width: '24px',
-                  height: '24px',
+                  width: 28,
+                  height: 28,
                   borderRadius: '50%',
-                  background: 'var(--cr-green-900)',
+                  background: 'var(--cr-green-600)',
+                  color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: 12,
                   fontWeight: 600,
-                  color: 'var(--cr-green-400)',
                 }}
               >
-                {(user.name || user.email).charAt(0).toUpperCase()}
+                {(user.name || user.email)?.[0]?.toUpperCase() ?? 'U'}
               </div>
             )}
-            <span
-              style={{
-                fontSize: '12px',
-                color: 'var(--cr-text-muted)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {user.name || user.email}
-            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--cr-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.name || user.email}
+              </div>
+            </div>
           </div>
         )}
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 text-sm w-full transition-all"
-          style={{
-            color: 'var(--cr-text-dim)',
-            borderRadius: 'var(--cr-radius-sm)',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-danger)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-dim)';
-          }}
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          <span>Sign Out</span>
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={() => navigate('/settings')}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '8px', borderRadius: 'var(--cr-radius-xs)', border: 'none',
+              background: 'transparent', color: 'var(--cr-text-muted)', cursor: 'pointer', fontSize: 12,
+            }}
+          >
+            <Settings size={14} />
+          </button>
+          <button
+            onClick={logout}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '8px', borderRadius: 'var(--cr-radius-xs)', border: 'none',
+              background: 'transparent', color: 'var(--cr-text-muted)', cursor: 'pointer', fontSize: 12,
+            }}
+          >
+            <LogOut size={14} />
+            Sign Out
+          </button>
+        </div>
       </div>
     </aside>
   );

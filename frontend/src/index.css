@@ -2,31 +2,43 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  /* Calculus Research — Light Institutional Theme */
   --cr-green-900: #0F4D2C;
   --cr-green-700: #1A6B3C;
   --cr-green-600: #3E9B5F;
   --cr-green-400: #5FBD7A;
+  --cr-green-50: #EDF7F0;
   --cr-gold-500: #F2A41F;
   --cr-gold-400: #F5B94E;
-  --cr-charcoal: #1C1F22;
-  --cr-charcoal-deep: #14161A;
-  --cr-charcoal-dark: #0E1012;
+
+  /* Light surfaces */
   --cr-surface: #F7F9F8;
   --cr-surface-2: #EEF2F0;
-  --cr-border: #2A2E32;
-  --cr-border-light: #DDE6E1;
+  --cr-white: #FFFFFF;
+  --cr-charcoal: #1C1F22;
+
+  /* Borders & muted */
+  --cr-border: #DDE6E1;
+  --cr-border-dark: #C4D1CA;
   --cr-mist: #A9B7AE;
   --cr-danger: #D64545;
-  --cr-text: #E2E8E4;
+
+  /* Text — dark on light */
+  --cr-text: #1C1F22;
+  --cr-text-secondary: #4A5650;
   --cr-text-muted: #7A8A80;
-  --cr-text-dim: #4A5650;
+  --cr-text-dim: #A9B7AE;
+
+  /* Layout */
   --sidebar-width: 260px;
   --cr-radius: 14px;
   --cr-radius-sm: 8px;
   --cr-radius-xs: 6px;
-  --navy: var(--cr-charcoal);
-  --navy-light: var(--cr-charcoal-deep);
-  --navy-dark: var(--cr-charcoal-dark);
+
+  /* Legacy aliases */
+  --navy: var(--cr-surface);
+  --navy-light: var(--cr-surface-2);
+  --navy-dark: var(--cr-white);
   --blue: var(--cr-green-600);
   --blue-light: var(--cr-green-400);
   --green: var(--cr-green-600);
@@ -39,7 +51,7 @@
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--cr-charcoal-dark);
+  background-color: var(--cr-surface);
   color: var(--cr-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -58,7 +70,7 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--cr-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--cr-text-dim); }
+::-webkit-scrollbar-thumb:hover { background: var(--cr-mist); }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(6px); }
@@ -81,3 +93,4 @@ h1, h2, h3, h4, h5, h6 {
 .animate-pulse-glow { animation: subtlePulse 2s ease-in-out infinite; }
 button:active:not(:disabled) { transform: translateY(1px); }
 ::selection { background: var(--cr-green-600); color: #FFFFFF; }
+
