@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import type { Specialist, Pipeline } from '../types';
 
 function Card({ children }: { children: React.ReactNode }) {

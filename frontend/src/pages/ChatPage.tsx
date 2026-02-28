@@ -61,12 +61,11 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    if (isAtBottom()) {
+    const atBottom = isAtBottom();
+    if (atBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setShowScrollPill(false);
-    } else if (messages.length > 0) {
-      setShowScrollPill(true);
     }
+    queueMicrotask(() => setShowScrollPill(!atBottom && messages.length > 0));
   }, [messages, isAtBottom]);
 
   const scrollToBottom = () => {

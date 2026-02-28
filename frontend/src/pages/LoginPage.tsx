@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { Shield, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try { await login(email); navigate('/'); } catch {} finally { setLoading(false); }
+    try { await login(email); navigate('/'); } catch { /* error is set in AuthContext */ } finally { setLoading(false); }
   };
 
   return (

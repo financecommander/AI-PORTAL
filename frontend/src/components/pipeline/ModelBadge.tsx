@@ -51,4 +51,3 @@ export default function ModelBadge({ model }: ModelBadgeProps) {
   );
 }
 
-export { resolveModel };

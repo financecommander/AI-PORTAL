@@ -1,29 +1,15 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { api } from '../api/client';
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string) => Promise<void>;
-  logout: () => void;
-  error: string | null;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext } from './authContextDef';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem('fc_token');
-    if (token) {
-      api.setToken(token);
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
-  }, []);
+    if (token) api.setToken(token);
+    return Boolean(token);
+  });
+  const [isLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const login = async (email: string) => {
     setError(null);
@@ -52,8 +38,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-}
