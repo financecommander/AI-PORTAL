@@ -223,18 +223,33 @@ class CrewPipeline(BasePipeline):
             except Exception:
                 pass
         
+        output = None
         try:
             output = await loop.run_in_executor(None, self._crew.kickoff)
         except Exception as e:
+            # Extract partial token usage from whatever the crew completed
+            # before failing — prevents silent cost leakage.
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            partial_usage = self._extract_token_usage(output) if output else {
+                "total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0,
+            }
+            if partial_usage.get("total_tokens", 0) > 0:
+                logger.warning(
+                    f"Pipeline failed after consuming {partial_usage['total_tokens']} tokens "
+                    f"in {duration_ms:.0f}ms"
+                )
             if on_progress:
                 try:
-                    await on_progress("error", {"message": str(e)})
+                    await on_progress("error", {
+                        "message": str(e),
+                        "partial_tokens": partial_usage.get("total_tokens", 0),
+                    })
                 except Exception:
                     pass
             raise
-        
+
         duration_ms = (time.perf_counter() - start_time) * 1000
-        
+
         total_usage = self._extract_token_usage(output)
         agent_breakdown = self._build_agent_breakdown(output, total_usage)
         

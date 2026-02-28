@@ -5,7 +5,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlmodel import Session, select
 from backend.auth.authenticator import get_current_user
@@ -139,7 +139,7 @@ async def execute_pipeline(
 
     # Generate pipeline ID
     pipeline_id = str(uuid.uuid4())
-    user_hash = current_user.get("user_hash", "unknown")
+    user_hash = current_user.get("sub", "unknown")
 
     # Create database record (status: running)
     pipeline_run = PipelineRun(
@@ -179,17 +179,35 @@ async def execute_pipeline(
 async def pipeline_websocket(
     websocket: WebSocket,
     pipeline_id: str,
-    token: Optional[str] = Query(None)
 ):
-    """WebSocket endpoint for real-time pipeline progress."""
-    if token:
-        payload = decode_access_token(token)
-        if not payload:
-            await websocket.close(code=1008, reason="Invalid authentication token")
-            return
+    """WebSocket endpoint for real-time pipeline progress.
 
-    await ws_manager.connect(pipeline_id, websocket)
+    Authentication: the client must send a JSON ``{"type": "auth", "token": "<jwt>"}``
+    message within 10 seconds of connecting.  The previous ``?token=`` query-param
+    approach leaked credentials into server logs and browser history.
+    """
+    await websocket.accept()
 
+    # --- Phase 1: authenticate via first message ---
+    try:
+        raw = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+        msg = json.loads(raw)
+    except (asyncio.TimeoutError, json.JSONDecodeError, WebSocketDisconnect):
+        await websocket.close(code=1008, reason="Authentication timeout or invalid payload")
+        return
+
+    token = msg.get("token") if isinstance(msg, dict) and msg.get("type") == "auth" else None
+    if not token:
+        await websocket.close(code=1008, reason="Missing authentication token")
+        return
+
+    payload = decode_access_token(token)
+    if not payload:
+        await websocket.close(code=1008, reason="Invalid authentication token")
+        return
+
+    # --- Phase 2: register and relay events ---
+    await ws_manager.connect_accepted(pipeline_id, websocket)
     try:
         while True:
             data = await websocket.receive_text()

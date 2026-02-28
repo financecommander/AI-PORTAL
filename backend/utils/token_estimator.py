@@ -9,10 +9,12 @@ For new code, prefer importing directly from shared:
 
 from typing import Optional
 
-# Import from shared module (add parent directory to path if needed)
+# Import from shared module (add project root to path if needed)
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+_PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.append(_PROJECT_ROOT)
 
 from shared import (
     MODEL_PRICING,

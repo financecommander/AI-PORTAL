@@ -1,6 +1,8 @@
 """Google Gemini provider."""
 
+import asyncio
 import time
+from functools import partial
 import google.generativeai as genai
 from google.api_core.exceptions import (
     Unauthenticated, ResourceExhausted, DeadlineExceeded, GoogleAPIError,
@@ -33,8 +35,11 @@ class GoogleProvider(BaseProvider):
             ),
         )
         start = time.perf_counter()
+        loop = asyncio.get_event_loop()
         try:
-            response = gemini_model.generate_content(gemini_messages)
+            response = await loop.run_in_executor(
+                None, partial(gemini_model.generate_content, gemini_messages)
+            )
         except Unauthenticated:
             raise ProviderAuthError(self.name)
         except ResourceExhausted:
