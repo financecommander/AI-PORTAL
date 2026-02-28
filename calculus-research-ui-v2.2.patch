@@ -1,0 +1,1309 @@
+diff --git a/frontend/src/components/Layout.tsx b/frontend/src/components/Layout.tsx
+index bec5c2f..0e51642 100644
+--- a/frontend/src/components/Layout.tsx
++++ b/frontend/src/components/Layout.tsx
+@@ -10,8 +10,11 @@ export default function Layout() {
+ 
+   if (isLoading) {
+     return (
+-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--navy-dark)' }}>
+-        <div className="text-white text-lg">Loading...</div>
++      <div
++        className="min-h-screen flex items-center justify-center"
++        style={{ background: 'var(--cr-charcoal-dark)' }}
++      >
++        <div style={{ color: 'var(--cr-text-muted)', fontSize: '14px' }}>Loading...</div>
+       </div>
+     );
+   }
+@@ -19,22 +22,42 @@ export default function Layout() {
+   if (!isAuthenticated) return <Navigate to="/login" replace />;
+ 
+   return (
+-    <div className="min-h-screen" style={{ background: 'var(--navy-dark)' }}>
++    <div className="min-h-screen" style={{ background: 'var(--cr-charcoal-dark)' }}>
+       {/* Mobile header */}
+-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center px-4 py-3"
+-        style={{ background: 'var(--navy)', borderBottom: '1px solid #222222' }}>
+-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white p-1">
++      <div
++        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center px-4 py-3"
++        style={{
++          background: 'var(--cr-charcoal)',
++          borderBottom: '1px solid var(--cr-border)',
++        }}
++      >
++        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ color: 'var(--cr-text)' }} className="p-1">
+           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+         </button>
+-        <h1 className="text-lime-400 font-bold ml-3 text-sm">CALCULUS LABS</h1>
++        <h1
++          className="ml-3"
++          style={{
++            fontFamily: "'Space Grotesk', sans-serif",
++            fontSize: '14px',
++            fontWeight: 700,
++            color: 'var(--cr-green-400)',
++            letterSpacing: '0.04em',
++          }}
++        >
++          CALCULUS LABS
++        </h1>
+       </div>
+ 
+       {/* Mobile overlay */}
+       {sidebarOpen && (
+-        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
++        <div
++          className="md:hidden fixed inset-0 z-40"
++          style={{ background: 'rgba(14, 16, 18, 0.7)' }}
++          onClick={() => setSidebarOpen(false)}
++        />
+       )}
+ 
+-      {/* Sidebar — hidden on mobile unless toggled */}
++      {/* Sidebar */}
+       <div className={`
+         fixed left-0 top-0 h-screen z-50 transition-transform duration-200
+         md:translate-x-0
+diff --git a/frontend/src/components/Sidebar.tsx b/frontend/src/components/Sidebar.tsx
+index e148e56..5ed191a 100644
+--- a/frontend/src/components/Sidebar.tsx
++++ b/frontend/src/components/Sidebar.tsx
+@@ -30,13 +30,32 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
+   return (
+     <aside
+       className="h-screen flex flex-col"
+-      style={{ width: 'var(--sidebar-width)', background: 'var(--navy)' }}
++      style={{
++        width: 'var(--sidebar-width)',
++        background: 'var(--cr-charcoal)',
++        borderRight: '1px solid var(--cr-border)',
++      }}
+     >
+-      <div className="px-5 py-5 border-b" style={{ borderColor: '#222222' }}>
+-        <h1 className="text-lg font-bold text-lime-400 tracking-tight">CALCULUS LABS</h1>
+-        <p className="text-xs mt-0.5" style={{ color: '#667788' }}>AI Portal v2.0</p>
++      {/* Brand */}
++      <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--cr-border)' }}>
++        <h1
++          style={{
++            fontFamily: "'Space Grotesk', sans-serif",
++            fontSize: '16px',
++            fontWeight: 700,
++            color: 'var(--cr-green-400)',
++            letterSpacing: '0.04em',
++            margin: 0,
++          }}
++        >
++          CALCULUS LABS
++        </h1>
++        <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>
++          AI Portal v2.2
++        </p>
+       </div>
+ 
++      {/* Navigation */}
+       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+         {navItems.map(({ to, icon: Icon, label }) => (
+           <NavLink
+@@ -45,28 +64,46 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
+             end={to === '/'}
+             onClick={() => onNavigate?.()}
+             className={({ isActive }) => clsx(
+-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all group',
+-              isActive ? 'text-white font-medium' : 'hover:text-white'
++              'flex items-center gap-3 px-3 py-2.5 text-sm transition-all group',
++              isActive ? 'font-medium' : ''
+             )}
+             style={({ isActive }) => ({
+-              background: isActive ? 'var(--navy-light)' : 'transparent',
+-              color: isActive ? '#FFFFFF' : '#8899AA',
++              borderRadius: 'var(--cr-radius-sm)',
++              background: isActive ? 'var(--cr-charcoal-deep)' : 'transparent',
++              color: isActive ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
++              borderLeft: isActive ? '2px solid var(--cr-green-600)' : '2px solid transparent',
+             })}
+           >
+-            <Icon className="w-5 h-5 shrink-0" />
++            <Icon className="w-[18px] h-[18px] shrink-0" />
+             <span className="flex-1">{label}</span>
+-            <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
++            <ChevronRight
++              className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity"
++              style={{ color: 'var(--cr-text-dim)' }}
++            />
+           </NavLink>
+         ))}
+       </nav>
+ 
+-      <div className="px-3 py-4 border-t" style={{ borderColor: '#222222' }}>
++      {/* Footer */}
++      <div className="px-3 py-4" style={{ borderTop: '1px solid var(--cr-border)' }}>
+         <button
+           onClick={handleLogout}
+-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-all hover:text-white"
+-          style={{ color: '#8899AA' }}
++          className="flex items-center gap-3 px-3 py-2.5 text-sm w-full transition-all"
++          style={{
++            color: 'var(--cr-text-dim)',
++            borderRadius: 'var(--cr-radius-sm)',
++            background: 'transparent',
++            border: 'none',
++            cursor: 'pointer',
++          }}
++          onMouseEnter={(e) => {
++            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-danger)';
++          }}
++          onMouseLeave={(e) => {
++            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-dim)';
++          }}
+         >
+-          <LogOut className="w-5 h-5" />
++          <LogOut className="w-[18px] h-[18px]" />
+           <span>Sign Out</span>
+         </button>
+       </div>
+diff --git a/frontend/src/components/chat/ChatInput.tsx b/frontend/src/components/chat/ChatInput.tsx
+index e01576a..f7a4580 100644
+--- a/frontend/src/components/chat/ChatInput.tsx
++++ b/frontend/src/components/chat/ChatInput.tsx
+@@ -174,7 +174,7 @@ export default function ChatInput({
+     <div
+       style={{
+         padding: '12px 24px 16px',
+-        borderTop: '1px solid #222222',
++        borderTop: '1px solid var(--cr-border)',
+         background: 'var(--navy-dark)',
+         position: 'relative',
+       }}
+@@ -189,7 +189,7 @@ export default function ChatInput({
+             position: 'absolute',
+             inset: 0,
+             background: 'rgba(46, 117, 182, 0.15)',
+-            border: '2px dashed var(--blue)',
++            border: '2px dashed var(--cr-green-600)',
+             borderRadius: 12,
+             display: 'flex',
+             alignItems: 'center',
+@@ -198,7 +198,7 @@ export default function ChatInput({
+             pointerEvents: 'none',
+           }}
+         >
+-          <span style={{ color: 'var(--blue)', fontSize: 15, fontWeight: 600 }}>
++          <span style={{ color: 'var(--cr-green-600)', fontSize: 15, fontWeight: 600 }}>
+             Drop files here
+           </span>
+         </div>
+@@ -210,10 +210,10 @@ export default function ChatInput({
+           style={{
+             marginBottom: 8,
+             padding: '6px 12px',
+-            background: '#3A1A1A',
++            background: 'rgba(214, 69, 69, 0.1)',
+             border: '1px solid var(--red)',
+             borderRadius: 8,
+-            color: '#FF8888',
++            color: 'var(--cr-danger)',
+             fontSize: 12,
+           }}
+         >
+@@ -240,7 +240,7 @@ export default function ChatInput({
+                 alignItems: 'center',
+                 gap: 6,
+                 background: 'var(--navy-light)',
+-                border: '1px solid #222222',
++                border: '1px solid var(--cr-border)',
+                 borderRadius: 8,
+                 padding: 4,
+                 maxWidth: 180,
+@@ -265,12 +265,12 @@ export default function ChatInput({
+                     width: 40,
+                     height: 40,
+                     borderRadius: 6,
+-                    background: '#222222',
++                    background: 'var(--cr-border)',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     flexShrink: 0,
+-                    color: '#8899AA',
++                    color: 'var(--cr-text-muted)',
+                   }}
+                 >
+                   <FileText size={18} />
+@@ -282,7 +282,7 @@ export default function ChatInput({
+                 <div
+                   style={{
+                     fontSize: 11,
+-                    color: '#C0C8D0',
++                    color: 'var(--cr-mist)',
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     whiteSpace: 'nowrap',
+@@ -290,7 +290,7 @@ export default function ChatInput({
+                 >
+                   {pf.attachment.filename}
+                 </div>
+-                <div style={{ fontSize: 10, color: '#667788' }}>
++                <div style={{ fontSize: 10, color: 'var(--cr-text-dim)' }}>
+                   {formatFileSize(pf.attachment.size_bytes)}
+                 </div>
+               </div>
+@@ -305,13 +305,13 @@ export default function ChatInput({
+                   width: 18,
+                   height: 18,
+                   borderRadius: '50%',
+-                  background: '#556677',
++                  background: 'var(--cr-text-dim)',
+                   border: 'none',
+                   cursor: 'pointer',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+-                  color: '#fff',
++                  color: 'var(--cr-text)',
+                   padding: 0,
+                 }}
+                 title="Remove"
+@@ -330,7 +330,7 @@ export default function ChatInput({
+           alignItems: 'flex-end',
+           gap: 8,
+           background: 'var(--navy-light)',
+-          border: `1px solid ${focused || isDragOver ? 'var(--blue)' : '#222222'}`,
++          border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : '#222222'}`,
+           borderRadius: 12,
+           padding: '8px 8px 8px 6px',
+           opacity: disabled ? 0.5 : 1,
+@@ -352,7 +352,7 @@ export default function ChatInput({
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+-            color: pendingFiles.length > 0 ? 'var(--blue)' : '#667788',
++            color: pendingFiles.length > 0 ? 'var(--cr-green-600)' : '#667788',
+             transition: 'color 200ms',
+           }}
+           title="Attach file"
+@@ -390,7 +390,7 @@ export default function ChatInput({
+             border: 'none',
+             outline: 'none',
+             resize: 'none',
+-            color: '#E0E0E0',
++            color: 'var(--cr-text)',
+             fontSize: 14,
+             lineHeight: '24px',
+             minHeight: 24,
+@@ -414,7 +414,7 @@ export default function ChatInput({
+               display: 'flex',
+               alignItems: 'center',
+               justifyContent: 'center',
+-              color: '#fff',
++              color: 'var(--cr-text)',
+             }}
+             title="Stop"
+           >
+@@ -429,7 +429,7 @@ export default function ChatInput({
+               width: 36,
+               height: 36,
+               borderRadius: '50%',
+-              background: canSend ? 'var(--blue)' : '#222222',
++              background: canSend ? 'var(--cr-green-600)' : '#222222',
+               border: 'none',
+               cursor: canSend ? 'pointer' : 'default',
+               display: 'flex',
+diff --git a/frontend/src/components/chat/MessageBubble.tsx b/frontend/src/components/chat/MessageBubble.tsx
+index 517d4cc..163b4c7 100644
+--- a/frontend/src/components/chat/MessageBubble.tsx
++++ b/frontend/src/components/chat/MessageBubble.tsx
+@@ -37,7 +37,7 @@ function renderInlineMarkdown(text: string): string {
+   // Inline code (already HTML-escaped, so no XSS risk)
+   html = html.replace(
+     /`([^`]+)`/g,
+-    '<code style="background:#0D1520;padding:2px 6px;border-radius:4px;font-family:monospace">$1</code>',
++    '<code style="background:var(--cr-charcoal-deep);padding:2px 6px;border-radius:4px;font-family:monospace">$1</code>',
+   );
+ 
+   // Bold
+@@ -79,7 +79,7 @@ function CodeBlock({ content }: { content: string }) {
+     <div style={{ position: 'relative', margin: '8px 0' }}>
+       <pre
+         style={{
+-          background: '#0D1520',
++          background: 'var(--cr-charcoal-deep)',
+           fontFamily: 'monospace',
+           fontSize: 14,
+           padding: 12,
+@@ -97,9 +97,9 @@ function CodeBlock({ content }: { content: string }) {
+           position: 'absolute',
+           top: 6,
+           right: 8,
+-          background: '#222222',
++          background: 'var(--cr-border)',
+           border: 'none',
+-          color: '#8899AA',
++          color: 'var(--cr-text-muted)',
+           fontSize: 11,
+           padding: '2px 8px',
+           borderRadius: 4,
+@@ -220,7 +220,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
+       </div>
+ 
+       {!isUser && hasStats && (
+-        <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>
++        <div style={{ fontSize: 11, color: 'var(--cr-text-dim)', marginTop: 4 }}>
+           {(message.tokens!.input + message.tokens!.output).toLocaleString()} tokens
+           &nbsp;·&nbsp;${message.cost_usd!.toFixed(4)}
+         </div>
+diff --git a/frontend/src/components/chat/ModelSelector.tsx b/frontend/src/components/chat/ModelSelector.tsx
+index 0ce698e..7937c6d 100644
+--- a/frontend/src/components/chat/ModelSelector.tsx
++++ b/frontend/src/components/chat/ModelSelector.tsx
+@@ -2,33 +2,31 @@ import { useState, useRef, useEffect } from 'react';
+ import { ChevronDown, ChevronRight, Crown, Sparkles, Zap } from 'lucide-react';
+ import type { LLMProvider } from '../../types';
+ 
+-// Provider accent colors
++// Provider accent colors — institutional palette
+ const PROVIDER_COLORS: Record<string, string> = {
+-  openai: '#10A37F',
+-  anthropic: '#D97706',
++  openai: '#3E9B5F',
++  anthropic: '#F2A41F',
+   google: '#4285F4',
+-  grok: '#EF4444',
+-  deepseek: '#6366F1',
+-  mistral: '#F97316',
+-  groq: '#F97316',
++  grok: '#D64545',
++  deepseek: '#7C8CF5',
++  mistral: '#E8853D',
++  groq: '#E8853D',
+ };
+ 
+-// Provider logos / labels
+ const PROVIDER_LABELS: Record<string, string> = {
+   openai: 'OpenAI',
+   anthropic: 'Anthropic',
+   google: 'Google',
+   grok: 'xAI (Grok)',
+   deepseek: 'DeepSeek',
+-  mistral: 'Mistral',
++  mistral: 'Mistral AI',
+   groq: 'Groq (Llama)',
+ };
+ 
+-// Tier config
+ const TIER_CONFIG: Record<string, { icon: typeof Crown; color: string; label: string }> = {
+-  top: { icon: Crown, color: '#F59E0B', label: 'TOP' },
+-  mid: { icon: Sparkles, color: '#6B7280', label: 'MID' },
+-  budget: { icon: Zap, color: '#22C55E', label: '💰' },
++  top: { icon: Crown, color: '#F2A41F', label: 'TOP' },
++  mid: { icon: Sparkles, color: 'var(--cr-text-dim)', label: 'MID' },
++  budget: { icon: Zap, color: 'var(--cr-green-600)', label: 'BUDGET' },
+ };
+ 
+ interface ModelSelectorProps {
+@@ -45,16 +43,12 @@ function formatPrice(input?: number, output?: number): string {
+   return `$${input.toFixed(2)}/$${output.toFixed(0)}`;
+ }
+ 
+-// ── Grid Mode — Provider Dropdowns ─────────────────────────────
++// ── Grid Mode — Provider Accordion Cards ────────────────────────
+ 
+ function GridSelector({
+-  providers,
+-  selectedProvider,
+-  selectedModel,
+-  onSelect,
++  providers, selectedProvider, selectedModel, onSelect,
+ }: Omit<ModelSelectorProps, 'mode'>) {
+   const [expandedProviders, setExpandedProviders] = useState<Set<string>>(() => {
+-    // Default: expand the selected provider, or the first one
+     if (selectedProvider) return new Set([selectedProvider]);
+     if (providers.length > 0) return new Set([providers[0].id]);
+     return new Set();
+@@ -80,7 +74,7 @@ function GridSelector({
+       }}
+     >
+       {providers.map((prov) => {
+-        const accent = PROVIDER_COLORS[prov.id] || '#2E75B6';
++        const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
+         const isExpanded = expandedProviders.has(prov.id);
+         const hasSelection = prov.models.some(
+           (m) => selectedProvider === prov.id && selectedModel === m.id,
+@@ -93,14 +87,14 @@ function GridSelector({
+           <div
+             key={prov.id}
+             style={{
+-              background: '#111',
+-              borderRadius: '10px',
+-              border: hasSelection ? `1px solid ${accent}44` : '1px solid #222',
++              background: 'var(--cr-charcoal)',
++              borderRadius: 'var(--cr-radius)',
++              border: hasSelection ? `1px solid ${accent}44` : '1px solid var(--cr-border)',
+               overflow: 'hidden',
+-              transition: 'border-color 200ms',
++              transition: 'border-color 150ms',
+             }}
+           >
+-            {/* Provider header — clickable dropdown toggle */}
++            {/* Provider header */}
+             <button
+               onClick={() => toggleProvider(prov.id)}
+               style={{
+@@ -113,70 +107,52 @@ function GridSelector({
+                 background: 'transparent',
+                 cursor: 'pointer',
+                 textAlign: 'left',
+-                transition: 'background 150ms',
++                transition: 'background 120ms',
+               }}
+               onMouseEnter={(e) => {
+-                (e.currentTarget as HTMLButtonElement).style.background = '#1a1a1a';
++                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+               }}
+               onMouseLeave={(e) => {
+                 (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+               }}
+             >
+-              {/* Provider color dot */}
+               <div
+                 style={{
+-                  width: '10px',
+-                  height: '10px',
++                  width: '8px',
++                  height: '8px',
+                   borderRadius: '50%',
+                   background: accent,
+                   flexShrink: 0,
+-                  boxShadow: `0 0 8px ${accent}66`,
+                 }}
+               />
+-              {/* Provider name */}
+               <span
+                 style={{
+-                  fontSize: '14px',
++                  fontFamily: "'Space Grotesk', sans-serif",
++                  fontSize: '13px',
+                   fontWeight: 700,
+-                  color: '#FFFFFF',
+-                  letterSpacing: '0.01em',
++                  color: 'var(--cr-text)',
++                  letterSpacing: '0.02em',
+                   flex: 1,
+                 }}
+               >
+                 {PROVIDER_LABELS[prov.id] || prov.name}
+               </span>
+-              {/* Selected model badge (when collapsed) */}
+               {!isExpanded && selectedInProvider && (
+-                <span
+-                  style={{
+-                    fontSize: '11px',
+-                    color: accent,
+-                    fontWeight: 500,
+-                    marginRight: '4px',
+-                  }}
+-                >
++                <span style={{ fontSize: '11px', color: accent, fontWeight: 500, marginRight: '4px' }}>
+                   {selectedInProvider.name}
+                 </span>
+               )}
+-              {/* Model count */}
+-              <span
+-                style={{
+-                  fontSize: '11px',
+-                  color: '#555',
+-                  fontWeight: 500,
+-                }}
+-              >
++              <span style={{ fontSize: '10px', color: 'var(--cr-text-dim)', fontWeight: 500 }}>
+                 {prov.models.length}
+               </span>
+-              {/* Chevron */}
+               {isExpanded ? (
+-                <ChevronDown style={{ width: '16px', height: '16px', color: '#666', flexShrink: 0 }} />
++                <ChevronDown style={{ width: '14px', height: '14px', color: 'var(--cr-text-dim)', flexShrink: 0 }} />
+               ) : (
+-                <ChevronRight style={{ width: '16px', height: '16px', color: '#444', flexShrink: 0 }} />
++                <ChevronRight style={{ width: '14px', height: '14px', color: 'var(--cr-text-dim)', flexShrink: 0 }} />
+               )}
+             </button>
+ 
+-            {/* Models list — expanded */}
++            {/* Models list */}
+             {isExpanded && (
+               <div style={{ padding: '0 8px 10px' }}>
+                 {prov.models.map((m) => {
+@@ -192,9 +168,9 @@ function GridSelector({
+                         flexDirection: 'column',
+                         gap: '3px',
+                         padding: '10px 12px',
+-                        borderRadius: '8px',
+-                        border: isSelected ? `1px solid ${accent}88` : '1px solid transparent',
+-                        background: isSelected ? `${accent}12` : 'transparent',
++                        borderRadius: 'var(--cr-radius-sm)',
++                        border: isSelected ? `1px solid ${accent}66` : '1px solid transparent',
++                        background: isSelected ? `${accent}10` : 'transparent',
+                         cursor: 'pointer',
+                         textAlign: 'left',
+                         width: '100%',
+@@ -202,22 +178,20 @@ function GridSelector({
+                         transition: 'all 120ms',
+                       }}
+                       onMouseEnter={(e) => {
+-                        if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = '#1a1a1a';
++                        if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+                       }}
+                       onMouseLeave={(e) => {
+                         if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                       }}
+                     >
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+-                        <TierIcon
+-                          style={{ width: '13px', height: '13px', color: tier.color, flexShrink: 0 }}
+-                        />
++                        <TierIcon style={{ width: '12px', height: '12px', color: tier.color, flexShrink: 0 }} />
+                         <div style={{ flex: 1, minWidth: 0 }}>
+                           <div
+                             style={{
+                               fontSize: '13px',
+                               fontWeight: isSelected ? 600 : 400,
+-                              color: isSelected ? '#FFFFFF' : '#C0C8D0',
++                              color: isSelected ? 'var(--cr-text)' : 'var(--cr-mist)',
+                               whiteSpace: 'nowrap',
+                               overflow: 'hidden',
+                               textOverflow: 'ellipsis',
+@@ -231,17 +205,17 @@ function GridSelector({
+                             style={{
+                               fontSize: '10px',
+                               fontWeight: 500,
+-                              color: '#666',
+-                              background: '#1a1a1a',
++                              color: 'var(--cr-text-dim)',
++                              background: 'var(--cr-charcoal-deep)',
+                               padding: '1px 5px',
+-                              borderRadius: '3px',
++                              borderRadius: 'var(--cr-radius-xs)',
+                               flexShrink: 0,
+                             }}
+                           >
+                             {m.context}
+                           </span>
+                         )}
+-                        <span style={{ fontSize: '10px', color: '#555', flexShrink: 0 }}>
++                        <span style={{ fontSize: '10px', color: 'var(--cr-text-dim)', flexShrink: 0 }}>
+                           {formatPrice(m.input_price, m.output_price)}/1M
+                         </span>
+                       </div>
+@@ -249,13 +223,13 @@ function GridSelector({
+                         <div
+                           style={{
+                             fontSize: '11px',
+-                            color: '#555',
++                            color: 'var(--cr-text-dim)',
+                             lineHeight: '1.3',
+                             overflow: 'hidden',
+                             display: '-webkit-box',
+                             WebkitLineClamp: 1,
+                             WebkitBoxOrient: 'vertical',
+-                            paddingLeft: '21px',
++                            paddingLeft: '20px',
+                           }}
+                         >
+                           {m.description}
+@@ -276,10 +250,7 @@ function GridSelector({
+ // ── Compact Mode ────────────────────────────────────────────────
+ 
+ function CompactSelector({
+-  providers,
+-  selectedProvider,
+-  selectedModel,
+-  onSelect,
++  providers, selectedProvider, selectedModel, onSelect,
+ }: Omit<ModelSelectorProps, 'mode'>) {
+   const [isOpen, setIsOpen] = useState(false);
+   const dropdownRef = useRef<HTMLDivElement>(null);
+@@ -295,14 +266,14 @@ function CompactSelector({
+   }, [isOpen]);
+ 
+   let selectedModelName = 'Select model';
+-  let selectedAccent = '#2E75B6';
++  let selectedAccent = 'var(--cr-green-600)';
+   let selectedContext = '';
+   let selectedProviderLabel = '';
+   for (const prov of providers) {
+     for (const m of prov.models) {
+       if (prov.id === selectedProvider && m.id === selectedModel) {
+         selectedModelName = m.name;
+-        selectedAccent = PROVIDER_COLORS[prov.id] || '#2E75B6';
++        selectedAccent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
+         selectedContext = m.context || '';
+         selectedProviderLabel = PROVIDER_LABELS[prov.id] || prov.name;
+       }
+@@ -318,36 +289,35 @@ function CompactSelector({
+           alignItems: 'center',
+           gap: '8px',
+           padding: '8px 14px',
+-          borderRadius: '8px',
+-          border: '1px solid #222',
+-          background: '#111',
++          borderRadius: 'var(--cr-radius-sm)',
++          border: '1px solid var(--cr-border)',
++          background: 'var(--cr-charcoal)',
+           cursor: 'pointer',
+-          transition: 'all 150ms',
++          transition: 'all 120ms',
+         }}
+       >
+         <div
+           style={{
+-            width: '8px',
+-            height: '8px',
++            width: '7px',
++            height: '7px',
+             borderRadius: '50%',
+             background: selectedAccent,
+-            boxShadow: `0 0 6px ${selectedAccent}66`,
+           }}
+         />
+-        <span style={{ fontSize: '12px', color: '#666', fontWeight: 500 }}>
++        <span style={{ fontSize: '11px', color: 'var(--cr-text-dim)', fontWeight: 500 }}>
+           {selectedProviderLabel}
+         </span>
+-        <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
++        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cr-text)' }}>
+           {selectedModelName}
+         </span>
+         {selectedContext && (
+-          <span style={{ fontSize: '10px', color: '#555' }}>{selectedContext}</span>
++          <span style={{ fontSize: '10px', color: 'var(--cr-text-dim)' }}>{selectedContext}</span>
+         )}
+         <ChevronDown
+           style={{
+             width: '14px',
+             height: '14px',
+-            color: '#666',
++            color: 'var(--cr-text-dim)',
+             transform: isOpen ? 'rotate(180deg)' : 'rotate(0)',
+             transition: 'transform 150ms',
+           }}
+@@ -363,40 +333,27 @@ function CompactSelector({
+             minWidth: '340px',
+             maxHeight: '460px',
+             overflowY: 'auto',
+-            background: '#0a0a0a',
+-            border: '1px solid #222',
+-            borderRadius: '12px',
++            background: 'var(--cr-charcoal)',
++            border: '1px solid var(--cr-border)',
++            borderRadius: 'var(--cr-radius)',
+             padding: '6px',
+             zIndex: 50,
+-            boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
++            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+           }}
+         >
+           {providers.map((prov) => {
+-            const accent = PROVIDER_COLORS[prov.id] || '#2E75B6';
++            const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
+             return (
+               <div key={prov.id}>
+-                <div
+-                  style={{
+-                    display: 'flex',
+-                    alignItems: 'center',
+-                    gap: '8px',
+-                    padding: '10px 10px 4px',
+-                  }}
+-                >
+-                  <div
+-                    style={{
+-                      width: '6px',
+-                      height: '6px',
+-                      borderRadius: '50%',
+-                      background: accent,
+-                    }}
+-                  />
++                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 10px 4px' }}>
++                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: accent }} />
+                   <span
+                     style={{
+-                      fontSize: '11px',
++                      fontFamily: "'Space Grotesk', sans-serif",
++                      fontSize: '10px',
+                       fontWeight: 700,
+-                      color: '#888',
+-                      letterSpacing: '0.05em',
++                      color: 'var(--cr-text-dim)',
++                      letterSpacing: '0.06em',
+                       textTransform: 'uppercase',
+                     }}
+                   >
+@@ -410,39 +367,34 @@ function CompactSelector({
+                   return (
+                     <button
+                       key={m.id}
+-                      onClick={() => {
+-                        onSelect(prov.id, m.id);
+-                        setIsOpen(false);
+-                      }}
++                      onClick={() => { onSelect(prov.id, m.id); setIsOpen(false); }}
+                       style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: '8px',
+                         width: '100%',
+                         padding: '8px 10px',
+-                        borderRadius: '6px',
++                        borderRadius: 'var(--cr-radius-xs)',
+                         border: 'none',
+-                        background: isActive ? `${accent}15` : 'transparent',
++                        background: isActive ? `${accent}12` : 'transparent',
+                         cursor: 'pointer',
+                         textAlign: 'left',
+                         transition: 'background 100ms',
+                       }}
+                       onMouseEnter={(e) => {
+-                        if (!isActive) (e.currentTarget as HTMLElement).style.background = '#1a1a1a';
++                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--cr-charcoal-deep)';
+                       }}
+                       onMouseLeave={(e) => {
+-                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
++                        if (!isActive) (e.currentTarget as HTMLElement).style.background = isActive ? `${accent}12` : 'transparent';
+                       }}
+                     >
+-                      <TierIcon
+-                        style={{ width: '13px', height: '13px', color: tier.color, flexShrink: 0 }}
+-                      />
++                      <TierIcon style={{ width: '12px', height: '12px', color: tier.color, flexShrink: 0 }} />
+                       <div style={{ flex: 1, minWidth: 0 }}>
+                         <span
+                           style={{
+                             fontSize: '13px',
+                             fontWeight: isActive ? 600 : 400,
+-                            color: isActive ? '#FFFFFF' : '#C0C8D0',
++                            color: isActive ? 'var(--cr-text)' : 'var(--cr-mist)',
+                           }}
+                         >
+                           {m.name}
+@@ -452,17 +404,17 @@ function CompactSelector({
+                         <span
+                           style={{
+                             fontSize: '10px',
+-                            color: '#555',
+-                            background: '#1a1a1a',
++                            color: 'var(--cr-text-dim)',
++                            background: 'var(--cr-charcoal-deep)',
+                             padding: '1px 4px',
+-                            borderRadius: '3px',
++                            borderRadius: 'var(--cr-radius-xs)',
+                             flexShrink: 0,
+                           }}
+                         >
+                           {m.context}
+                         </span>
+                       )}
+-                      <span style={{ fontSize: '10px', color: '#555', flexShrink: 0 }}>
++                      <span style={{ fontSize: '10px', color: 'var(--cr-text-dim)', flexShrink: 0 }}>
+                         {formatPrice(m.input_price, m.output_price)}
+                       </span>
+                     </button>
+@@ -480,9 +432,5 @@ function CompactSelector({
+ // ── Export ───────────────────────────────────────────────────────
+ 
+ export default function ModelSelector(props: ModelSelectorProps) {
+-  return props.mode === 'grid' ? (
+-    <GridSelector {...props} />
+-  ) : (
+-    <CompactSelector {...props} />
+-  );
++  return props.mode === 'grid' ? <GridSelector {...props} /> : <CompactSelector {...props} />;
+ }
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+index 7831abc..7642803 100644
+--- a/frontend/src/index.css
++++ b/frontend/src/index.css
+@@ -1,32 +1,76 @@
+ @import "tailwindcss";
++@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+ 
+ :root {
+-  --navy: #0A0A0A;
+-  --navy-light: #161616;
+-  --navy-dark: #000000;
+-  --blue: #2E75B6;
+-  --blue-light: #4A9ADE;
+-  --green: #2D8B4E;
+-  --orange: #D4760A;
+-  --red: #C0392B;
+-  --sidebar-width: 280px;
++  /* Calculus Research — Brand Tokens */
++  --cr-green-900: #0F4D2C;
++  --cr-green-700: #1A6B3C;
++  --cr-green-600: #3E9B5F;
++  --cr-green-400: #5FBD7A;
++  --cr-gold-500: #F2A41F;
++  --cr-gold-400: #F5B94E;
++  --cr-charcoal: #1C1F22;
++  --cr-charcoal-deep: #14161A;
++  --cr-charcoal-dark: #0E1012;
++  --cr-surface: #F7F9F8;
++  --cr-surface-2: #EEF2F0;
++  --cr-border: #2A2E32;
++  --cr-border-light: #DDE6E1;
++  --cr-mist: #A9B7AE;
++  --cr-danger: #D64545;
++  --cr-text: #E2E8E4;
++  --cr-text-muted: #7A8A80;
++  --cr-text-dim: #4A5650;
++
++  /* Layout */
++  --sidebar-width: 260px;
++  --cr-radius: 14px;
++  --cr-radius-sm: 8px;
++  --cr-radius-xs: 6px;
++
++  /* Backward-compatible aliases — old vars map to new design tokens */
++  --navy: var(--cr-charcoal);
++  --navy-light: var(--cr-charcoal-deep);
++  --navy-dark: var(--cr-charcoal-dark);
++  --blue: var(--cr-green-600);
++  --blue-light: var(--cr-green-400);
++  --green: var(--cr-green-600);
++  --orange: var(--cr-gold-500);
++  --red: var(--cr-danger);
+ }
+ 
++* { box-sizing: border-box; }
++
+ body {
+   margin: 0;
+   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+-  background-color: var(--navy-dark);
+-  color: #E8E8E8;
++  background-color: var(--cr-charcoal-dark);
++  color: var(--cr-text);
++  -webkit-font-smoothing: antialiased;
++  -moz-osx-font-smoothing: grayscale;
+ }
+ 
+-/* Scrollbar styling */
+-::-webkit-scrollbar { width: 6px; }
+-::-webkit-scrollbar-track { background: var(--navy-dark); }
+-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
++h1, h2, h3, h4, h5, h6 {
++  font-family: 'Space Grotesk', system-ui, sans-serif;
++  letter-spacing: -0.01em;
++}
++
++/* Accessibility focus ring — gold accent */
++.cr-focus:focus-visible,
++*:focus-visible {
++  outline: 2px solid var(--cr-gold-500);
++  outline-offset: 2px;
++}
+ 
+-/* Chat animations */
++/* Scrollbar — minimal, institutional */
++::-webkit-scrollbar { width: 5px; }
++::-webkit-scrollbar-track { background: transparent; }
++::-webkit-scrollbar-thumb { background: var(--cr-border); border-radius: 3px; }
++::-webkit-scrollbar-thumb:hover { background: var(--cr-text-dim); }
++
++/* Chat animations — restrained, no glow */
+ @keyframes fadeInUp {
+-  from { opacity: 0; transform: translateY(8px); }
++  from { opacity: 0; transform: translateY(6px); }
+   to { opacity: 1; transform: translateY(0); }
+ }
+ 
+@@ -36,19 +80,30 @@ body {
+ }
+ 
+ .animate-fade-in-up {
+-  animation: fadeInUp 200ms ease-out both;
++  animation: fadeInUp 180ms ease-out both;
+ }
+ 
+ .animate-blink {
+   animation: blink 800ms infinite;
+ }
+ 
+-/* Pipeline animations */
+-@keyframes pulseGlow {
+-  0%, 100% { box-shadow: 0 0 4px rgba(46, 117, 182, 0.3); }
+-  50% { box-shadow: 0 0 12px rgba(46, 117, 182, 0.6); }
++/* Pipeline status — subtle pulse, no glow */
++@keyframes subtlePulse {
++  0%, 100% { opacity: 0.7; }
++  50% { opacity: 1; }
+ }
+ 
+ .animate-pulse-glow {
+-  animation: pulseGlow 2s ease-in-out infinite;
++  animation: subtlePulse 2s ease-in-out infinite;
++}
++
++/* Button active state — institutional micro-interaction */
++button:active:not(:disabled) {
++  transform: translateY(1px);
++}
++
++/* Selection styling */
++::selection {
++  background: var(--cr-green-600);
++  color: #FFFFFF;
+ }
+diff --git a/frontend/src/pages/LLMChatPage.tsx b/frontend/src/pages/LLMChatPage.tsx
+index e6abf66..52a1741 100644
+--- a/frontend/src/pages/LLMChatPage.tsx
++++ b/frontend/src/pages/LLMChatPage.tsx
+@@ -99,10 +99,10 @@ export default function LLMChatPage() {
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+-          background: '#000',
++          background: 'var(--cr-charcoal-dark)',
+         }}
+       >
+-        <div style={{ color: '#555', fontSize: 14 }}>Loading models...</div>
++        <div style={{ color: 'var(--cr-text-dim)', fontSize: 14 }}>Loading models...</div>
+       </div>
+     );
+   }
+@@ -120,7 +120,7 @@ export default function LLMChatPage() {
+           padding: '24px',
+           gap: '24px',
+           overflow: 'auto',
+-          background: '#000',
++          background: 'var(--cr-charcoal-dark)',
+         }}
+       >
+         {/* Branding */}
+@@ -134,27 +134,27 @@ export default function LLMChatPage() {
+               marginBottom: '8px',
+             }}
+           >
+-            <Sparkles style={{ width: 28, height: 28, color: '#A3E635' }} />
++            <Sparkles style={{ width: 28, height: 28, color: 'var(--cr-green-400)' }} />
+             <span
+               style={{
+-                fontSize: '22px',
++                fontFamily: "'Space Grotesk', sans-serif", fontSize: '20px',
+                 fontWeight: 700,
+-                color: '#A3E635',
++                color: 'var(--cr-green-400)',
+                 letterSpacing: '-0.02em',
+               }}
+             >
+               CALCULUS LABS
+             </span>
+           </div>
+-          <div style={{ fontSize: '13px', color: '#555' }}>Direct LLM Access — 26 Models</div>
++          <div style={{ fontSize: '13px', color: 'var(--cr-text-dim)' }}>Direct LLM Access — 26 Models</div>
+         </div>
+ 
+         {/* Heading */}
+         <h1
+           style={{
+-            fontSize: '26px',
++            fontFamily: "'Space Grotesk', sans-serif", fontSize: '24px',
+             fontWeight: 600,
+-            color: '#FFFFFF',
++            color: 'var(--cr-text)',
+             textAlign: 'center',
+             margin: 0,
+           }}
+@@ -205,10 +205,10 @@ export default function LLMChatPage() {
+               key={prompt}
+               onClick={() => sendMessage(prompt)}
+               style={{
+-                background: '#111',
+-                border: '1px solid #222',
++                background: 'var(--cr-charcoal)',
++                border: '1px solid var(--cr-border)',
+                 borderRadius: '20px',
+-                color: '#666',
++                color: 'var(--cr-text-muted)',
+                 fontSize: '12px',
+                 padding: '6px 14px',
+                 cursor: 'pointer',
+@@ -219,12 +219,12 @@ export default function LLMChatPage() {
+                 whiteSpace: 'nowrap',
+               }}
+               onMouseEnter={(e) => {
+-                (e.currentTarget as HTMLButtonElement).style.background = '#1a1a1a';
+-                (e.currentTarget as HTMLButtonElement).style.color = '#C0C8D0';
++                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
++                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-mist)';
+               }}
+               onMouseLeave={(e) => {
+-                (e.currentTarget as HTMLButtonElement).style.background = '#111';
+-                (e.currentTarget as HTMLButtonElement).style.color = '#666';
++                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal)';
++                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
+               }}
+             >
+               {prompt}
+@@ -236,10 +236,10 @@ export default function LLMChatPage() {
+           <div
+             style={{
+               padding: '8px 14px',
+-              background: '#1a0a0a',
+-              border: '1px solid var(--red)',
+-              borderRadius: 8,
+-              color: '#FF8888',
++              background: 'rgba(214, 69, 69, 0.08)',
++              border: '1px solid var(--cr-danger)',
++              borderRadius: 'var(--cr-radius-sm)',
++              color: 'var(--cr-danger)',
+               fontSize: 13,
+               maxWidth: '700px',
+               width: '100%',
+@@ -254,7 +254,7 @@ export default function LLMChatPage() {
+ 
+   // ── Active Conversation ───────────────────────────────────────
+   return (
+-    <div className="flex flex-col" style={{ height: '100vh', background: '#000' }}>
++    <div className="flex flex-col" style={{ height: '100vh', background: 'var(--cr-charcoal-dark)' }}>
+       {/* Header bar */}
+       <div
+         style={{
+@@ -262,9 +262,9 @@ export default function LLMChatPage() {
+           alignItems: 'center',
+           gap: '12px',
+           padding: '10px 20px',
+-          borderBottom: '1px solid #1a1a1a',
++          borderBottom: '1px solid var(--cr-border)',
+           flexShrink: 0,
+-          background: '#0a0a0a',
++          background: 'var(--cr-charcoal-dark)',
+         }}
+       >
+         <ModelSelector
+@@ -283,20 +283,20 @@ export default function LLMChatPage() {
+             gap: '6px',
+             padding: '7px 14px',
+             borderRadius: '8px',
+-            border: '1px solid #222',
++            border: '1px solid var(--cr-border)',
+             background: 'transparent',
+-            color: '#666',
++            color: 'var(--cr-text-muted)',
+             fontSize: '13px',
+             cursor: 'pointer',
+             transition: 'all 150ms',
+           }}
+           onMouseEnter={(e) => {
+-            (e.currentTarget as HTMLButtonElement).style.background = '#161616';
++            (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+             (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF';
+           }}
+           onMouseLeave={(e) => {
+             (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+-            (e.currentTarget as HTMLButtonElement).style.color = '#666';
++            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
+           }}
+         >
+           <Plus style={{ width: 14, height: 14 }} />
+@@ -333,7 +333,7 @@ export default function LLMChatPage() {
+               bottom: 8,
+               left: '50%',
+               transform: 'translateX(-50%)',
+-              background: 'var(--blue)',
++              background: 'var(--cr-green-900)',
+               border: 'none',
+               borderRadius: 20,
+               color: '#fff',
+@@ -358,10 +358,10 @@ export default function LLMChatPage() {
+           style={{
+             margin: '0 16px 8px',
+             padding: '8px 12px',
+-            background: '#1a0a0a',
+-            border: '1px solid var(--red)',
+-            borderRadius: 8,
+-            color: '#FF8888',
++            background: 'rgba(214, 69, 69, 0.08)',
++            border: '1px solid var(--cr-danger)',
++            borderRadius: 'var(--cr-radius-sm)',
++            color: 'var(--cr-danger)',
+             fontSize: 13,
+           }}
+         >
+diff --git a/frontend/src/pages/LoginPage.tsx b/frontend/src/pages/LoginPage.tsx
+index 6d6b104..dc5adbe 100644
+--- a/frontend/src/pages/LoginPage.tsx
++++ b/frontend/src/pages/LoginPage.tsx
+@@ -23,30 +23,87 @@ export default function LoginPage() {
+   };
+ 
+   return (
+-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--navy-dark)' }}>
+-      <div className="w-full max-w-md p-8 rounded-2xl shadow-2xl" style={{ background: 'var(--navy)' }}>
+-        {/* Header */}
+-        <div className="text-center mb-8">
+-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+-               style={{ background: 'var(--blue)', opacity: 0.9 }}>
+-            <Shield className="w-8 h-8 text-white" />
++    <div
++      className="min-h-screen flex items-center justify-center"
++      style={{ background: 'var(--cr-charcoal-dark)' }}
++    >
++      <div
++        style={{
++          width: '100%',
++          maxWidth: '420px',
++          padding: '40px 36px',
++          background: 'var(--cr-charcoal)',
++          border: '1px solid var(--cr-border)',
++          borderRadius: 'var(--cr-radius)',
++        }}
++      >
++        {/* Brand */}
++        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
++          <div
++            style={{
++              display: 'inline-flex',
++              alignItems: 'center',
++              justifyContent: 'center',
++              width: '56px',
++              height: '56px',
++              borderRadius: '14px',
++              background: 'var(--cr-green-900)',
++              border: '1px solid var(--cr-green-700)',
++              marginBottom: '16px',
++            }}
++          >
++            <Shield style={{ width: '28px', height: '28px', color: 'var(--cr-green-400)' }} />
+           </div>
+-          <h1 className="text-2xl font-bold text-lime-400">CALCULUS LABS</h1>
+-          <p className="text-sm mt-1" style={{ color: '#8899AA' }}>AI Intelligence Portal v2.0</p>
++          <h1
++            style={{
++              fontFamily: "'Space Grotesk', sans-serif",
++              fontSize: '22px',
++              fontWeight: 700,
++              color: 'var(--cr-green-400)',
++              letterSpacing: '0.04em',
++              margin: '0 0 4px',
++            }}
++          >
++            CALCULUS LABS
++          </h1>
++          <p style={{ fontSize: '12px', color: 'var(--cr-text-dim)', margin: 0 }}>
++            AI Intelligence Portal v2.2
++          </p>
+         </div>
+ 
+         {/* Error */}
+         {error && (
+-          <div className="flex items-center gap-2 p-3 rounded-lg mb-4 text-sm"
+-               style={{ background: 'rgba(192, 57, 43, 0.15)', color: '#E74C3C' }}>
+-            <AlertCircle className="w-4 h-4 shrink-0" />
++          <div
++            style={{
++              display: 'flex',
++              alignItems: 'center',
++              gap: '8px',
++              padding: '10px 14px',
++              borderRadius: 'var(--cr-radius-sm)',
++              background: 'rgba(214, 69, 69, 0.1)',
++              border: '1px solid rgba(214, 69, 69, 0.25)',
++              color: 'var(--cr-danger)',
++              fontSize: '13px',
++              marginBottom: '16px',
++            }}
++          >
++            <AlertCircle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+             <span>{error}</span>
+           </div>
+         )}
+ 
+         {/* Form */}
+         <form onSubmit={handleSubmit}>
+-          <label className="block text-sm font-medium mb-2" style={{ color: '#8899AA' }}>
++          <label
++            style={{
++              display: 'block',
++              fontSize: '12px',
++              fontWeight: 500,
++              color: 'var(--cr-text-muted)',
++              marginBottom: '8px',
++              letterSpacing: '0.02em',
++            }}
++          >
+             Email Address
+           </label>
+           <input
+@@ -55,27 +112,62 @@ export default function LoginPage() {
+             onChange={(e) => setEmail(e.target.value)}
+             placeholder="you@calculusresearch.io"
+             required
+-            className="w-full px-4 py-3 rounded-lg text-white text-sm outline-none transition-all
+-                       focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+-            style={{ background: 'var(--navy-dark)', border: '1px solid #222222' }}
++            style={{
++              width: '100%',
++              padding: '12px 16px',
++              borderRadius: 'var(--cr-radius-sm)',
++              border: '1px solid var(--cr-border)',
++              background: 'var(--cr-charcoal-deep)',
++              color: 'var(--cr-text)',
++              fontSize: '14px',
++              outline: 'none',
++              transition: 'border-color 150ms',
++            }}
++            onFocus={(e) => {
++              e.currentTarget.style.borderColor = 'var(--cr-green-600)';
++            }}
++            onBlur={(e) => {
++              e.currentTarget.style.borderColor = 'var(--cr-border)';
++            }}
+           />
+-          <p className="text-xs mt-2" style={{ color: '#667788' }}>
++          <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '6px' }}>
+             Domain-restricted access: @calculusresearch.io
+           </p>
+ 
+           <button
+             type="submit"
+             disabled={loading || !email}
+-            className="w-full mt-6 py-3 rounded-lg text-white font-semibold text-sm transition-all
+-                       disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+-            style={{ background: 'var(--blue)' }}
++            style={{
++              width: '100%',
++              marginTop: '24px',
++              padding: '12px',
++              borderRadius: 'var(--cr-radius-sm)',
++              border: '1px solid var(--cr-green-700)',
++              background: 'var(--cr-green-900)',
++              color: 'var(--cr-green-400)',
++              fontFamily: "'Space Grotesk', sans-serif",
++              fontSize: '14px',
++              fontWeight: 600,
++              cursor: loading || !email ? 'not-allowed' : 'pointer',
++              opacity: loading || !email ? 0.5 : 1,
++              transition: 'all 150ms',
++              letterSpacing: '0.02em',
++            }}
++            onMouseEnter={(e) => {
++              if (!loading && email) {
++                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-green-700)';
++              }
++            }}
++            onMouseLeave={(e) => {
++              (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-green-900)';
++            }}
+           >
+             {loading ? 'Authenticating...' : 'Sign In'}
+           </button>
+         </form>
+ 
+         {/* Footer */}
+-        <p className="text-center text-xs mt-6" style={{ color: '#556677' }}>
++        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '28px' }}>
+           Calculus Holdings LLC &middot; Secured with JWT authentication
+         </p>
+       </div>
