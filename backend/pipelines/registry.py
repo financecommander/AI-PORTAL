@@ -10,12 +10,22 @@ Hand-coded pipelines take priority on name collisions.
 import logging
 from backend.pipelines.base_pipeline import BasePipeline
 from backend.pipelines.forge_intelligence import ForgeIntelligence
+from backend.pipelines.lead_ranking_pipeline import LeadRankingPipeline
+from backend.pipelines.underwriting_pipeline import UnderwritingPipeline
+from backend.pipelines.due_diligence_pipeline import DueDiligencePipeline
+from backend.pipelines.portfolio_monitoring_pipeline import PortfolioMonitoringPipeline
+from backend.pipelines.investor_reporting_pipeline import InvestorReportingPipeline
 
 logger = logging.getLogger(__name__)
 
 # Hand-coded pipeline factories (always available)
 _REGISTRY: dict[str, callable] = {
     "forge_intelligence": lambda: ForgeIntelligence(),
+    "lead_ranking": lambda: LeadRankingPipeline(),
+    "underwriting": lambda: UnderwritingPipeline(),
+    "due_diligence": lambda: DueDiligencePipeline(),
+    "portfolio_monitoring": lambda: PortfolioMonitoringPipeline(),
+    "investor_reporting": lambda: InvestorReportingPipeline(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
@@ -102,4 +112,3 @@ def list_pipelines() -> list[dict]:
         except Exception as e:
             logger.error(f"Failed to load pipeline '{name}': {e}")
             continue
-    return result

@@ -1,30 +1,33 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '../api/client';
-import type { Attachment, ChatMessage } from '../types';
+import type { ChatMessage } from '../types';
 
-interface UseChatReturn {
+interface UseDirectChatReturn {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
-  sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
+  sendMessage: (content: string) => Promise<void>;
   stopStreaming: () => void;
   clearChat: () => void;
 }
 
-export function useChat(specialistId: string | null): UseChatReturn {
+export function useDirectChat(
+  provider: string | null,
+  model: string | null,
+): UseDirectChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const stoppedRef = useRef(false);
 
-  // Clear chat when specialist changes
+  // Clear chat when provider or model changes
   useEffect(() => {
     setMessages([]);
     setIsStreaming(false);
     setError(null);
     stoppedRef.current = false;
-  }, [specialistId]);
+  }, [provider, model]);
 
   const clearChat = () => {
     setMessages([]);
@@ -36,17 +39,15 @@ export function useChat(specialistId: string | null): UseChatReturn {
     setIsStreaming(false);
   };
 
-  const sendMessage = async (content: string, attachments?: Attachment[]) => {
-    if (!specialistId) return;
+  const sendMessage = async (content: string) => {
+    if (!provider || !model) return;
 
     setError(null);
     stoppedRef.current = false;
 
-    const userMessage: ChatMessage = { role: 'user', content, attachments };
+    const userMessage: ChatMessage = { role: 'user', content };
 
-    // Build history BEFORE appending new message.
-    // Only send role + content (no base64 data from previous attachments —
-    // the LLM already saw those in prior turns).
+    // Build history BEFORE appending new message
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
 
     // Append user message + empty assistant placeholder
@@ -59,8 +60,9 @@ export function useChat(specialistId: string | null): UseChatReturn {
     setIsStreaming(true);
 
     try {
-      await api.streamChat(
-        specialistId,
+      await api.streamDirectChat(
+        provider,
+        model,
         content,
         history,
         (chunk) => {
@@ -90,7 +92,6 @@ export function useChat(specialistId: string | null): UseChatReturn {
             return updated;
           });
         },
-        attachments,  // Pass current message attachments to API
       );
     } catch (err) {
       if (!stoppedRef.current) {

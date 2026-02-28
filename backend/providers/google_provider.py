@@ -18,13 +18,44 @@ class GoogleProvider(BaseProvider):
         super().__init__("google")
         genai.configure(api_key=api_key)
 
+    @staticmethod
+    def _content_to_parts(content) -> list:
+        """Convert a message's content field to Gemini parts format.
+
+        Handles both simple strings and rich content arrays (with images).
+        """
+        if isinstance(content, str):
+            return [content]
+
+        if isinstance(content, list):
+            parts: list = []
+            for block in content:
+                if not isinstance(block, dict):
+                    parts.append(str(block))
+                elif block.get("type") == "text":
+                    parts.append(block["text"])
+                elif block.get("type") == "inline_data":
+                    parts.append({
+                        "inline_data": {
+                            "mime_type": block["inline_data"]["mime_type"],
+                            "data": block["inline_data"]["data"],
+                        }
+                    })
+                # Skip unsupported block types gracefully
+            return parts
+
+        return [str(content)]
+
     async def send_message(
         self, messages: list[dict], model: str,
         temperature: float = 0.7, max_tokens: int = 4096,
         system_prompt: str | None = None,
     ) -> ProviderResponse:
         gemini_messages = [
-            {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
+            {
+                "role": "user" if m["role"] == "user" else "model",
+                "parts": self._content_to_parts(m["content"]),
+            }
             for m in messages
         ]
         gemini_model = genai.GenerativeModel(

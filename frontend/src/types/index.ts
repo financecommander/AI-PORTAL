@@ -10,9 +10,17 @@ export interface Specialist {
   version: number;
 }
 
+export interface Attachment {
+  filename: string;
+  content_type: string;     // MIME type: "image/png", "application/pdf", etc.
+  data_base64: string;      // base64-encoded file content (no data: URI prefix)
+  size_bytes: number;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  attachments?: Attachment[];   // Files attached to this message (user messages only)
   tokens?: { input: number; output: number };
   cost_usd?: number;
   latency_ms?: number;
@@ -56,6 +64,28 @@ export interface PipelineRun {
   duration_ms?: number;
   created_at?: string;
 }
+
+// ── Direct LLM Chat ─────────────────────────────────────────────
+
+export interface LLMModel {
+  id: string;
+  name: string;
+  tier: 'top' | 'mid';
+  input_price: number;
+  output_price: number;
+}
+
+export interface LLMProvider {
+  id: string;
+  name: string;
+  models: LLMModel[];
+}
+
+export interface LLMModelsResponse {
+  providers: LLMProvider[];
+}
+
+// ── Usage ───────────────────────────────────────────────────────
 
 export interface UsageLog {
   id: number;

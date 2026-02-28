@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  MessageSquare, Brain, BarChart3, Settings, LogOut, ChevronRight
+  Sparkles, MessageSquare, Brain, BarChart3, Settings, LogOut, ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const navItems = [
-  { to: '/', icon: MessageSquare, label: 'Chat' },
+  { to: '/', icon: Sparkles, label: 'Chat' },
+  { to: '/specialists', icon: MessageSquare, label: 'Specialists' },
   { to: '/pipelines', icon: Brain, label: 'Intelligence Pipelines' },
   { to: '/usage', icon: BarChart3, label: 'Usage & Costs' },
   { to: '/settings', icon: Settings, label: 'Settings' },

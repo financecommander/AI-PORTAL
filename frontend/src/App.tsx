@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import LLMChatPage from './pages/LLMChatPage';
 import ChatPage from './pages/ChatPage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
@@ -21,7 +22,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginGuard />} />
           <Route element={<Layout />}>
-            <Route index element={<ChatPage />} />
+            <Route index element={<LLMChatPage />} />
+            <Route path="specialists" element={<ChatPage />} />
             <Route path="pipelines" element={<PipelinesPage />} />
             <Route path="usage" element={<UsagePage />} />
             <Route path="settings" element={<SettingsPage />} />

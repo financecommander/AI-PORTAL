@@ -216,7 +216,15 @@ class LocalTernaryProvider(BaseProvider):
         text = ""
         for msg in reversed(messages):
             if msg.get("role") == "user":
-                text = msg.get("content", "")
+                raw_content = msg.get("content", "")
+                if isinstance(raw_content, list):
+                    # Rich content array — extract text blocks, ignore images
+                    text = " ".join(
+                        block["text"] for block in raw_content
+                        if isinstance(block, dict) and block.get("type") == "text"
+                    )
+                else:
+                    text = raw_content
                 break
 
         # Tokenize and predict
@@ -264,7 +272,14 @@ class LocalTernaryProvider(BaseProvider):
             parts.append(f"<|system|>\n{system_prompt}")
         for msg in messages:
             role = msg.get("role", "user")
-            content = msg.get("content", "")
+            raw_content = msg.get("content", "")
+            if isinstance(raw_content, list):
+                content = " ".join(
+                    block["text"] for block in raw_content
+                    if isinstance(block, dict) and block.get("type") == "text"
+                )
+            else:
+                content = raw_content
             parts.append(f"<|{role}|>\n{content}")
         parts.append("<|assistant|>\n")
         prompt = "\n".join(parts)
