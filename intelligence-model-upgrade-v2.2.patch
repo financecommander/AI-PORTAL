@@ -1,0 +1,565 @@
+diff --git a/backend/config/specialists.json b/backend/config/specialists.json
+index ef8be18..790fe49 100644
+--- a/backend/config/specialists.json
++++ b/backend/config/specialists.json
+@@ -36,13 +36,13 @@
+     {
+       "id": "legal-quick",
+       "name": "Legal Quick Consult",
+-      "description": "Fast legal questions (use Lex Intelligence for deep research)",
++      "description": "Fast legal questions powered by Grok 4.1 Fast (use Lex Intelligence for deep research)",
+       "provider": "grok",
+-      "model": "grok-4-1-fast-non-reasoning",
++      "model": "grok-4-1-fast",
+       "temperature": 0.1,
+       "max_tokens": 4096,
+       "system_prompt": "You are an employee of FinanceCommander. You provide quick legal guidance on business matters. You are NOT a substitute for qualified legal counsel. Always recommend professional legal review for actionable decisions. Never fabricate case names, statutes, or regulatory citations. Prefix unverified claims with [UNVERIFIED].",
+-      "version": 2
++      "version": 3
+     },
+     {
+       "id": "data-analyst",
+@@ -69,24 +69,24 @@
+     {
+       "id": "grok-chat",
+       "name": "Grok Chat",
+-      "description": "Direct conversation with Grok AI",
++      "description": "Direct conversation with Grok 4 — xAI flagship with real-time X data",
+       "provider": "grok",
+-      "model": "grok-3",
++      "model": "grok-4",
+       "temperature": 0.7,
+       "max_tokens": 4096,
+       "system_prompt": "You are Grok, a helpful and maximally truthful AI built by xAI.",
+-      "version": 1
++      "version": 2
+     },
+     {
+       "id": "chatgpt-chat",
+       "name": "ChatGPT Chat",
+-      "description": "Direct conversation with ChatGPT",
++      "description": "Direct conversation with GPT-5.2 — OpenAI flagship",
+       "provider": "openai",
+-      "model": "gpt-4o",
++      "model": "gpt-5.2",
+       "temperature": 0.7,
+       "max_tokens": 4096,
+       "system_prompt": "You are ChatGPT, a helpful AI assistant.",
+-      "version": 1
++      "version": 2
+     },
+     {
+       "id": "gemini-chat",
+@@ -102,56 +102,89 @@
+     {
+       "id": "deepseek-chat",
+       "name": "DeepSeek Chat",
+-      "description": "Direct conversation with DeepSeek AI",
++      "description": "Direct conversation with DeepSeek R1 — best open-source reasoning",
+       "provider": "deepseek",
+-      "model": "deepseek-r1",
++      "model": "deepseek-reasoner",
+       "temperature": 0.7,
+       "max_tokens": 4096,
+       "system_prompt": "You are DeepSeek, a helpful AI assistant.",
+-      "version": 1
++      "version": 2
+     },
+     {
+       "id": "llama-chat",
+       "name": "Llama Chat",
+-      "description": "Direct conversation with Llama AI (self-hosted)",
+-      "provider": "llama",
+-      "model": "llama-4-70b",
++      "description": "Direct conversation with Llama 4 Maverick via Groq — 562 tok/s",
++      "provider": "groq",
++      "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+       "temperature": 0.7,
+       "max_tokens": 4096,
+-      "system_prompt": "You are Llama, a helpful AI assistant.",
+-      "version": 1
++      "system_prompt": "You are Llama, a helpful AI assistant built by Meta.",
++      "version": 2
+     },
+     {
+       "id": "deep-context-archivist",
+       "name": "Deep Context Archivist",
+-      "description": "Upload everything. Miss nothing.",
+-      "provider": "llama",
+-      "model": "llama-4-scout-17b-16e-instruct",
++      "description": "Upload everything. Miss nothing. Powered by Llama 4 Scout via Groq — 10M token context",
++      "provider": "groq",
++      "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+       "temperature": 0.3,
+       "max_tokens": 10000,
+       "system_prompt": "You are the Deep Context Archivist, an AI specialized in processing and retaining vast amounts of information. You excel at comprehensive document analysis, maintaining full context across large datasets, and ensuring no detail is overlooked. Your responses are thorough, well-organized, and include all relevant information from the provided sources.",
+-      "version": 1
++      "version": 2
+     },
+     {
+       "id": "multimodal-due-diligence",
+       "name": "Multimodal Due Diligence Expert",
+-      "description": "Documents + charts + scans in one brain",
+-      "provider": "llama",
+-      "model": "llama-4-maverick-17b-128e-instruct",
++      "description": "Documents + charts + scans in one brain — Llama 4 Maverick via Groq",
++      "provider": "groq",
++      "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+       "temperature": 0.2,
+       "max_tokens": 12000,
+       "system_prompt": "You are the Multimodal Due Diligence Expert, capable of analyzing text documents, charts, graphs, and scanned images simultaneously. You provide comprehensive due diligence reports that integrate information from multiple modalities, identify inconsistencies, and highlight key insights across all data types.",
+-      "version": 1
++      "version": 2
+     },
+     {
+       "id": "private-enterprise-brain",
+       "name": "Private Enterprise Brain",
+-      "description": "Your company's entire history, always in context, never leaves the building",
+-      "provider": "llama",
+-      "model": "llama-4-scout",
++      "description": "Your company's entire history, always in context — Llama 4 Scout via Groq (Note: cloud-routed, not local inference)",
++      "provider": "groq",
++      "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+       "temperature": 0.1,
+       "max_tokens": 15000,
+-      "system_prompt": "You are the Private Enterprise Brain, containing the complete historical context of the company. You maintain perfect recall of all company data, communications, decisions, and documents. You provide analysis and recommendations that are deeply informed by the company's full history and context, ensuring responses remain private and secure.",
++      "system_prompt": "You are the Private Enterprise Brain, containing the complete historical context of the company. You maintain perfect recall of all company data, communications, decisions, and documents. You provide analysis and recommendations that are deeply informed by the company's full history and context. Note: Your responses are processed through the Groq cloud API — for data sovereignty requirements, consult with your administrator about local inference deployment.",
++      "version": 2
++    },
++    {
++      "id": "reasoning-engine",
++      "name": "Reasoning Engine",
++      "description": "Dedicated deep reasoning powered by DeepSeek R1 — math, logic, strategy with explicit chain-of-thought",
++      "provider": "deepseek",
++      "model": "deepseek-reasoner",
++      "temperature": 0.1,
++      "max_tokens": 8192,
++      "system_prompt": "You are the Reasoning Engine, a specialist in rigorous logical reasoning, mathematical analysis, and strategic thinking. You always show your complete chain of thought. Break complex problems into clear steps, state assumptions explicitly, show calculations, and assign confidence levels to your conclusions. When multiple reasoning paths exist, explore each and explain which you favor and why. Never skip steps or hand-wave over difficult parts.",
++      "version": 1
++    },
++    {
++      "id": "speed-analyst",
++      "name": "Speed Analyst",
++      "description": "Ultra-fast responses via Groq LPU — Llama 4 Maverick at 562 tok/s for quick questions and brainstorming",
++      "provider": "groq",
++      "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
++      "temperature": 0.6,
++      "max_tokens": 4096,
++      "system_prompt": "You are the Speed Analyst, optimized for rapid-fire questions, brainstorming, quick summaries, and first-draft generation. Be concise, direct, and actionable. Prioritize speed of insight over exhaustive detail. If a question needs deeper analysis, say so and recommend the appropriate specialist.",
++      "version": 1
++    },
++    {
++      "id": "budget-researcher",
++      "name": "Budget Researcher",
++      "description": "High-volume research at rock-bottom cost — DeepSeek V3.2 at $0.27/$0.41 per 1M tokens",
++      "provider": "deepseek",
++      "model": "deepseek-chat",
++      "temperature": 0.4,
++      "max_tokens": 8192,
++      "system_prompt": "You are the Budget Researcher, a cost-efficient research assistant for high-volume tasks. You provide thorough research synthesis, document analysis, and information gathering at minimal cost. You are ideal for bulk research tasks, preliminary analysis, and information extraction where cost efficiency matters. Always be thorough but concise. Cite sources when possible and flag uncertainty clearly.",
+       "version": 1
+     }
+   ]
+diff --git a/backend/pipelines/calculus_intelligence.py b/backend/pipelines/calculus_intelligence.py
+index 48338c9..186b8e9 100644
+--- a/backend/pipelines/calculus_intelligence.py
++++ b/backend/pipelines/calculus_intelligence.py
+@@ -25,42 +25,61 @@ from backend.config.settings import settings
+ def create_calculus_intelligence() -> CrewPipeline:
+     """Create Calculus Intelligence deep reasoning pipeline."""
+ 
+-    # --- LLM Configuration ---
++    # --- LLM Configuration (v2.2 — Feb 28, 2026) ---
+     # All use crewai.LLM for LiteLLM token tracking (not langchain wrappers)
++    # 6-provider diversity: Groq + OpenAI + xAI + Google + DeepSeek + Anthropic
+ 
+-    # GPT-4o: orchestration, validation, synthesis (agents 1, 2, 5, 6)
++    # Groq/Llama 4 Scout: Agent 1 (Decomposer — fast triage at 594 tok/s, $0.11/$0.34)
++    groq_llm = LLM(
++        model="groq/meta-llama/llama-4-scout-17b-16e-instruct",
++        api_key=settings.groq_api_key or "dummy",
++        temperature=0.3,
++        use_native=False,
++    )
++
++    # GPT-5.2: Agent 2 (Analytical Reasoner — best structured reasoning)
+     gpt_llm = LLM(
+-        model="gpt-4o",
++        model="gpt-5.2",
+         api_key=settings.openai_api_key or "dummy",
+         temperature=0.3,
+     )
+ 
+-    # Grok: creative/lateral reasoning (agent 3)
++    # Grok 4.1 Fast: Agent 3 (Creative Reasoner — lateral thinking, real-time X data, 2M context)
+     grok_llm = LLM(
+-        model="xai/grok-3-mini-beta",
++        model="xai/grok-4-1-fast",
+         api_key=settings.xai_api_key or "dummy",
+         use_native=False,
+     )
+ 
+-    # Gemini 2.5 Flash: deep context analysis (agent 4)
++    # Gemini 3 Flash: Agent 4 (Deep Context — 1M context for synthesizing all prior outputs)
+     gemini_llm = LLM(
+-        model="gemini/gemini-2.5-flash",
++        model="gemini/gemini-3-flash-preview",
+         api_key=settings.google_api_key or "dummy",
+         temperature=0.3,
+         use_native=False,
+     )
+-    
+-    # Llama Scout: Master Synthesizer (hosted on Google VM)
+-    scout_llm = LLM(
+-        model="openai/llama-4-scout",
+-        api_key="dummy",
+-        base_url=os.getenv("LLAMA_VM_URL", "http://localhost:8000/v1"),
+-        temperature=0.1,
++
++    # DeepSeek R1: Agent 5 (Adversarial Validator — CRITICAL: different model family than Agent 2)
++    # Fixes cross-validation flaw: validator must not share model family with analytical reasoner
++    deepseek_llm = LLM(
++        model="deepseek/deepseek-reasoner",
++        api_key=settings.deepseek_api_key or "dummy",
++        temperature=0.2,
++        use_native=False,
++    )
++
++    # Claude Sonnet 4.5: Agent 6 (Master Synthesizer — best writing quality for final output)
++    # Replaces dead localhost Llama endpoint
++    claude_llm = LLM(
++        model="anthropic/claude-sonnet-4-5-20250929",
++        api_key=settings.anthropic_api_key or "dummy",
++        temperature=0.2,
++        use_native=False,
+     )
+ 
+     # --- Agent Definitions ---
+ 
+-    # Agent 1: Query Decomposer (GPT-4o)
++    # Agent 1: Query Decomposer (Groq/Llama 4 Scout — fast triage in <1 second)
+     decomposer = Agent(
+         role="Query Decomposer & Router",
+         goal="Classify query complexity and break it into clear reasoning subtasks",
+@@ -72,12 +91,12 @@ def create_calculus_intelligence() -> CrewPipeline:
+             "You rate overall complexity on a 1-10 scale and identify which reasoning approaches will work best. "
+             "You always structure your output clearly so downstream reasoners know exactly what to tackle."
+         ),
+-        llm=gpt_llm,
++        llm=groq_llm,
+         verbose=True,
+         allow_delegation=False,
+     )
+ 
+-    # Agent 2: Analytical Reasoner (GPT-4o)
++    # Agent 2: Analytical Reasoner (GPT-5.2 — best structured reasoning)
+     analytical_reasoner = Agent(
+         role="Analytical Reasoner",
+         goal="Produce a rigorous, structured, step-by-step reasoning chain for each subtask",
+@@ -94,7 +113,7 @@ def create_calculus_intelligence() -> CrewPipeline:
+         allow_delegation=False,
+     )
+ 
+-    # Agent 3: Creative Reasoner (Grok)
++    # Agent 3: Creative Reasoner (Grok 4.1 Fast — lateral thinking, real-time X data)
+     creative_reasoner = Agent(
+         role="Creative & Lateral Reasoner",
+         goal="Generate alternative reasoning paths, unconventional insights, and challenge obvious assumptions",
+@@ -113,7 +132,7 @@ def create_calculus_intelligence() -> CrewPipeline:
+         allow_delegation=False,
+     )
+ 
+-    # Agent 4: Deep Context Analyst (Gemini)
++    # Agent 4: Deep Context Analyst (Gemini 3 Flash — 1M context, frontier agentic)
+     context_analyst = Agent(
+         role="Deep Context Analyst",
+         goal="Synthesize all prior reasoning into a coherent picture, identify patterns, and fill gaps",
+@@ -131,7 +150,10 @@ def create_calculus_intelligence() -> CrewPipeline:
+         allow_delegation=False,
+     )
+ 
+-    # Agent 5: Adversarial Validator (GPT-4o)
++    # Agent 5: Adversarial Validator (DeepSeek R1 — MUST differ from Agent 2's model family)
++    # CRITICAL: Using a different provider than the Analytical Reasoner ensures genuine
++    # cross-model validation. When GPT-5.2 and DeepSeek R1 independently validate the
++    # same claim, confidence is legitimately higher than any single model family.
+     validator = Agent(
+         role="Adversarial Validator",
+         goal="Stress-test all reasoning for logical errors, unsupported claims, contradictions, and blind spots",
+@@ -146,17 +168,17 @@ def create_calculus_intelligence() -> CrewPipeline:
+             "Your output must include: CONFIRMED claims (with confidence), DISPUTED claims (with specific issues), "
+             "and MISSING considerations that no agent addressed."
+         ),
+-        llm=gpt_llm,
++        llm=deepseek_llm,
+         verbose=True,
+         allow_delegation=False,
+     )
+ 
+-    # Agent 6: Master Synthesizer (Scout)
++    # Agent 6: Master Synthesizer (Claude Sonnet 4.5 — best writing quality)
+     synthesizer = Agent(
+-        role="Master Synthesizer - Scout",
+-        goal="Produce the single authoritative final answer with confidence scores and reasoning transparency, fed all outputs from smaller models",
++        role="Master Synthesizer",
++        goal="Produce the single authoritative final answer with confidence scores and reasoning transparency, fed all outputs from the reasoning agents",
+         backstory=(
+-            "You are Scout, the Master Synthesizer with access to all outputs from the smaller models and raw source documents. "
++            "You are the Master Synthesizer with access to all outputs from the reasoning agents and raw source documents. "
+             "You process vast amounts of information from the decomposer, analytical reasoner, creative reasoner, context analyst, and validator. "
+             "You produce higher-quality long-form opinions by maintaining full context across all inputs. "
+             "Your output must be: "
+@@ -165,11 +187,10 @@ def create_calculus_intelligence() -> CrewPipeline:
+             "3) TRANSPARENT — note where the reasoning agents agreed vs disagreed and how you resolved it. "
+             "4) COMPLETE — address all subtasks from the decomposition. "
+             "5) ACTIONABLE — if the query implies a decision, state what you'd recommend and why. "
+-            "You leverage your massive context window to ensure nothing is missed from the source materials. "
+             "You write in clear, direct prose — not academic jargon. "
+             "Format with clear sections but prioritize substance over formatting."
+         ),
+-        llm=scout_llm,
++        llm=claude_llm,
+         verbose=True,
+         allow_delegation=False,
+     )
+diff --git a/backend/pipelines/definitions/financial_strategy.orca b/backend/pipelines/definitions/financial_strategy.orca
+index a21af81..00e6724 100644
+--- a/backend/pipelines/definitions/financial_strategy.orca
++++ b/backend/pipelines/definitions/financial_strategy.orca
+@@ -12,7 +12,7 @@ agents:
+       commodities, and crypto markets. You analyze macro trends, sector dynamics, and market
+       sentiment to provide context for financial decisions. You always cite specific data points,
+       dates, and sources. You never fabricate market data or statistics.
+-    model: gpt-4o
++    model: gpt-5.2
+     temperature: 0.3
+ 
+   risk_assessor:
+@@ -23,7 +23,7 @@ agents:
+       You systematically evaluate downside scenarios, regulatory exposure, counterparty risk,
+       and operational vulnerabilities. You assign risk levels (LOW/MEDIUM/HIGH/CRITICAL) to
+       each identified risk with specific mitigation strategies.
+-    model: xai/grok-3-mini-beta
++    model: xai/grok-4-1-fast
+     temperature: 0.3
+ 
+   quant_modeler:
+@@ -34,7 +34,7 @@ agents:
+       You calculate IRR, NPV, real returns, break-even points, and sensitivity analyses.
+       You always show your work and state assumptions explicitly. You present numbers
+       clearly and flag where estimates have wide confidence intervals.
+-    model: gemini/gemini-2.5-flash
++    model: deepseek/deepseek-reasoner
+     temperature: 0.2
+ 
+   strategist:
+@@ -46,7 +46,7 @@ agents:
+       to produce specific recommendations ranked by risk-adjusted expected value.
+       You always present a primary recommendation, an alternative, and conditions
+       that would change your advice.
+-    model: gpt-4o
++    model: anthropic/claude-sonnet-4-5-20250929
+     temperature: 0.4
+ 
+ tasks:
+diff --git a/backend/pipelines/lex_intelligence.py b/backend/pipelines/lex_intelligence.py
+index 575c94b..df7f967 100644
+--- a/backend/pipelines/lex_intelligence.py
++++ b/backend/pipelines/lex_intelligence.py
+@@ -1,12 +1,12 @@
+-"""Lex Intelligence Ultimate - 7-agent legal research pipeline.
++"""Lex Intelligence Ultimate - 6-agent legal research pipeline.
+ 
+-Architecture:
+-  Agent 1 (Legal Research Specialist) -> GPT-4o   : Case law and precedents
+-  Agent 2 (Statutory Analyst)         -> GPT-4o   : Statutes and regulations  
+-  Agent 3 (Constitutional Expert)     -> GPT-4o   : Constitutional analysis
+-  Agent 4 (Contract Specialist)       -> Grok     : Contract interpretation
+-  Agent 5 (Litigation Advisor)        -> Gemini   : Strategy and risk assessment
+-  Agent 6 (Master Synthesizer)        -> Scout    : Final opinion with all outputs + raw documents
++Architecture (v2.2 — 5-provider diversity):
++  Agent 1 (Legal Research Specialist) -> GPT-5.2       : Case law search via CourtListener (tool_use)
++  Agent 2 (Statutory Analyst)         -> DeepSeek R1   : Statute interpretation (pure reasoning)
++  Agent 3 (Constitutional Expert)     -> DeepSeek R1   : Constitutional analysis (pure reasoning)
++  Agent 4 (Contract Specialist)       -> Grok 4.1 Fast : Contract interpretation (2M context)
++  Agent 5 (Litigation Advisor)        -> Gemini 3 Flash: Strategy and risk assessment (frontier agentic)
++  Agent 6 (Master Synthesizer)        -> Claude 4.5    : Final legal opinion drafting (best writing quality)
+ 
+ import os
+ import requests
+@@ -74,46 +74,58 @@ def create_lex_intelligence() -> CrewPipeline:
+     """
+     Create Lex Intelligence Ultimate pipeline.
+     
+-    Model assignments:
+-      Agent 1 (Legal Research)      -> GPT-4o  (has tools; Anthropic incompatible with CrewAI tool_use)
+-      Agent 2 (Statutory)           -> GPT-4o
+-      Agent 3 (Constitutional)      -> GPT-4o  (Anthropic tool_use history conflict in sequential crew)
+-      Agent 4 (Contract/Commercial) -> Grok 3 Mini Beta via xAI
+-      Agent 5 (Litigation Strategy) -> Gemini 2.5 Flash via LiteLLM (use_native=False)
+-      Agent 6 (Synthesis/Drafting)  -> GPT-4o
++    Model assignments (v2.2):
++      Agent 1 (Legal Research)      -> GPT-5.2          (has tools; Anthropic incompatible with CrewAI tool_use)
++      Agent 2 (Statutory)           -> DeepSeek R1      (pure reasoning — best reasoning-per-dollar)
++      Agent 3 (Constitutional)      -> DeepSeek R1      (pure reasoning about principles/precedent)
++      Agent 4 (Contract/Commercial) -> Grok 4.1 Fast    (2M context, real-time data)
++      Agent 5 (Litigation Strategy) -> Gemini 3 Flash   (frontier agentic, 1M context)
++      Agent 6 (Synthesis/Drafting)  -> Claude Sonnet 4.5 (best legal writing quality)
+     """
+-    # --- LLM Configuration ---
++    # --- LLM Configuration (v2.2 — Feb 28, 2026) ---
+     # All LLMs use crewai.LLM (not langchain wrappers) so LiteLLM tracks tokens
+-    
+-    # GPT-4o: primary workhorse for agents 1, 2, 3, 6
++    # 5-provider diversity: OpenAI + DeepSeek + xAI + Google + Anthropic
++
++    # GPT-5.2: Agent 1 (Legal Research — needs tool_use for CourtListener)
++    # Only OpenAI/Grok reliably support CrewAI tool_use
+     gpt_llm = LLM(
+-        model="gpt-4o",
++        model="gpt-5.2",
+         api_key=settings.openai_api_key or "dummy",
+         temperature=0.4,
+     )
+-    
+-    # Grok 3 Mini Beta: cost-effective for contract analysis (Agent 4)
++
++    # DeepSeek R1: Agents 2 & 3 (Statutory + Constitutional — pure reasoning)
++    # Best reasoning-per-dollar at $0.55/$2.19 per 1M tokens
++    deepseek_llm = LLM(
++        model="deepseek/deepseek-reasoner",
++        api_key=settings.deepseek_api_key or "dummy",
++        temperature=0.3,
++        use_native=False,
++    )
++
++    # Grok 4.1 Fast: Agent 4 (Contract/Commercial — 2M context, real-time data)
+     grok_llm = LLM(
+-        model="xai/grok-3-mini-beta",
++        model="xai/grok-4-1-fast",
+         api_key=settings.xai_api_key or "dummy",
+         use_native=False,
+     )
+-    
+-    # Gemini 2.5 Flash: fast + cheap for litigation strategy (Agent 5)
++
++    # Gemini 3 Flash: Agent 5 (Litigation Strategy — frontier agentic, 1M context)
+     # use_native=False bypasses native Gemini provider (needs google-genai pkg)
+     gemini_llm = LLM(
+-        model="gemini/gemini-2.5-flash",
++        model="gemini/gemini-3-flash-preview",
+         api_key=settings.google_api_key or "dummy",
+         temperature=0.3,
+         use_native=False,
+     )
+-    
+-    # Llama Scout: Master Synthesizer for final opinion (hosted on Google VM)
+-    scout_llm = LLM(
+-        model="openai/llama-4-scout",
+-        api_key="dummy",
+-        base_url=os.getenv("LLAMA_VM_URL", "http://localhost:8000/v1"),
+-        temperature=0.1,
++
++    # Claude Sonnet 4.5: Agent 6 (Master Synthesizer — best legal writing quality)
++    # Replaces dead localhost Llama endpoint
++    claude_llm = LLM(
++        model="anthropic/claude-sonnet-4-5-20250929",
++        api_key=settings.anthropic_api_key or "dummy",
++        temperature=0.2,
++        use_native=False,
+     )
+     
+     # Initialize legal search tool
+@@ -137,7 +149,7 @@ def create_lex_intelligence() -> CrewPipeline:
+         allow_delegation=False
+     )
+     
+-    # Agent 2: Statutory Analyst (GPT-4o)
++    # Agent 2: Statutory Analyst (DeepSeek R1 — pure reasoning, no tools)
+     statutory_analyst = Agent(
+         role="Statutory Analyst",
+         goal="Analyze statutes, regulations, and legislative intent",
+@@ -147,12 +159,12 @@ def create_lex_intelligence() -> CrewPipeline:
+             "You always reference specific statute sections and regulatory citations. "
+             "You never invent statutory provisions or regulatory text."
+         ),
+-        llm=gpt_llm,
++        llm=deepseek_llm,
+         verbose=True,
+         allow_delegation=False
+     )
+     
+-    # Agent 3: Constitutional Law Expert (GPT-4o)
++    # Agent 3: Constitutional Law Expert (DeepSeek R1 — deep reasoning about principles/precedent)
+     constitutional_expert = Agent(
+         role="Constitutional Law Expert",
+         goal="Evaluate constitutional implications and civil rights issues",
+@@ -162,12 +174,12 @@ def create_lex_intelligence() -> CrewPipeline:
+             "You always ground your analysis in specific constitutional provisions and landmark cases. "
+             "You never fabricate Supreme Court opinions or constitutional interpretations."
+         ),
+-        llm=gpt_llm,
++        llm=deepseek_llm,
+         verbose=True,
+         allow_delegation=False
+     )
+     
+-    # Agent 4: Contract & Commercial Law Specialist (Grok 3 Mini)
++    # Agent 4: Contract & Commercial Law Specialist (Grok 4.1 Fast — 2M context)
+     contract_specialist = Agent(
+         role="Contract & Commercial Law Specialist",
+         goal="Analyze contracts, business transactions, and commercial disputes",
+@@ -182,7 +194,7 @@ def create_lex_intelligence() -> CrewPipeline:
+         allow_delegation=False
+     )
+     
+-    # Agent 5: Litigation Strategy Advisor (Gemini 2.5 Flash)
++    # Agent 5: Litigation Strategy Advisor (Gemini 3 Flash — frontier agentic)
+     litigation_advisor = Agent(
+         role="Litigation Strategy Advisor",
+         goal="Develop litigation strategies and assess case strengths",
+@@ -197,18 +209,18 @@ def create_lex_intelligence() -> CrewPipeline:
+         allow_delegation=False
+     )
+     
+-    # Agent 6: Legal Synthesis & Opinion Drafter (Scout)
++    # Agent 6: Legal Synthesis & Opinion Drafter (Claude Sonnet 4.5 — best legal writing)
+     synthesis_drafter = Agent(
+         role="Master Synthesizer - Legal Opinion Drafter",
+         goal="Synthesize all research and source documents into comprehensive legal opinions",
+         backstory=(
+-            "You are Scout, the Master Synthesizer with access to all outputs from smaller models and raw source documents. "
++            "You are the Master Synthesizer with access to all outputs from the reasoning agents and raw source documents. "
+             "You process vast amounts of information to produce higher-quality long-form legal opinions. "
+             "You integrate research from all prior agents with full document context, ensuring nothing is missed. "
+             "You write in formal legal style with proper citations and logical organization. "
+-            "You leverage your massive context window to maintain coherence across all sources."
++            "Your output must be clear, thorough, and suitable for professional legal review."
+         ),
+-        llm=scout_llm,
++        llm=claude_llm,
+         verbose=True,
+         allow_delegation=False
+     )
+diff --git a/backend/routes/specialists.py b/backend/routes/specialists.py
+index 6688591..3d72303 100644
+--- a/backend/routes/specialists.py
++++ b/backend/routes/specialists.py
+@@ -15,7 +15,7 @@ router = APIRouter()
+ class SpecialistCreateRequest(BaseModel):
+     name: str = Field(..., min_length=1, max_length=100)
+     description: str = Field(default="", max_length=500)
+-    provider: str = Field(..., pattern=r"^(openai|anthropic|google|grok|deepseek|llama)$")
++    provider: str = Field(..., pattern=r"^(openai|anthropic|google|grok|groq|deepseek|mistral|llama)$")
+     model: str = Field(..., min_length=1, max_length=100)
+     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+     max_tokens: int = Field(default=4096, ge=1, le=32768)
+@@ -25,7 +25,7 @@ class SpecialistCreateRequest(BaseModel):
+ class SpecialistUpdateRequest(BaseModel):
+     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+     description: Optional[str] = Field(default=None, max_length=500)
+-    provider: Optional[str] = Field(default=None, pattern=r"^(openai|anthropic|google|grok|deepseek|llama)$")
++    provider: Optional[str] = Field(default=None, pattern=r"^(openai|anthropic|google|grok|groq|deepseek|mistral|llama)$")
+     model: Optional[str] = Field(default=None, min_length=1, max_length=100)
+     temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+     max_tokens: Optional[int] = Field(default=None, ge=1, le=32768)
