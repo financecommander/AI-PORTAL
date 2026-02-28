@@ -28,7 +28,8 @@ interface ModelSelectorProps {
   mode: 'grid' | 'compact';
 }
 
-function formatPrice(input: number, output: number): string {
+function formatPrice(input?: number, output?: number): string {
+  if (input == null || output == null) return '';
   if (input < 1) return `$${input.toFixed(2)}/$${output.toFixed(2)}`;
   return `$${input.toFixed(2)}/$${output.toFixed(0)}`;
 }

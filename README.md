@@ -83,6 +83,24 @@ Frontend: http://localhost:3000
 Backend API: http://localhost:8000
 API docs: http://localhost:8000/docs
 
+## Environment Variables
+
+```env
+DB_USER=portal
+DB_PASSWORD=<your-db-password>
+JWT_SECRET=<your-jwt-secret>
+JWT_SECRET_KEY=<your-jwt-secret-key>
+CORS_ORIGINS=http://localhost:3000,http://localhost:8000,http://34.26.83.138
+OPENAI_API_KEY=<your-openai-api-key>
+ANTHROPIC_API_KEY=<your-anthropic-api-key>
+GOOGLE_API_KEY=<your-google-api-key>
+XAI_API_KEY=<your-xai-api-key>
+GROQ_API_KEY=<your-groq-api-key>
+DEEPSEEK_API_KEY=<your-deepseek-api-key>
+MISTRAL_API_KEY=<your-mistral-api-key>
+COURTLISTENER_API_KEY=<your-courtlistener-api-key>
+```
+
 ## Tech Stack
 
 | Layer | Technology |
