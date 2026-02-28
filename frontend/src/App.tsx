@@ -7,6 +7,7 @@ import ChatPage from './pages/ChatPage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
 import SettingsPage from './pages/SettingsPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 
 function LoginGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,6 +22,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginGuard />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
           <Route element={<Layout />}>
             <Route index element={<LLMChatPage />} />
             <Route path="specialists" element={<ChatPage />} />
