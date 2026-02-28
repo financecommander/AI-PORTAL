@@ -30,11 +30,13 @@ _model_cache: dict = {}
 
 
 def _find_triton_path() -> Optional[Path]:
-    """Locate the Triton repo relative to the AI Portal."""
+    """Locate the Triton repo (env var first, then relative paths)."""
     candidates = [
+        # Explicit env var (Docker / production)
+        Path(os.getenv("TRITON_PATH", "")) if os.getenv("TRITON_PATH") else None,
+        # Relative to AI Portal (local dev)
         Path(__file__).resolve().parent.parent.parent / "Triton",
         Path(__file__).resolve().parent.parent.parent.parent / "Triton",
-        Path(os.getenv("TRITON_PATH", "")) if os.getenv("TRITON_PATH") else None,
     ]
     for p in candidates:
         if p and p.exists() and (p / "backend" / "pytorch" / "ternary_tensor.py").exists():

@@ -3,11 +3,17 @@ FROM python:3.12-slim
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl git && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install PyTorch CPU for local ternary model inference
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Clone Triton for ternary credit risk model
+RUN git clone --depth 1 https://github.com/financecommander/Triton.git /app/triton
 
 COPY backend/ ./backend/
 COPY shared/ ./shared/

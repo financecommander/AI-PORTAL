@@ -31,6 +31,8 @@ services:
       XAI_API_KEY: ${XAI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       COURTLISTENER_API_KEY: ${COURTLISTENER_API_KEY:-}
+      TRITON_CHECKPOINT_DIR: /app/triton/checkpoints
+      TRITON_PATH: /app/triton
     ports:
       - "8000:8000"
     depends_on:
