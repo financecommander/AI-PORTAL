@@ -8,8 +8,8 @@ from starlette.responses import JSONResponse
 from backend.auth.jwt_handler import decode_access_token
 
 EXEMPT_PATHS = {"/", "/health", "/auth/login", "/docs", "/openapi.json", "/redoc"}
-RATE_LIMIT = 60  # requests per window
-WINDOW_SECONDS = 3600  # 1 hour
+RATE_LIMIT = 60
+WINDOW_SECONDS = 3600
 
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
@@ -50,7 +50,6 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
             self._buckets[user_key].append(now)
         except Exception:
-            # Never let rate limiter crash a request
             return await call_next(request)
 
         response = await call_next(request)
