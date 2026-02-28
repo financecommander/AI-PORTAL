@@ -104,13 +104,13 @@ def test_api_key_warning_in_production(capsys):
         assert 'WARNING' in captured.err or 'OPENAI_API_KEY' in captured.err
 
 
-def test_no_litellm_in_requirements():
-    """Test that litellm is not in requirements.txt."""
+def test_litellm_in_requirements():
+    """Test that litellm IS in requirements (needed by CrewAI pipelines)."""
     requirements_path = os.path.join(
-        os.path.dirname(__file__), 
-        '..', 
+        os.path.dirname(__file__),
+        '..',
         'requirements.txt'
     )
     with open(requirements_path, 'r') as f:
         requirements = f.read()
-    assert 'litellm' not in requirements.lower()
+    assert 'litellm' in requirements.lower()
