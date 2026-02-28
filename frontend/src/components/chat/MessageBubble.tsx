@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { FileText } from 'lucide-react';
 import type { ChatMessage } from '../../types';
+import { isImageType, formatFileSize } from '../../utils/fileUpload';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -136,7 +138,69 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
         }}
       >
         {isUser ? (
-          <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+          <>
+            {/* Render file attachments above message text */}
+            {message.attachments && message.attachments.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  marginBottom: message.content.trim() ? 8 : 0,
+                }}
+              >
+                {message.attachments.map((att, i) =>
+                  isImageType(att.content_type) ? (
+                    <img
+                      key={i}
+                      src={`data:${att.content_type};base64,${att.data_base64}`}
+                      alt={att.filename}
+                      style={{
+                        maxWidth: 200,
+                        maxHeight: 200,
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        display: 'block',
+                      }}
+                      onClick={() => {
+                        // Open full-size image in new tab
+                        const win = window.open();
+                        if (win) {
+                          win.document.write(
+                            `<img src="data:${att.content_type};base64,${att.data_base64}" style="max-width:100%;height:auto" />`
+                          );
+                          win.document.title = att.filename;
+                        }
+                      }}
+                      title={`${att.filename} — click to view full size`}
+                    />
+                  ) : (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: 8,
+                        padding: '4px 8px',
+                        fontSize: 12,
+                      }}
+                    >
+                      <FileText size={14} />
+                      <span>{att.filename}</span>
+                      <span style={{ opacity: 0.7 }}>
+                        ({formatFileSize(att.size_bytes)})
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
+            {message.content.trim() && (
+              <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+            )}
+          </>
         ) : (
           <>
             {segments!.map((seg, i) =>

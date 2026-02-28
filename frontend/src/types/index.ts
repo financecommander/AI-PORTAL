@@ -10,9 +10,17 @@ export interface Specialist {
   version: number;
 }
 
+export interface Attachment {
+  filename: string;
+  content_type: string;     // MIME type: "image/png", "application/pdf", etc.
+  data_base64: string;      // base64-encoded file content (no data: URI prefix)
+  size_bytes: number;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  attachments?: Attachment[];   // Files attached to this message (user messages only)
   tokens?: { input: number; output: number };
   cost_usd?: number;
   latency_ms?: number;

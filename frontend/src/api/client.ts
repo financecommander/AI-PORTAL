@@ -1,3 +1,5 @@
+import type { Attachment } from '../types';
+
 const BASE_URL = '';  // Uses Vite proxy in dev
 
 interface RequestOptions {
@@ -64,18 +66,31 @@ class ApiClient {
     message: string,
     history: Array<{ role: string; content: string }>,
     onChunk: (chunk: { content: string; is_final: boolean; input_tokens: number; output_tokens: number; cost_usd: number }) => void,
+    attachments?: Attachment[],
   ): Promise<void> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
 
+    const body: Record<string, unknown> = {
+      specialist_id: specialistId,
+      message,
+      conversation_history: history,
+    };
+
+    // Include attachments only when present (keeps backward compatibility)
+    if (attachments && attachments.length > 0) {
+      body.attachments = attachments.map((a) => ({
+        filename: a.filename,
+        content_type: a.content_type,
+        data_base64: a.data_base64,
+        size_bytes: a.size_bytes,
+      }));
+    }
+
     const response = await fetch(`${BASE_URL}/chat/stream`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        specialist_id: specialistId,
-        message,
-        conversation_history: history,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
