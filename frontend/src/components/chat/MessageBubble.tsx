@@ -37,7 +37,7 @@ function renderInlineMarkdown(text: string): string {
   // Inline code (already HTML-escaped, so no XSS risk)
   html = html.replace(
     /`([^`]+)`/g,
-    '<code style="background:#0D1520;padding:2px 6px;border-radius:4px;font-family:monospace">$1</code>',
+    '<code style="background:var(--cr-charcoal-deep);padding:2px 6px;border-radius:4px;font-family:monospace">$1</code>',
   );
 
   // Bold
@@ -79,7 +79,7 @@ function CodeBlock({ content }: { content: string }) {
     <div style={{ position: 'relative', margin: '8px 0' }}>
       <pre
         style={{
-          background: '#0D1520',
+          background: 'var(--cr-charcoal-deep)',
           fontFamily: 'monospace',
           fontSize: 14,
           padding: 12,
@@ -97,9 +97,9 @@ function CodeBlock({ content }: { content: string }) {
           position: 'absolute',
           top: 6,
           right: 8,
-          background: '#2A3A5C',
+          background: 'var(--cr-border)',
           border: 'none',
-          color: '#8899AA',
+          color: 'var(--cr-text-muted)',
           fontSize: 11,
           padding: '2px 8px',
           borderRadius: 4,
@@ -130,7 +130,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
       <div
         style={{
           maxWidth: '80%',
-          background: isUser ? 'var(--blue)' : 'var(--navy-light)',
+          background: isUser ? 'var(--cr-green-900)' : 'var(--cr-charcoal)',
           color: isUser ? '#FFFFFF' : '#E0E0E0',
           borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
           padding: '10px 14px',
@@ -220,7 +220,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
       </div>
 
       {!isUser && hasStats && (
-        <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: 'var(--cr-text-dim)', marginTop: 4 }}>
           {(message.tokens!.input + message.tokens!.output).toLocaleString()} tokens
           &nbsp;·&nbsp;${message.cost_usd!.toFixed(4)}
         </div>

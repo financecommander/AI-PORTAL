@@ -174,8 +174,8 @@ export default function ChatInput({
     <div
       style={{
         padding: '12px 24px 16px',
-        borderTop: '1px solid #2A3A5C',
-        background: 'var(--navy-dark)',
+        borderTop: '1px solid var(--cr-border)',
+        background: 'var(--cr-charcoal-dark)',
         position: 'relative',
       }}
       onDragOver={handleDragOver}
@@ -189,8 +189,8 @@ export default function ChatInput({
             position: 'absolute',
             inset: 0,
             background: 'rgba(46, 117, 182, 0.15)',
-            border: '2px dashed var(--blue)',
-            borderRadius: 12,
+            border: '2px dashed var(--cr-green-600)',
+            borderRadius: 'var(--cr-radius)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -198,7 +198,7 @@ export default function ChatInput({
             pointerEvents: 'none',
           }}
         >
-          <span style={{ color: 'var(--blue)', fontSize: 15, fontWeight: 600 }}>
+          <span style={{ color: 'var(--cr-green-600)', fontSize: 15, fontWeight: 600 }}>
             Drop files here
           </span>
         </div>
@@ -210,10 +210,10 @@ export default function ChatInput({
           style={{
             marginBottom: 8,
             padding: '6px 12px',
-            background: '#3A1A1A',
-            border: '1px solid var(--red)',
-            borderRadius: 8,
-            color: '#FF8888',
+            background: 'rgba(214, 69, 69, 0.1)',
+            border: '1px solid var(--cr-danger)',
+            borderRadius: 'var(--cr-radius-sm)',
+            color: 'var(--cr-danger)',
             fontSize: 12,
           }}
         >
@@ -239,9 +239,9 @@ export default function ChatInput({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                background: 'var(--navy-light)',
-                border: '1px solid #2A3A5C',
-                borderRadius: 8,
+                background: 'var(--cr-charcoal)',
+                border: '1px solid var(--cr-border)',
+                borderRadius: 'var(--cr-radius-sm)',
                 padding: 4,
                 maxWidth: 180,
               }}
@@ -265,12 +265,12 @@ export default function ChatInput({
                     width: 40,
                     height: 40,
                     borderRadius: 6,
-                    background: '#2A3A5C',
+                    background: 'var(--cr-border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    color: '#8899AA',
+                    color: 'var(--cr-text-muted)',
                   }}
                 >
                   <FileText size={18} />
@@ -282,7 +282,7 @@ export default function ChatInput({
                 <div
                   style={{
                     fontSize: 11,
-                    color: '#C0C8D0',
+                    color: 'var(--cr-mist)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -290,7 +290,7 @@ export default function ChatInput({
                 >
                   {pf.attachment.filename}
                 </div>
-                <div style={{ fontSize: 10, color: '#667788' }}>
+                <div style={{ fontSize: 10, color: 'var(--cr-text-dim)' }}>
                   {formatFileSize(pf.attachment.size_bytes)}
                 </div>
               </div>
@@ -305,13 +305,13 @@ export default function ChatInput({
                   width: 18,
                   height: 18,
                   borderRadius: '50%',
-                  background: '#556677',
+                  background: 'var(--cr-text-dim)',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#fff',
+                  color: 'var(--cr-text)',
                   padding: 0,
                 }}
                 title="Remove"
@@ -329,9 +329,9 @@ export default function ChatInput({
           display: 'flex',
           alignItems: 'flex-end',
           gap: 8,
-          background: 'var(--navy-light)',
-          border: `1px solid ${focused || isDragOver ? 'var(--blue)' : '#2A3A5C'}`,
-          borderRadius: 12,
+          background: 'var(--cr-charcoal)',
+          border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : 'var(--cr-border)'}`,
+          borderRadius: 'var(--cr-radius)',
           padding: '8px 8px 8px 6px',
           opacity: disabled ? 0.5 : 1,
           transition: 'border-color 200ms',
@@ -352,7 +352,7 @@ export default function ChatInput({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: pendingFiles.length > 0 ? 'var(--blue)' : '#667788',
+            color: pendingFiles.length > 0 ? 'var(--cr-green-600)' : 'var(--cr-text-dim)',
             transition: 'color 200ms',
           }}
           title="Attach file"
@@ -390,7 +390,7 @@ export default function ChatInput({
             border: 'none',
             outline: 'none',
             resize: 'none',
-            color: '#E0E0E0',
+            color: 'var(--cr-text)',
             fontSize: 14,
             lineHeight: '24px',
             minHeight: 24,
@@ -408,13 +408,13 @@ export default function ChatInput({
               width: 36,
               height: 36,
               borderRadius: '50%',
-              background: 'var(--red)',
+              background: 'var(--cr-danger)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: 'var(--cr-text)',
             }}
             title="Stop"
           >
@@ -429,13 +429,13 @@ export default function ChatInput({
               width: 36,
               height: 36,
               borderRadius: '50%',
-              background: canSend ? 'var(--blue)' : '#2A3A5C',
+              background: canSend ? 'var(--cr-green-600)' : 'var(--cr-border)',
               border: 'none',
               cursor: canSend ? 'pointer' : 'default',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: canSend ? '#fff' : '#556677',
+              color: canSend ? 'var(--cr-text)' : 'var(--cr-text-dim)',
               transition: 'background 200ms',
             }}
             title="Send"

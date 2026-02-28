@@ -4,20 +4,20 @@ import type { LLMProvider } from '../../types';
 
 // Provider accent colors
 const PROVIDER_COLORS: Record<string, string> = {
-  openai: '#10A37F',
-  anthropic: '#D97706',
+  openai: '#3E9B5F',
+  anthropic: '#F2A41F',
   google: '#4285F4',
-  grok: '#EF4444',
-  deepseek: '#6366F1',
-  mistral: '#F97316',
-  groq: '#F97316',  // orange (Groq brand)
+  grok: '#D64545',
+  deepseek: '#7C8CF5',
+  mistral: '#E8853D',
+  groq: '#E8853D',  // orange (Groq brand)
 };
 
 // Tier config
 const TIER_CONFIG: Record<string, { icon: typeof Crown; color: string; label: string }> = {
-  top: { icon: Crown, color: '#F59E0B', label: 'TOP' },
-  mid: { icon: Sparkles, color: '#6B7280', label: 'MID' },
-  budget: { icon: Zap, color: '#22C55E', label: '💰' },
+  top: { icon: Crown, color: '#F2A41F', label: 'TOP' },
+  mid: { icon: Sparkles, color: 'var(--cr-text-dim)', label: 'MID' },
+  budget: { icon: Zap, color: 'var(--cr-green-600)', label: '💰' },
 };
 
 interface ModelSelectorProps {
@@ -53,14 +53,14 @@ function GridSelector({
       }}
     >
       {providers.map((prov) => {
-        const accent = PROVIDER_COLORS[prov.id] || '#2E75B6';
+        const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
         return (
           <div
             key={prov.id}
             style={{
-              background: 'var(--navy-light)',
-              borderRadius: '12px',
-              border: '1px solid #2A3A5C',
+              background: 'var(--cr-charcoal)',
+              borderRadius: 'var(--cr-radius)',
+              border: '1px solid var(--cr-border)',
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',
@@ -81,7 +81,7 @@ function GridSelector({
                 style={{
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#C8D0D8',
+                  color: 'var(--cr-mist)',
                   letterSpacing: '0.02em',
                 }}
               >
@@ -103,9 +103,9 @@ function GridSelector({
                     flexDirection: 'column',
                     gap: '4px',
                     padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: isSelected ? `2px solid ${accent}` : '1px solid #2A3A5C',
-                    background: isSelected ? `${accent}15` : 'var(--navy-dark)',
+                    borderRadius: 'var(--cr-radius-sm)',
+                    border: isSelected ? `2px solid ${accent}` : '1px solid var(--cr-border)',
+                    background: isSelected ? `${accent}15` : 'var(--cr-charcoal-dark)',
                     cursor: 'pointer',
                     textAlign: 'left',
                     width: '100%',
@@ -133,10 +133,10 @@ function GridSelector({
                         style={{
                           fontSize: '10px',
                           fontWeight: 500,
-                          color: '#8899AA',
-                          background: '#1A2A44',
+                          color: 'var(--cr-text-muted)',
+                          background: 'var(--cr-charcoal-deep)',
                           padding: '1px 5px',
-                          borderRadius: '3px',
+                          borderRadius: 'var(--cr-radius-xs)',
                           flexShrink: 0,
                         }}
                       >
@@ -148,7 +148,7 @@ function GridSelector({
                     <div
                       style={{
                         fontSize: '11px',
-                        color: '#667788',
+                        color: 'var(--cr-text-dim)',
                         lineHeight: '1.3',
                         overflow: 'hidden',
                         display: '-webkit-box',
@@ -159,7 +159,7 @@ function GridSelector({
                       {m.description}
                     </div>
                   )}
-                  <div style={{ fontSize: '11px', color: '#667788' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)' }}>
                     {formatPrice(m.input_price, m.output_price)}/1M
                   </div>
                 </button>
@@ -196,13 +196,13 @@ function CompactSelector({
 
   // Find selected model info
   let selectedModelName = 'Select model';
-  let selectedAccent = '#2E75B6';
+  let selectedAccent = 'var(--cr-green-600)';
   let selectedContext = '';
   for (const prov of providers) {
     for (const m of prov.models) {
       if (prov.id === selectedProvider && m.id === selectedModel) {
         selectedModelName = m.name;
-        selectedAccent = PROVIDER_COLORS[prov.id] || '#2E75B6';
+        selectedAccent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
         selectedContext = m.context || '';
       }
     }
@@ -217,9 +217,9 @@ function CompactSelector({
           alignItems: 'center',
           gap: '8px',
           padding: '8px 14px',
-          borderRadius: '8px',
-          border: '1px solid #2A3A5C',
-          background: 'var(--navy-light)',
+          borderRadius: 'var(--cr-radius-sm)',
+          border: '1px solid var(--cr-border)',
+          background: 'var(--cr-charcoal)',
           cursor: 'pointer',
           transition: 'all 150ms',
         }}
@@ -232,11 +232,11 @@ function CompactSelector({
             background: selectedAccent,
           }}
         />
-        <span style={{ fontSize: '13px', fontWeight: 500, color: '#FFFFFF' }}>
+        <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--cr-text)' }}>
           {selectedModelName}
         </span>
         {selectedContext && (
-          <span style={{ fontSize: '10px', color: '#667788' }}>
+          <span style={{ fontSize: '10px', color: 'var(--cr-text-dim)' }}>
             {selectedContext}
           </span>
         )}
@@ -244,7 +244,7 @@ function CompactSelector({
           style={{
             width: '14px',
             height: '14px',
-            color: '#8899AA',
+            color: 'var(--cr-text-muted)',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0)',
             transition: 'transform 150ms',
           }}
@@ -260,23 +260,23 @@ function CompactSelector({
             minWidth: '320px',
             maxHeight: '420px',
             overflowY: 'auto',
-            background: 'var(--navy)',
-            border: '1px solid #2A3A5C',
-            borderRadius: '12px',
+            background: 'var(--cr-charcoal-deep)',
+            border: '1px solid var(--cr-border)',
+            borderRadius: 'var(--cr-radius)',
             padding: '8px',
             zIndex: 50,
-            boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
           }}
         >
           {providers.map((prov) => {
-            const accent = PROVIDER_COLORS[prov.id] || '#2E75B6';
+            const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
             return (
               <div key={prov.id}>
                 <div
                   style={{
                     fontSize: '11px',
                     fontWeight: 600,
-                    color: '#667788',
+                    color: 'var(--cr-text-dim)',
                     padding: '8px 10px 4px',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
@@ -301,7 +301,7 @@ function CompactSelector({
                         gap: '8px',
                         width: '100%',
                         padding: '8px 10px',
-                        borderRadius: '6px',
+                        borderRadius: 'var(--cr-radius-xs)',
                         border: 'none',
                         background: isActive ? `${accent}15` : 'transparent',
                         cursor: 'pointer',
@@ -309,7 +309,7 @@ function CompactSelector({
                         transition: 'background 100ms',
                       }}
                       onMouseEnter={(e) => {
-                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--navy-light)';
+                        if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--cr-charcoal)';
                       }}
                       onMouseLeave={(e) => {
                         if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
@@ -321,7 +321,7 @@ function CompactSelector({
                           style={{
                             fontSize: '13px',
                             fontWeight: isActive ? 500 : 400,
-                            color: isActive ? '#FFFFFF' : '#C0C8D0',
+                            color: isActive ? 'var(--cr-text)' : 'var(--cr-mist)',
                           }}
                         >
                           {m.name}
@@ -330,7 +330,7 @@ function CompactSelector({
                           <div
                             style={{
                               fontSize: '10px',
-                              color: '#556677',
+                              color: 'var(--cr-text-dim)',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -345,17 +345,17 @@ function CompactSelector({
                         <span
                           style={{
                             fontSize: '10px',
-                            color: '#667788',
-                            background: '#1A2A44',
+                            color: 'var(--cr-text-dim)',
+                            background: 'var(--cr-charcoal-deep)',
                             padding: '1px 4px',
-                            borderRadius: '3px',
+                            borderRadius: 'var(--cr-radius-xs)',
                             flexShrink: 0,
                           }}
                         >
                           {m.context}
                         </span>
                       )}
-                      <span style={{ fontSize: '11px', color: '#667788', flexShrink: 0 }}>
+                      <span style={{ fontSize: '11px', color: 'var(--cr-text-dim)', flexShrink: 0 }}>
                         {formatPrice(m.input_price, m.output_price)}
                       </span>
                     </button>

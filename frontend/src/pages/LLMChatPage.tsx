@@ -101,7 +101,7 @@ export default function LLMChatPage() {
           justifyContent: 'center',
         }}
       >
-        <div style={{ color: '#667788', fontSize: 14 }}>Loading models...</div>
+        <div style={{ color: 'var(--cr-text-dim)', fontSize: 14 }}>Loading models...</div>
       </div>
     );
   }
@@ -132,19 +132,19 @@ export default function LLMChatPage() {
               marginBottom: '8px',
             }}
           >
-            <Sparkles style={{ width: 28, height: 28, color: '#A3E635' }} />
+            <Sparkles style={{ width: 28, height: 28, color: 'var(--cr-green-400)' }} />
             <span
               style={{
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#A3E635',
+                color: 'var(--cr-green-400)',
                 letterSpacing: '-0.02em',
               }}
             >
               CALCULUS LABS
             </span>
           </div>
-          <div style={{ fontSize: '13px', color: '#667788' }}>Direct LLM Access</div>
+          <div style={{ fontSize: '13px', color: 'var(--cr-text-dim)' }}>Direct LLM Access</div>
         </div>
 
         {/* Heading */}
@@ -152,7 +152,7 @@ export default function LLMChatPage() {
           style={{
             fontSize: '26px',
             fontWeight: 600,
-            color: '#FFFFFF',
+            color: 'var(--cr-text)',
             textAlign: 'center',
             margin: 0,
           }}
@@ -203,10 +203,10 @@ export default function LLMChatPage() {
               key={prompt}
               onClick={() => sendMessage(prompt)}
               style={{
-                background: 'var(--navy-light)',
-                border: '1px solid #2A3A5C',
+                background: 'var(--cr-charcoal)',
+                border: '1px solid var(--cr-border)',
                 borderRadius: '20px',
-                color: '#8899AA',
+                color: 'var(--cr-text-muted)',
                 fontSize: '12px',
                 padding: '6px 14px',
                 cursor: 'pointer',
@@ -217,12 +217,12 @@ export default function LLMChatPage() {
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#2A3A5C';
-                (e.currentTarget as HTMLButtonElement).style.color = '#C0C8D0';
+                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-mist)';
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'var(--navy-light)';
-                (e.currentTarget as HTMLButtonElement).style.color = '#8899AA';
+                (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
               }}
             >
               {prompt}
@@ -234,10 +234,10 @@ export default function LLMChatPage() {
           <div
             style={{
               padding: '8px 14px',
-              background: '#3A1A1A',
-              border: '1px solid var(--red)',
+              background: 'rgba(214, 69, 69, 0.08)',
+              border: '1px solid var(--cr-danger)',
               borderRadius: 8,
-              color: '#FF8888',
+              color: 'var(--cr-danger)',
               fontSize: 13,
               maxWidth: '700px',
               width: '100%',
@@ -260,9 +260,9 @@ export default function LLMChatPage() {
           alignItems: 'center',
           gap: '12px',
           padding: '10px 20px',
-          borderBottom: '1px solid #2A3A5C',
+          borderBottom: '1px solid var(--cr-border)',
           flexShrink: 0,
-          background: 'var(--navy)',
+          background: 'var(--cr-charcoal-deep)',
         }}
       >
         <ModelSelector
@@ -281,20 +281,20 @@ export default function LLMChatPage() {
             gap: '6px',
             padding: '7px 14px',
             borderRadius: '8px',
-            border: '1px solid #2A3A5C',
+            border: '1px solid var(--cr-border)',
             background: 'transparent',
-            color: '#8899AA',
+            color: 'var(--cr-text-muted)',
             fontSize: '13px',
             cursor: 'pointer',
             transition: 'all 150ms',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'var(--navy-light)';
-            (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF';
+            (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.color = '#8899AA';
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
           }}
         >
           <Plus style={{ width: 14, height: 14 }} />
@@ -331,10 +331,10 @@ export default function LLMChatPage() {
               bottom: 8,
               left: '50%',
               transform: 'translateX(-50%)',
-              background: 'var(--blue)',
+              background: 'var(--cr-green-900)',
               border: 'none',
               borderRadius: 20,
-              color: '#fff',
+              color: 'var(--cr-text)',
               fontSize: 12,
               padding: '5px 14px',
               cursor: 'pointer',
@@ -356,10 +356,10 @@ export default function LLMChatPage() {
           style={{
             margin: '0 16px 8px',
             padding: '8px 12px',
-            background: '#3A1A1A',
-            border: '1px solid var(--red)',
+            background: 'rgba(214, 69, 69, 0.08)',
+            border: '1px solid var(--cr-danger)',
             borderRadius: 8,
-            color: '#FF8888',
+            color: 'var(--cr-danger)',
             fontSize: 13,
           }}
         >
