@@ -12,72 +12,37 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      await login(email);
-      navigate('/');
-    } catch {
-      // error is set in context
-    } finally {
-      setLoading(false);
-    }
+    try { await login(email); navigate('/'); } catch {} finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--navy-dark)' }}>
-      <div className="w-full max-w-md p-8 rounded-2xl shadow-2xl" style={{ background: 'var(--navy)' }}>
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-               style={{ background: 'var(--blue)', opacity: 0.9 }}>
-            <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cr-charcoal-dark)' }}>
+      <div style={{ width: '100%', maxWidth: '420px', padding: '40px 36px', background: 'var(--cr-charcoal)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '14px', background: 'var(--cr-green-900)', border: '1px solid var(--cr-green-700)', marginBottom: '16px' }}>
+            <Shield style={{ width: '28px', height: '28px', color: 'var(--cr-green-400)' }} />
           </div>
-          <h1 className="text-2xl font-bold text-lime-400">CALCULUS LABS</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899AA' }}>AI Intelligence Portal v2.0</p>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '22px', fontWeight: 700, color: 'var(--cr-green-400)', letterSpacing: '0.04em', margin: '0 0 4px' }}>CALCULUS LABS</h1>
+          <p style={{ fontSize: '12px', color: 'var(--cr-text-dim)', margin: 0 }}>AI Intelligence Portal v2.2</p>
         </div>
-
-        {/* Error */}
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg mb-4 text-sm"
-               style={{ background: 'rgba(192, 57, 43, 0.15)', color: '#E74C3C' }}>
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: 'var(--cr-radius-sm)', background: 'rgba(214, 69, 69, 0.1)', border: '1px solid rgba(214, 69, 69, 0.25)', color: 'var(--cr-danger)', fontSize: '13px', marginBottom: '16px' }}>
+            <AlertCircle style={{ width: '16px', height: '16px', flexShrink: 0 }} /><span>{error}</span>
           </div>
         )}
-
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium mb-2" style={{ color: '#8899AA' }}>
-            Email Address
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@calculusresearch.io"
-            required
-            className="w-full px-4 py-3 rounded-lg text-white text-sm outline-none transition-all
-                       focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
-            style={{ background: 'var(--navy-dark)', border: '1px solid #2A3A5C' }}
-          />
-          <p className="text-xs mt-2" style={{ color: '#667788' }}>
-            Domain-restricted access: @calculusresearch.io
-          </p>
-
-          <button
-            type="submit"
-            disabled={loading || !email}
-            className="w-full mt-6 py-3 rounded-lg text-white font-semibold text-sm transition-all
-                       disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-            style={{ background: 'var(--blue)' }}
-          >
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--cr-text-muted)', marginBottom: '8px' }}>Email Address</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@calculusresearch.io" required
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)', background: 'var(--cr-charcoal-deep)', color: 'var(--cr-text)', fontSize: '14px', outline: 'none', transition: 'border-color 150ms' }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; }} />
+          <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '6px' }}>Domain-restricted access: @calculusresearch.io</p>
+          <button type="submit" disabled={loading || !email}
+            style={{ width: '100%', marginTop: '24px', padding: '12px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-green-700)', background: 'var(--cr-green-900)', color: 'var(--cr-green-400)', fontFamily: "'Space Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, cursor: loading || !email ? 'not-allowed' : 'pointer', opacity: loading || !email ? 0.5 : 1, transition: 'all 150ms' }}>
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
-
-        {/* Footer */}
-        <p className="text-center text-xs mt-6" style={{ color: '#556677' }}>
-          Calculus Holdings LLC &middot; Secured with JWT authentication
-        </p>
+        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '28px' }}>Calculus Holdings LLC &middot; Secured with JWT authentication</p>
       </div>
     </div>
   );
