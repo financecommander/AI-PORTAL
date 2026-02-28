@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     courtlistener_api_key: str = Field(default="", env="COURTLISTENER_API_KEY")
     
+    # OAuth Providers
+    frontend_url: str = Field(default="http://localhost:3000")
+    oauth_state_secret: str = Field(default="oauth-state-secret-change-in-production")
+    google_oauth_client_id: str = Field(default="")
+    google_oauth_client_secret: str = Field(default="")
+    apple_oauth_client_id: str = Field(default="")
+    apple_oauth_client_secret: str = Field(default="")
+    x_oauth_client_id: str = Field(default="")
+    x_oauth_client_secret: str = Field(default="")
+
     # CORS Configuration
     cors_origins: str = Field(
         default="http://localhost:3000,http://localhost:8501",

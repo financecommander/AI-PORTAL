@@ -6,6 +6,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string) => Promise<void>;
   logout: () => void;
+  handleOAuthToken: (token: string) => void;
   error: string | null;
 }
 
@@ -39,6 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleOAuthToken = (token: string) => {
+    api.setToken(token);
+    localStorage.setItem('fc_token', token);
+    setIsAuthenticated(true);
+  };
+
   const logout = () => {
     api.setToken(null);
     localStorage.removeItem('fc_token');
@@ -46,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, error }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, handleOAuthToken, error }}>
       {children}
     </AuthContext.Provider>
   );

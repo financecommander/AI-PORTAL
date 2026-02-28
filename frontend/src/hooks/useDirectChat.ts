@@ -9,6 +9,7 @@ interface UseDirectChatReturn {
   sendMessage: (content: string) => Promise<void>;
   stopStreaming: () => void;
   clearChat: () => void;
+  loadMessages: (msgs: ChatMessage[]) => void;
 }
 
 export function useDirectChat(
@@ -32,6 +33,13 @@ export function useDirectChat(
   const clearChat = () => {
     setMessages([]);
     setError(null);
+  };
+
+  const loadMessages = (msgs: ChatMessage[]) => {
+    setMessages(msgs);
+    setError(null);
+    setIsStreaming(false);
+    stoppedRef.current = false;
   };
 
   const stopStreaming = () => {
@@ -104,5 +112,5 @@ export function useDirectChat(
     }
   };
 
-  return { messages, isStreaming, error, sendMessage, stopStreaming, clearChat };
+  return { messages, isStreaming, error, sendMessage, stopStreaming, clearChat, loadMessages };
 }
