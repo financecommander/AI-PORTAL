@@ -279,7 +279,7 @@ PROVIDERS_CATALOG = [
                 "tier": "top",
                 "context": "128K",
                 "description": "Meta's flagship MoE model via Groq — 562 tok/s, multimodal",
-                "pricing": {"input": 0.20, "output": 0.60}
+                "input_price": 0.20, "output_price": 0.60
             },
             {
                 "id": "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -287,7 +287,7 @@ PROVIDERS_CATALOG = [
                 "tier": "mid",
                 "context": "128K",
                 "description": "Fast general-purpose MoE via Groq — 594 tok/s, reasoning & code",
-                "pricing": {"input": 0.11, "output": 0.34}
+                "input_price": 0.11, "output_price": 0.34
             },
         ]
     },
