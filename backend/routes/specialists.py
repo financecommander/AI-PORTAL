@@ -15,7 +15,7 @@ router = APIRouter()
 class SpecialistCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(default="", max_length=500)
-    provider: str = Field(..., pattern=r"^(openai|anthropic|google|grok)$")
+    provider: str = Field(..., pattern=r"^(openai|anthropic|google|grok|deepseek|llama)$")
     model: str = Field(..., min_length=1, max_length=100)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=4096, ge=1, le=32768)
@@ -25,7 +25,7 @@ class SpecialistCreateRequest(BaseModel):
 class SpecialistUpdateRequest(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     description: Optional[str] = Field(default=None, max_length=500)
-    provider: Optional[str] = Field(default=None, pattern=r"^(openai|anthropic|google|grok)$")
+    provider: Optional[str] = Field(default=None, pattern=r"^(openai|anthropic|google|grok|deepseek|llama)$")
     model: Optional[str] = Field(default=None, min_length=1, max_length=100)
     temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(default=None, ge=1, le=32768)

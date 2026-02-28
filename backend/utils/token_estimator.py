@@ -16,7 +16,7 @@ _PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(
 if _PROJECT_ROOT not in sys.path:
     sys.path.append(_PROJECT_ROOT)
 
-from shared import (
+from pricing import (
     MODEL_PRICING,
     calculate_cost,
     estimate_cost,

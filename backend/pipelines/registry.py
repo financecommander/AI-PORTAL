@@ -9,19 +9,13 @@ Hand-coded pipelines take priority on name collisions.
 
 import logging
 from backend.pipelines.base_pipeline import BasePipeline
-from backend.pipelines.lex_intelligence import create_lex_intelligence
-from backend.pipelines.calculus_intelligence import create_calculus_intelligence
 from backend.pipelines.forge_intelligence import ForgeIntelligence
-from backend.pipelines.lead_ranking_pipeline import LeadRankingPipeline
 
 logger = logging.getLogger(__name__)
 
 # Hand-coded pipeline factories (always available)
 _REGISTRY: dict[str, callable] = {
-    "lex_intelligence": create_lex_intelligence,
-    "calculus_intelligence": create_calculus_intelligence,
     "forge_intelligence": lambda: ForgeIntelligence(),
-    "lead_ranking": lambda: LeadRankingPipeline(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
@@ -65,7 +59,6 @@ def get_pipeline(name: str) -> BasePipeline:
     """Get a pipeline instance by name.
 
     Args:
-        name: Pipeline name (e.g., 'lex_intelligence', 'financial_strategy')
 
     Returns:
         Pipeline instance

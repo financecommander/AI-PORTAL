@@ -18,6 +18,9 @@ SPECIALISTS_FILE = os.path.join(
 # Auth
 ALLOWED_DOMAINS: list[str] = ["financecommander.com"]
 
+# API Keys
+DEEPSEEK_API_KEY: str = "sk-3e473ac8cc314c0c8dc6126e8d4c11be"
+
 # Session
 SESSION_TIMEOUT_SECONDS: int = 1800  # 30 minutes
 

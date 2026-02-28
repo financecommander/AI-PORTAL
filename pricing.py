@@ -48,6 +48,20 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "grok-beta": (5.00, 15.00),
     "grok-3": (5.00, 15.00),
     "grok-2": (2.00, 10.00),
+    
+    # DeepSeek
+    "deepseek-r1": (0.14, 0.28),
+    "deepseek-v3": (0.07, 0.14),
+    
+    # Meta / Llama (self-hosted)
+    "llama-4-8b": (0.0, 0.0),
+    "llama-4-70b": (0.0, 0.0),
+    "llama-4-405b": (0.0, 0.0),
+    
+    # Scout / Maverick (self-hosted)
+    "llama-4-scout-17b-16e-instruct": (0.0, 0.0),
+    "llama-4-maverick-17b-128e-instruct": (0.0, 0.0),
+    "llama-4-scout": (0.0, 0.0),
 }
 
 
