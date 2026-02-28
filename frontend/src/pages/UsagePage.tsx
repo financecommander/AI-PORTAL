@@ -88,13 +88,13 @@ export default function UsagePage() {
   const pipelineLogs: UsageLog[] = pipelines.map((p, i) => ({
     id: i,
     user_hash: '',
-    timestamp: '',
-    provider: p.status,
-    model: p.pipeline_id,
+    timestamp: p.created_at ?? '',
+    provider: p.pipeline_name ?? 'pipeline',
+    model: p.pipeline_name ?? p.pipeline_id,
     input_tokens: p.total_tokens ?? 0,
     output_tokens: 0,
     cost_usd: p.total_cost ?? 0,
-    latency_ms: 0,
+    latency_ms: p.duration_ms ?? 0,
     specialist_id: p.query?.slice(0, 40),
   }));
 

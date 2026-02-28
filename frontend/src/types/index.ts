@@ -46,12 +46,15 @@ export interface PipelineAgent {
 
 export interface PipelineRun {
   pipeline_id: string;
+  pipeline_name?: string;
   status: 'running' | 'complete' | 'error';
   agents: PipelineAgent[];
   query: string;
   output?: string;
   total_cost?: number;
   total_tokens?: number;
+  duration_ms?: number;
+  created_at?: string;
 }
 
 export interface UsageLog {

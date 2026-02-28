@@ -4,11 +4,11 @@ AI PORTAL v2.0 — Lex Intelligence Pipeline: Aggregation Config
 Applies compound AI aggregation theory to the multi-agent research
 pipeline. Implements dual-mode aggregation per the ICLR 2026 paper.
 
-Pipeline agents:
+Pipeline agents (must match LEX_AGENTS in lex_pipeline.py):
   1. Lead Researcher      — primary research synthesis
-  2. Contrarian Analyst   — adversarial challenge
+  2. Financial Analyst    — financial/market analysis
   3. Regulatory Scanner   — compliance/regulatory lens
-  4. Quantitative Modeler — data-driven analysis
+  4. Legal Quick Consult  — contrarian legal perspective
   5. Convergence Synth    — aggregation layer (this config)
   6. Final Editor         — polish and output
 
@@ -126,12 +126,12 @@ class ConvergenceSynthesizer:
         confidence_threshold: float = 0.5,
         contradiction_penalty: float = 0.3,
     ):
-        # Default weights reflecting agent roles
+        # Default weights reflecting agent roles (must match LEX_AGENTS in lex_pipeline.py)
         self.agent_weights = agent_weights or {
             1: 0.30,   # Lead Researcher — primary authority
-            2: 0.15,   # Contrarian — lower weight but preserved
-            3: 0.25,   # Regulatory — high weight on compliance
-            4: 0.20,   # Quantitative — data-driven
+            2: 0.20,   # Financial Analyst — market/financial data
+            3: 0.25,   # Regulatory Scanner — compliance (high weight)
+            4: 0.15,   # Legal Quick Consult — contrarian perspective
         }
         self.confidence_threshold = confidence_threshold
         self.contradiction_penalty = contradiction_penalty
@@ -383,9 +383,13 @@ class ConvergenceSynthesizer:
         claims_filtered = sum(
             s.get("claims_filtered", 0) for s in result.sections
         )
-        # 2. Addition combined perspectives no single agent covered
+        # 2. Addition combined perspectives from multiple agents
+        #    (any section that merged 2+ agent perspectives is expansion)
         perspectives_combined = sum(
             s.get("perspectives_combined", 0) for s in result.sections
+        )
+        multi_agent_sections = any(
+            s.get("perspectives_combined", 0) > 1 for s in result.sections
         )
         # 3. Gated addition caught regulatory issues
         has_regulatory_gates = any(
@@ -394,7 +398,7 @@ class ConvergenceSynthesizer:
 
         return (
             claims_filtered > 0
-            or perspectives_combined > len(agent_outputs)
+            or multi_agent_sections
             or has_regulatory_gates
         )
 
@@ -414,8 +418,8 @@ FACTUAL CLAIMS (dates, numbers, citations, events):
 
 ANALYSIS & INTERPRETATION:
 → Use ADDITION: combine perspectives with weighting.
-  Lead Researcher (30%), Contrarian (15%), Regulatory (25%), Quant (20%).
-  Preserve dissenting views from the Contrarian — do not suppress them.
+  Lead Researcher (30%), Financial Analyst (20%), Regulatory (25%), Legal Consult (15%).
+  Preserve dissenting views from the Legal Consult — do not suppress them.
 
 RECOMMENDATIONS:
 → Use GATED ADDITION: combine suggestions for breadth, but flag

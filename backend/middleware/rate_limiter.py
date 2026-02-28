@@ -37,7 +37,11 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         window_start = now - WINDOW_SECONDS
         self._buckets.setdefault(user_key, [])
         self._buckets[user_key] = [t for t in self._buckets[user_key] if t > window_start]
-        remaining = RATE_LIMIT - len(self._buckets[user_key])
+        if not self._buckets[user_key]:
+            del self._buckets[user_key]
+            remaining = RATE_LIMIT
+        else:
+            remaining = RATE_LIMIT - len(self._buckets[user_key])
 
         if remaining <= 0:
             return JSONResponse(

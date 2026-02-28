@@ -55,7 +55,6 @@ jobs:
       
       - name: Lint
         run: cd frontend && npx eslint src/ --max-warnings 0
-        continue-on-error: true
       
       - name: Build
         run: cd frontend && npm run build

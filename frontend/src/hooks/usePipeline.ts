@@ -53,11 +53,6 @@ export function usePipeline(): UsePipelineReturn {
   const statusRef = useRef<'idle' | 'running' | 'complete' | 'error'>('idle');
   const finishedRef = useRef(false);
 
-  // Keep statusRef in sync
-  useEffect(() => {
-    statusRef.current = status;
-  }, [status]);
-
   // Cleanup WebSocket on unmount
   useEffect(() => {
     return () => {
@@ -70,6 +65,7 @@ export function usePipeline(): UsePipelineReturn {
     wsRef.current = null;
     setAgents([]);
     setStatus('idle');
+    statusRef.current = 'idle';
     setOutput(null);
     setTotalCost(null);
     setTotalTokens(null);

@@ -19,7 +19,7 @@ async def get_usage_logs(
     user_hash = user.get("sub", "")
     stmt = select(UsageLog).where(UsageLog.user_hash == user_hash).order_by(UsageLog.timestamp.desc()).limit(limit)
     results = session.exec(stmt).all()
-    return {"logs": [r.dict() for r in results]}
+    return {"logs": [r.model_dump() for r in results]}
 
 
 @router.get("/pipelines")
@@ -31,4 +31,4 @@ async def get_pipeline_runs(
     user_hash = user.get("sub", "")
     stmt = select(PipelineRun).where(PipelineRun.user_hash == user_hash).order_by(PipelineRun.created_at.desc()).limit(limit)
     results = session.exec(stmt).all()
-    return {"runs": [r.dict() for r in results]}
+    return {"runs": [r.model_dump() for r in results]}

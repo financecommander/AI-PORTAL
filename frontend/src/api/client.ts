@@ -78,7 +78,10 @@ class ApiClient {
       }),
     });
 
-    if (!response.ok) throw new Error('Stream failed');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Stream failed' }));
+      throw new Error(err.error || err.detail || 'Stream failed');
+    }
     if (!response.body) throw new Error('No response body');
 
     const reader = response.body.getReader();
@@ -110,8 +113,13 @@ class ApiClient {
     onClose?: () => void,
   ): WebSocket {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/v2/pipelines/ws/${pipelineId}?token=${this.token}`;
+    const wsUrl = `${protocol}//${window.location.host}/api/v2/pipelines/ws/${pipelineId}`;
     const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      // Authenticate via first message instead of query param (avoids token in URL/logs)
+      ws.send(JSON.stringify({ type: 'auth', token: this.token }));
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -120,6 +128,7 @@ class ApiClient {
       } catch { /* skip */ }
     };
 
+    ws.onerror = () => onClose?.();
     ws.onclose = () => onClose?.();
     return ws;
   }

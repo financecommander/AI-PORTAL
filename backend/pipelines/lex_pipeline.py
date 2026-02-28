@@ -75,9 +75,10 @@ class LexPipeline(BasePipeline):
         # Fan out to agents
         agent_outputs = await self._run_agents_parallel(query, on_progress)
 
-        # Synthesize
+        # Synthesize — extract AgentOutput objects from the raw result dicts
         synthesizer = ConvergenceSynthesizer()
-        synthesized = synthesizer.synthesize(agent_outputs)
+        classified_outputs = [o["agent_output"] for o in agent_outputs]
+        synthesized = synthesizer.synthesize(classified_outputs)
 
         # Final editor call
         final_report = await self._final_editor_call(query, synthesized)
@@ -126,7 +127,7 @@ class LexPipeline(BasePipeline):
             if isinstance(result, Exception):
                 # Log failure but continue
                 if on_progress:
-                    on_progress("agent_error", {"agent_id": agent_id, "error": str(result)})
+                    await on_progress("agent_error", {"agent_id": agent_id, "error": str(result)})
                 continue
             agent_outputs.append(result)
 
@@ -169,7 +170,7 @@ class LexPipeline(BasePipeline):
         }
 
         if on_progress:
-            on_progress("agent_complete", {"agent_id": agent_id, "agent_name": specialist["name"]})
+            await on_progress("agent_complete", {"agent_id": agent_id, "agent_name": specialist["name"]})
 
         return result
 
@@ -217,49 +218,58 @@ class LexPipeline(BasePipeline):
         return calculate_cost("gpt-4o", estimated_tokens // 2, estimated_tokens // 2)
 
 
+import re as _re
+
+# Section header patterns — must appear at the START of a line (after optional
+# markdown formatting like **, ##, -).  This avoids false positives from natural
+# prose that happens to contain words like "risk" or "analysis".
+_HEADER_PATTERNS: list[tuple[_re.Pattern, ContentType]] = [
+    (_re.compile(r"^(?:[#*\-\s]*)FACTUAL\s*CLAIMS?\b", _re.IGNORECASE), ContentType.FACTUAL_CLAIM),
+    (_re.compile(r"^(?:[#*\-\s]*)RECOMMENDATIONS?\b", _re.IGNORECASE), ContentType.RECOMMENDATION),
+    (_re.compile(r"^(?:[#*\-\s]*)RISK\s*ASSESSMENTS?\b", _re.IGNORECASE), ContentType.RISK_ASSESSMENT),
+    (_re.compile(r"^(?:[#*\-\s]*)CONTRARIAN\b", _re.IGNORECASE), ContentType.CONTRARIAN_VIEW),
+    (_re.compile(r"^(?:[#*\-\s]*)ALTERNATIVE\s*(?:STRATEG|VIEW|PERSPECTIVE)", _re.IGNORECASE), ContentType.CONTRARIAN_VIEW),
+    # ANALYSIS last — broadest match; only triggers at line start
+    (_re.compile(r"^(?:[#*\-\s]*)ANALYSIS\b", _re.IGNORECASE), ContentType.ANALYSIS),
+]
+
+
+def _detect_header(line: str) -> ContentType | None:
+    """Return the ContentType if *line* is a section header, else None."""
+    for pattern, ct in _HEADER_PATTERNS:
+        if pattern.search(line):
+            return ct
+    return None
+
+
 def classify_content(agent_id: int, agent_name: str, raw_response: str) -> AgentOutput:
     """
     Parse raw LLM response into classified content blocks.
     """
     lines = raw_response.split('\n')
     blocks = []
-    current_type = None
-    current_content = []
+    current_type: ContentType | None = None
+    current_content: list[str] = []
 
     for line in lines:
-        line = line.strip()
-        if not line:
+        stripped = line.strip()
+        if not stripped:
             continue
 
-        # Detect section headers
-        if "FACTUAL" in line.upper() or "CLAIM" in line.upper():
+        header = _detect_header(stripped)
+        if header is not None:
+            # Flush previous block
             if current_content:
-                blocks.append({"type": current_type, "content": '\n'.join(current_content), "confidence": 0.8})
+                blocks.append({
+                    "type": current_type or ContentType.ANALYSIS,
+                    "content": '\n'.join(current_content),
+                    "confidence": 0.8,
+                })
                 current_content = []
-            current_type = ContentType.FACTUAL_CLAIM
-        elif "ANALYSIS" in line.upper():
-            if current_content:
-                blocks.append({"type": current_type, "content": '\n'.join(current_content), "confidence": 0.8})
-                current_content = []
-            current_type = ContentType.ANALYSIS
-        elif "RECOMMEND" in line.upper():
-            if current_content:
-                blocks.append({"type": current_type, "content": '\n'.join(current_content), "confidence": 0.8})
-                current_content = []
-            current_type = ContentType.RECOMMENDATION
-        elif "RISK" in line.upper():
-            if current_content:
-                blocks.append({"type": current_type, "content": '\n'.join(current_content), "confidence": 0.8})
-                current_content = []
-            current_type = ContentType.RISK_ASSESSMENT
-        elif "CONTRARIAN" in line.upper() or "ALTERNATIVE" in line.upper():
-            if current_content:
-                blocks.append({"type": current_type, "content": '\n'.join(current_content), "confidence": 0.8})
-                current_content = []
-            current_type = ContentType.CONTRARIAN_VIEW
+            current_type = header
         else:
-            if current_type:
-                current_content.append(line)
+            # Collect content — don't drop lines before the first header
+            current_content.append(stripped)
 
     if current_content:
         blocks.append({"type": current_type or ContentType.ANALYSIS, "content": '\n'.join(current_content), "confidence": 0.8})

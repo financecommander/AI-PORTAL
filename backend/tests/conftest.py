@@ -30,8 +30,8 @@ def client():
 @pytest.fixture
 def auth_headers():
     """Valid JWT auth headers for protected routes."""
-    from backend.auth.jwt_handler import create_token
-    token = create_token({"sub": "test@financecommander.com"})
+    from backend.auth.jwt_handler import create_access_token
+    token = create_access_token({"sub": "test@financecommander.com"})
     return {"Authorization": f"Bearer {token}"}
 
 @pytest.fixture

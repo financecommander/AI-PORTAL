@@ -31,13 +31,17 @@ class WebSocketManager:
 
     async def connect(self, pipeline_id: str, websocket: WebSocket):
         """
-        Register a new WebSocket connection for a pipeline.
-        
+        Accept and register a new WebSocket connection for a pipeline.
+
         Args:
             pipeline_id: Pipeline execution identifier
             websocket: WebSocket connection
         """
         await websocket.accept()
+        await self.connect_accepted(pipeline_id, websocket)
+
+    async def connect_accepted(self, pipeline_id: str, websocket: WebSocket):
+        """Register an already-accepted WebSocket connection for a pipeline."""
         async with self._lock:
             if pipeline_id not in self._connections:
                 self._connections[pipeline_id] = set()
