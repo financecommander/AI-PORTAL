@@ -72,7 +72,7 @@ export default function AgentTraceVisualizer({
       case 'complete': return 'var(--cr-green-600)';
       case 'error': return 'var(--cr-danger)';
       case 'running': return 'var(--cr-green-600)';
-      default: return '#445566';
+      default: return 'var(--cr-text-dim)';
     }
   };
 
@@ -95,7 +95,7 @@ export default function AgentTraceVisualizer({
           color: agent.status === 'pending' ? 'var(--cr-text-muted)' : 'var(--cr-text)',
           backgroundColor: isComplete ? 'var(--cr-green-600)' : isError ? 'var(--cr-danger)' : 'transparent',
           border: agent.status === 'pending'
-            ? '2px dashed #1E2E4A'
+            ? '2px dashed var(--cr-charcoal-deep)'
             : isRunning
               ? '2px solid var(--cr-green-600)'
               : 'none',
@@ -138,7 +138,7 @@ export default function AgentTraceVisualizer({
           style={{
             width: '80px',
             height: '4px',
-            backgroundColor: '#1E2E4A',
+            backgroundColor: 'var(--cr-charcoal-deep)',
             borderRadius: '2px',
             overflow: 'hidden',
           }}
@@ -185,7 +185,7 @@ export default function AgentTraceVisualizer({
               animation: status === 'running' ? 'animate-pulse-glow' : 'none',
             }}
           />
-          <span style={{ color: '#E0E8F0', fontSize: '14px', fontWeight: '500' }}>
+          <span style={{ color: 'var(--cr-text)', fontSize: '14px', fontWeight: '500' }}>
             {status === 'complete'
               ? 'Pipeline Complete'
               : status === 'error'
@@ -204,7 +204,7 @@ export default function AgentTraceVisualizer({
       <div
         style={{
           height: '2px',
-          backgroundColor: '#1E2E4A',
+          backgroundColor: 'var(--cr-charcoal-deep)',
           borderRadius: '1px',
           overflow: 'hidden',
         }}
@@ -238,7 +238,7 @@ export default function AgentTraceVisualizer({
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ color: '#E0E8F0', fontSize: '14px', fontWeight: '500' }}>
+                  <span style={{ color: 'var(--cr-text)', fontSize: '14px', fontWeight: '500' }}>
                     {agent.name}
                   </span>
                   {agent.model && <ModelBadge model={agent.model} />}
@@ -309,7 +309,7 @@ export default function AgentTraceVisualizer({
                       style={{
                         margin: 0,
                         fontSize: '12px',
-                        color: '#C8D0E0',
+                        color: 'var(--cr-text-muted)',
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
                       }}
@@ -339,7 +339,7 @@ export default function AgentTraceVisualizer({
           <div style={{ color: 'var(--cr-danger)', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
             Error
           </div>
-          <div style={{ color: '#E0E8F0', fontSize: '13px' }}>{error}</div>
+          <div style={{ color: 'var(--cr-text)', fontSize: '13px' }}>{error}</div>
         </div>
       )}
 
@@ -378,7 +378,7 @@ export default function AgentTraceVisualizer({
               </div>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Total Cost</div>
-                <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
+                <div style={{ fontSize: '14px', color: 'var(--cr-text)', fontWeight: '500' }}>
                   ${totalCost.toFixed(4)}
                 </div>
               </div>
@@ -411,7 +411,7 @@ export default function AgentTraceVisualizer({
               </div>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Total Tokens</div>
-                <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
+                <div style={{ fontSize: '14px', color: 'var(--cr-text)', fontWeight: '500' }}>
                   {totalTokens.toLocaleString()}
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function AgentTraceVisualizer({
               </div>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Duration</div>
-                <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
+                <div style={{ fontSize: '14px', color: 'var(--cr-text)', fontWeight: '500' }}>
                   {(durationMs / 1000).toFixed(1)}s
                 </div>
               </div>
@@ -476,7 +476,7 @@ export default function AgentTraceVisualizer({
             </div>
             <div>
               <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Agents</div>
-              <div style={{ fontSize: '14px', color: '#E0E8F0', fontWeight: '500' }}>
+              <div style={{ fontSize: '14px', color: 'var(--cr-text)', fontWeight: '500' }}>
                 {completedCount} / {agents.length}
               </div>
             </div>
@@ -500,7 +500,7 @@ export default function AgentTraceVisualizer({
               padding: '12px 16px',
               background: 'none',
               border: 'none',
-              color: '#E0E8F0',
+              color: 'var(--cr-text)',
               textAlign: 'left',
               cursor: 'pointer',
               display: 'flex',
@@ -518,14 +518,14 @@ export default function AgentTraceVisualizer({
             <div
               style={{
                 padding: '0 16px 16px',
-                borderTop: '1px solid #1E2E4A',
+                borderTop: '1px solid var(--cr-charcoal-deep)',
               }}
             >
               <pre
                 style={{
                   margin: 0,
                   fontSize: '13px',
-                  color: '#C8D0E0',
+                  color: 'var(--cr-text-muted)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   lineHeight: '1.5',

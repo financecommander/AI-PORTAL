@@ -101,3 +101,23 @@ export interface UsageLog {
   latency_ms: number;
   specialist_id?: string;
 }
+
+// ── Conversations ────────────────────────────────────────────────
+
+export interface ConversationSummary {
+  uuid: string;
+  title: string;
+  provider: string;
+  model: string;
+  mode: string;
+  specialist_id?: string;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+  preview: string;
+}
+
+export interface ConversationDetail extends ConversationSummary {
+  messages: ChatMessage[];
+}
+

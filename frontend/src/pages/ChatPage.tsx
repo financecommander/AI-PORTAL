@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Bot } from 'lucide-react';
 import { api } from '../api/client';
 import type { Specialist } from '../types';
 import { useChat } from '../hooks/useChat';
@@ -88,56 +88,122 @@ export default function ChatPage() {
       <div
         className="hidden md:block p-4 overflow-y-auto"
         style={{
-          width: 256,
-          borderRight: '1px solid #2A3A5C',
+          width: 260,
+          borderRight: '1px solid var(--cr-border)',
           flexShrink: 0,
+          background: 'var(--cr-charcoal)',
         }}
       >
-        <h2 className="text-sm font-semibold text-white mb-3">Specialists</h2>
+        <h2
+          style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--cr-text-dim)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: '12px',
+          }}
+        >
+          Specialists
+        </h2>
         {specialists.map((s) => (
           <button
             key={s.id}
             onClick={() => setSelected(s)}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm mb-1 transition-all"
             style={{
-              background: selected?.id === s.id ? 'var(--navy-light)' : 'transparent',
-              color: selected?.id === s.id ? '#FFFFFF' : '#8899AA',
+              width: '100%',
+              textAlign: 'left',
+              padding: '10px 12px',
+              borderRadius: 'var(--cr-radius-sm)',
+              marginBottom: '3px',
+              border: 'none',
+              background: selected?.id === s.id ? 'var(--cr-charcoal-deep)' : 'transparent',
+              borderLeft: selected?.id === s.id ? '2px solid var(--cr-green-600)' : '2px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 100ms',
+            }}
+            onMouseEnter={(e) => {
+              if (selected?.id !== s.id) e.currentTarget.style.background = 'rgba(42,46,50,0.5)';
+            }}
+            onMouseLeave={(e) => {
+              if (selected?.id !== s.id) e.currentTarget.style.background = 'transparent';
             }}
           >
-            <div className="font-medium">{s.name}</div>
-            <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: selected?.id === s.id ? 500 : 400,
+                color: selected?.id === s.id ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
+              }}
+            >
+              {s.name}
+            </div>
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--cr-text-dim)',
+                marginTop: '2px',
+              }}
+            >
+              {s.description}
+            </div>
           </button>
         ))}
+        {specialists.length === 0 && (
+          <div style={{ color: 'var(--cr-text-dim)', fontSize: '12px', padding: '8px' }}>
+            Loading specialists...
+          </div>
+        )}
       </div>
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col" style={{ minWidth: 0, overflow: 'hidden' }}>
         {/* Mobile specialist selector */}
-        <div className="md:hidden" style={{ borderBottom: '1px solid #2A3A5C' }}>
+        <div className="md:hidden" style={{ borderBottom: '1px solid var(--cr-border)' }}>
           <button
             onClick={() => setShowSpecialistPanel(!showSpecialistPanel)}
             className="w-full flex items-center justify-between px-4 py-3"
-            style={{ color: '#FFFFFF' }}
+            style={{ color: 'var(--cr-text)', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <span className="text-sm font-medium">
-              {selected?.name ?? 'Select Specialist'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Bot style={{ width: 16, height: 16, color: 'var(--cr-green-400)' }} />
+              <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {selected?.name ?? 'Select Specialist'}
+              </span>
+            </div>
             {showSpecialistPanel ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {showSpecialistPanel && (
-            <div className="px-3 pb-3 space-y-1">
+            <div style={{ padding: '0 8px 10px' }}>
               {specialists.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => { setSelected(s); setShowSpecialistPanel(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all"
                   style={{
-                    background: selected?.id === s.id ? 'var(--navy-light)' : 'transparent',
-                    color: selected?.id === s.id ? '#FFFFFF' : '#8899AA',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 12px',
+                    margin: '2px 0',
+                    borderRadius: 'var(--cr-radius-sm)',
+                    border: 'none',
+                    background: selected?.id === s.id ? 'var(--cr-charcoal-deep)' : 'transparent',
+                    borderLeft: selected?.id === s.id ? '2px solid var(--cr-green-600)' : '2px solid transparent',
+                    cursor: 'pointer',
+                    transition: 'all 100ms',
                   }}
                 >
-                  <div className="font-medium">{s.name}</div>
-                  <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: selected?.id === s.id ? 500 : 400,
+                      color: selected?.id === s.id ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
+                    }}
+                  >
+                    {s.name}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>
+                    {s.description}
+                  </div>
                 </button>
               ))}
             </div>
@@ -169,34 +235,52 @@ export default function ChatPage() {
                     gap: 12,
                   }}
                 >
-                  <div style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 600 }}>
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '12px',
+                      background: 'var(--cr-green-900)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <Bot style={{ width: 24, height: 24, color: 'var(--cr-green-400)' }} />
+                  </div>
+                  <div style={{ color: 'var(--cr-text)', fontSize: '18px', fontWeight: 600 }}>
                     {selected.name}
                   </div>
-                  <div style={{ color: '#8899AA', fontSize: 14, marginBottom: 8 }}>
-                    Start a conversation with {selected.name}
+                  <div style={{ color: 'var(--cr-text-muted)', fontSize: '13px', maxWidth: 400 }}>
+                    {selected.description}
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
+                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginBottom: '12px' }}>
+                    Powered by {selected.provider}/{selected.model}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 500 }}>
                     {examplePrompts.map((prompt) => (
                       <button
                         key={prompt}
                         onClick={() => sendMessage(prompt)}
                         style={{
-                          background: 'var(--navy-light)',
-                          border: '1px solid #2A3A5C',
-                          borderRadius: 20,
-                          color: '#8899AA',
-                          fontSize: 13,
+                          background: 'var(--cr-charcoal)',
+                          border: '1px solid var(--cr-border)',
+                          borderRadius: '20px',
+                          color: 'var(--cr-text-muted)',
+                          fontSize: '12px',
                           padding: '6px 14px',
                           cursor: 'pointer',
-                          transition: 'background 200ms',
+                          transition: 'background 200ms, color 200ms',
                         }}
-                        onMouseEnter={(e) =>
-                          ((e.currentTarget as HTMLButtonElement).style.background = '#2A3A5C')
-                        }
-                        onMouseLeave={(e) =>
-                          ((e.currentTarget as HTMLButtonElement).style.background =
-                            'var(--navy-light)')
-                        }
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
+                          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-mist)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal)';
+                          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
+                        }}
                       >
                         {prompt}
                       </button>
@@ -226,10 +310,10 @@ export default function ChatPage() {
                     bottom: 8,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: 'var(--blue)',
+                    background: 'var(--cr-green-900)',
                     border: 'none',
                     borderRadius: 20,
-                    color: '#fff',
+                    color: 'var(--cr-text)',
                     fontSize: 12,
                     padding: '5px 14px',
                     cursor: 'pointer',
@@ -250,10 +334,10 @@ export default function ChatPage() {
                 style={{
                   margin: '0 16px 8px',
                   padding: '8px 12px',
-                  background: '#3A1A1A',
-                  border: '1px solid var(--red)',
+                  background: 'rgba(214, 69, 69, 0.08)',
+                  border: '1px solid var(--cr-danger)',
                   borderRadius: 8,
-                  color: '#FF8888',
+                  color: 'var(--cr-danger)',
                   fontSize: 13,
                 }}
               >
@@ -271,10 +355,11 @@ export default function ChatPage() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p style={{ color: '#667788' }}>Select a specialist to begin</p>
+            <p style={{ color: 'var(--cr-text-dim)' }}>Select a specialist to begin</p>
           </div>
         )}
       </div>
     </div>
   );
 }
+

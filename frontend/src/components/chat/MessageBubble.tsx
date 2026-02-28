@@ -131,7 +131,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
         style={{
           maxWidth: '80%',
           background: isUser ? 'var(--cr-green-900)' : 'var(--cr-charcoal)',
-          color: isUser ? '#FFFFFF' : '#E0E0E0',
+          color: isUser ? 'var(--cr-text)' : 'var(--cr-text)',
           borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
           padding: '10px 14px',
           wordBreak: 'break-word',
@@ -228,3 +228,4 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
     </div>
   );
 }
+

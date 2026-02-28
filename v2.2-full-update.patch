@@ -1,0 +1,2540 @@
+From 94a663e0ecdb5bf7253436d61e10de99d0f033d2 Mon Sep 17 00:00:00 2001
+From: Sean <finance@calculusresearch.io>
+Date: Sat, 28 Feb 2026 20:32:03 +0000
+Subject: [PATCH 1/2] v2.2: OAuth login (Google/Apple/X) + persistent
+ conversation history
+
+Backend:
+- User, Conversation, Message tables (SQLModel)
+- OAuth handlers for Google, Apple, X via httpx
+- /auth/me endpoint returns user profile from JWT
+- /conversations/ CRUD with auto-titling and message persistence
+- Email login now creates User records in DB
+
+Frontend:
+- LoginPage with Google/Apple/X OAuth buttons + email fallback
+- AuthContext with OAuth flow + user profile state
+- ConversationList sidebar component with delete, timestamps
+- Sidebar updated with conversation history + user avatar
+
+Config:
+- httpx added to requirements.txt
+- OAuth env vars in docker-compose.v2.yml
+---
+ backend/auth/oauth.py                        | 269 +++++++++++++++
+ backend/main.py                              |   2 +
+ backend/models/__init__.py                   |  61 +++-
+ backend/routes/auth.py                       |  95 +++++-
+ backend/routes/conversations.py              | 335 +++++++++++++++++++
+ docker-compose.v2.yml                        |   7 +
+ frontend/src/components/ConversationList.tsx | 223 ++++++++++++
+ frontend/src/components/Sidebar.tsx          | 202 ++++++++++-
+ frontend/src/contexts/AuthContext.tsx        |  88 ++++-
+ frontend/src/pages/LoginPage.tsx             | 296 ++++++++++++++--
+ frontend/src/types/index.ts                  |  19 ++
+ requirements.txt                             |   3 +-
+ 12 files changed, 1538 insertions(+), 62 deletions(-)
+ create mode 100644 backend/auth/oauth.py
+ create mode 100644 backend/routes/conversations.py
+ create mode 100644 frontend/src/components/ConversationList.tsx
+
+diff --git a/backend/auth/oauth.py b/backend/auth/oauth.py
+new file mode 100644
+index 0000000..5d48c49
+--- /dev/null
++++ b/backend/auth/oauth.py
+@@ -0,0 +1,269 @@
++"""OAuth authentication handlers for Google, Apple, and X (Twitter).
++
++Lightweight implementation using direct HTTP calls to OAuth providers.
++No heavy dependencies — just httpx for async HTTP.
++"""
++
++import os
++import logging
++from typing import Optional
++from datetime import datetime, timezone
++
++import httpx
++from sqlmodel import Session, select
++
++from backend.database import engine
++from backend.models import User
++from backend.auth.jwt_handler import create_access_token
++
++logger = logging.getLogger(__name__)
++
++
++# ── Provider configs from env ───────────────────────────────────
++
++GOOGLE_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
++GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
++
++APPLE_CLIENT_ID = os.getenv("APPLE_OAUTH_CLIENT_ID", "")
++APPLE_CLIENT_SECRET = os.getenv("APPLE_OAUTH_CLIENT_SECRET", "")
++
++X_CLIENT_ID = os.getenv("X_OAUTH_CLIENT_ID", "")
++X_CLIENT_SECRET = os.getenv("X_OAUTH_CLIENT_SECRET", "")
++
++
++def _get_redirect_uri(provider: str) -> str:
++    """Build redirect URI from environment."""
++    base = os.getenv("OAUTH_REDIRECT_BASE", "http://localhost:3000")
++    return f"{base}/auth/{provider}/callback"
++
++
++# ── User upsert ─────────────────────────────────────────────────
++
++
++def get_or_create_user(
++    email: str,
++    name: str = "",
++    avatar_url: str = "",
++    oauth_provider: str = "email",
++    oauth_id: str = "",
++) -> User:
++    """Find existing user by email or create a new one."""
++    with Session(engine) as session:
++        statement = select(User).where(User.email == email)
++        user = session.exec(statement).first()
++
++        if user:
++            user.last_login = datetime.now(timezone.utc)
++            if name and not user.name:
++                user.name = name
++            if avatar_url and not user.avatar_url:
++                user.avatar_url = avatar_url
++            session.add(user)
++            session.commit()
++            session.refresh(user)
++            return user
++
++        user = User(
++            email=email,
++            name=name,
++            avatar_url=avatar_url,
++            oauth_provider=oauth_provider,
++            oauth_id=oauth_id,
++        )
++        session.add(user)
++        session.commit()
++        session.refresh(user)
++        return user
++
++
++def create_user_token(user: User) -> str:
++    """Create JWT for an authenticated user."""
++    return create_access_token({
++        "sub": str(user.id),
++        "email": user.email,
++        "name": user.name,
++        "avatar_url": user.avatar_url,
++        "provider": user.oauth_provider,
++    })
++
++
++# ── Google OAuth ────────────────────────────────────────────────
++
++
++async def google_get_auth_url() -> str:
++    """Get Google OAuth authorization URL."""
++    redirect_uri = _get_redirect_uri("google")
++    return (
++        "https://accounts.google.com/o/oauth2/v2/auth?"
++        f"client_id={GOOGLE_CLIENT_ID}&"
++        f"redirect_uri={redirect_uri}&"
++        "response_type=code&"
++        "scope=openid+email+profile&"
++        "access_type=offline&"
++        "prompt=consent"
++    )
++
++
++async def google_exchange_code(code: str) -> Optional[User]:
++    """Exchange Google auth code for user info, create/update user."""
++    redirect_uri = _get_redirect_uri("google")
++
++    async with httpx.AsyncClient() as client:
++        # Exchange code for tokens
++        token_resp = await client.post(
++            "https://oauth2.googleapis.com/token",
++            data={
++                "code": code,
++                "client_id": GOOGLE_CLIENT_ID,
++                "client_secret": GOOGLE_CLIENT_SECRET,
++                "redirect_uri": redirect_uri,
++                "grant_type": "authorization_code",
++            },
++        )
++        if token_resp.status_code != 200:
++            logger.error(f"Google token exchange failed: {token_resp.text}")
++            return None
++
++        tokens = token_resp.json()
++        access_token = tokens.get("access_token")
++
++        # Get user info
++        user_resp = await client.get(
++            "https://www.googleapis.com/oauth2/v2/userinfo",
++            headers={"Authorization": f"Bearer {access_token}"},
++        )
++        if user_resp.status_code != 200:
++            logger.error(f"Google userinfo failed: {user_resp.text}")
++            return None
++
++        info = user_resp.json()
++        return get_or_create_user(
++            email=info["email"],
++            name=info.get("name", ""),
++            avatar_url=info.get("picture", ""),
++            oauth_provider="google",
++            oauth_id=info.get("id", ""),
++        )
++
++
++# ── Apple OAuth ─────────────────────────────────────────────────
++
++
++async def apple_get_auth_url() -> str:
++    """Get Apple Sign In authorization URL."""
++    redirect_uri = _get_redirect_uri("apple")
++    return (
++        "https://appleid.apple.com/auth/authorize?"
++        f"client_id={APPLE_CLIENT_ID}&"
++        f"redirect_uri={redirect_uri}&"
++        "response_type=code&"
++        "scope=name+email&"
++        "response_mode=form_post"
++    )
++
++
++async def apple_exchange_code(code: str) -> Optional[User]:
++    """Exchange Apple auth code for user info."""
++    redirect_uri = _get_redirect_uri("apple")
++
++    async with httpx.AsyncClient() as client:
++        token_resp = await client.post(
++            "https://appleid.apple.com/auth/token",
++            data={
++                "code": code,
++                "client_id": APPLE_CLIENT_ID,
++                "client_secret": APPLE_CLIENT_SECRET,
++                "redirect_uri": redirect_uri,
++                "grant_type": "authorization_code",
++            },
++        )
++        if token_resp.status_code != 200:
++            logger.error(f"Apple token exchange failed: {token_resp.text}")
++            return None
++
++        tokens = token_resp.json()
++        # Apple returns id_token as JWT — decode to get email
++        import json
++        import base64
++
++        id_token = tokens.get("id_token", "")
++        # Decode JWT payload (middle segment) without verification
++        # (we already verified via Apple's token endpoint)
++        payload_b64 = id_token.split(".")[1]
++        payload_b64 += "=" * (4 - len(payload_b64) % 4)  # pad
++        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
++
++        email = payload.get("email", "")
++        if not email:
++            logger.error("Apple auth: no email in id_token")
++            return None
++
++        return get_or_create_user(
++            email=email,
++            name="",  # Apple only sends name on first auth
++            oauth_provider="apple",
++            oauth_id=payload.get("sub", ""),
++        )
++
++
++# ── X (Twitter) OAuth 2.0 PKCE ─────────────────────────────────
++
++
++async def x_get_auth_url(state: str = "random") -> str:
++    """Get X OAuth 2.0 authorization URL."""
++    redirect_uri = _get_redirect_uri("x")
++    return (
++        "https://twitter.com/i/oauth2/authorize?"
++        f"response_type=code&"
++        f"client_id={X_CLIENT_ID}&"
++        f"redirect_uri={redirect_uri}&"
++        f"scope=tweet.read+users.read+offline.access&"
++        f"state={state}&"
++        "code_challenge=challenge&"
++        "code_challenge_method=plain"
++    )
++
++
++async def x_exchange_code(code: str) -> Optional[User]:
++    """Exchange X auth code for user info."""
++    redirect_uri = _get_redirect_uri("x")
++
++    async with httpx.AsyncClient() as client:
++        token_resp = await client.post(
++            "https://api.twitter.com/2/oauth2/token",
++            data={
++                "code": code,
++                "client_id": X_CLIENT_ID,
++                "redirect_uri": redirect_uri,
++                "grant_type": "authorization_code",
++                "code_verifier": "challenge",
++            },
++            auth=(X_CLIENT_ID, X_CLIENT_SECRET),
++        )
++        if token_resp.status_code != 200:
++            logger.error(f"X token exchange failed: {token_resp.text}")
++            return None
++
++        tokens = token_resp.json()
++        access_token = tokens.get("access_token")
++
++        # Get user info
++        user_resp = await client.get(
++            "https://api.twitter.com/2/users/me?user.fields=profile_image_url",
++            headers={"Authorization": f"Bearer {access_token}"},
++        )
++        if user_resp.status_code != 200:
++            logger.error(f"X userinfo failed: {user_resp.text}")
++            return None
++
++        data = user_resp.json().get("data", {})
++        # X doesn't expose email easily — use username@x.com as placeholder
++        username = data.get("username", "unknown")
++
++        return get_or_create_user(
++            email=f"{username}@x.com",
++            name=data.get("name", username),
++            avatar_url=data.get("profile_image_url", ""),
++            oauth_provider="x",
++            oauth_id=data.get("id", ""),
++        )
+diff --git a/backend/main.py b/backend/main.py
+index 99673f0..e910311 100644
+--- a/backend/main.py
++++ b/backend/main.py
+@@ -11,6 +11,7 @@ from backend.routes import chat as chat_routes
+ from backend.routes import specialists as specialist_routes
+ from backend.routes import usage as usage_routes
+ from backend.routes import direct_chat as direct_chat_routes
++from backend.routes import conversations as conversation_routes
+ from backend.config.settings import settings
+ from backend.errors.exceptions import PortalError
+ from backend.middleware.rate_limiter import RateLimiterMiddleware
+@@ -51,6 +52,7 @@ app.include_router(specialist_routes.router, prefix="/specialists", tags=["speci
+ app.include_router(usage_routes.router, prefix="/usage", tags=["usage"])
+ app.include_router(pipelines.router, prefix="/api/v2", tags=["pipelines"])
+ app.include_router(direct_chat_routes.router, prefix="/chat/direct", tags=["direct-chat"])
++app.include_router(conversation_routes.router, prefix="/conversations", tags=["conversations"])
+ 
+ 
+ @app.get("/")
+diff --git a/backend/models/__init__.py b/backend/models/__init__.py
+index 48b66e8..868a96d 100644
+--- a/backend/models/__init__.py
++++ b/backend/models/__init__.py
+@@ -1,4 +1,4 @@
+-"""Database models for backend v2.0."""
++"""Database models for backend v2.2."""
+ 
+ from datetime import datetime, timezone
+ from typing import Optional
+@@ -7,9 +7,9 @@ from sqlmodel import SQLModel, Field
+ 
+ class UsageLog(SQLModel, table=True):
+     """Usage log for individual requests."""
+-    
++
+     __tablename__ = "usage_logs"
+-    
++
+     id: Optional[int] = Field(default=None, primary_key=True)
+     user_hash: str = Field(index=True)
+     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+@@ -24,9 +24,9 @@ class UsageLog(SQLModel, table=True):
+ 
+ class PipelineRun(SQLModel, table=True):
+     """High-level pipeline execution log."""
+-    
++
+     __tablename__ = "pipeline_runs"
+-    
++
+     id: Optional[int] = Field(default=None, primary_key=True)
+     pipeline_id: str = Field(index=True, unique=True)
+     pipeline_name: str
+@@ -42,3 +42,54 @@ class PipelineRun(SQLModel, table=True):
+     extra_metadata: str = Field(default="{}")  # JSON string - renamed from metadata
+     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+     completed_at: Optional[datetime] = None
++
++
++# ── v2.2: User accounts + conversation history ──────────────────
++
++
++class User(SQLModel, table=True):
++    """User accounts with OAuth or email login."""
++
++    __tablename__ = "users"
++
++    id: Optional[int] = Field(default=None, primary_key=True)
++    email: str = Field(index=True, unique=True)
++    name: str = Field(default="")
++    avatar_url: str = Field(default="")
++    oauth_provider: str = Field(default="email")  # email, google, apple, x
++    oauth_id: str = Field(default="")  # provider-specific user ID
++    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
++    last_login: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
++
++
++class Conversation(SQLModel, table=True):
++    """Persistent chat conversations."""
++
++    __tablename__ = "conversations"
++
++    id: Optional[int] = Field(default=None, primary_key=True)
++    uuid: str = Field(index=True, unique=True)  # public-facing ID
++    user_id: int = Field(index=True, foreign_key="users.id")
++    title: str = Field(default="New conversation")
++    provider: str = Field(default="")
++    model: str = Field(default="")
++    mode: str = Field(default="direct")  # direct, specialist
++    specialist_id: Optional[str] = None
++    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
++    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
++
++
++class Message(SQLModel, table=True):
++    """Individual messages within a conversation."""
++
++    __tablename__ = "messages"
++
++    id: Optional[int] = Field(default=None, primary_key=True)
++    conversation_id: int = Field(index=True, foreign_key="conversations.id")
++    role: str  # user, assistant
++    content: str
++    model: str = Field(default="")
++    input_tokens: int = Field(default=0)
++    output_tokens: int = Field(default=0)
++    cost_usd: float = Field(default=0.0)
++    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+diff --git a/backend/routes/auth.py b/backend/routes/auth.py
+index 6fbce36..c11a186 100644
+--- a/backend/routes/auth.py
++++ b/backend/routes/auth.py
+@@ -1,14 +1,19 @@
+-"""Authentication routes."""
+-import hashlib
++"""Authentication routes — email + OAuth (Google, Apple, X)."""
++
+ import re
+-from fastapi import APIRouter, HTTPException
++from fastapi import APIRouter, Depends, HTTPException
+ from pydantic import BaseModel, field_validator
+-from backend.auth.jwt_handler import create_access_token
++from backend.auth.authenticator import get_current_user
++from backend.auth.oauth import (
++    google_get_auth_url, google_exchange_code,
++    apple_get_auth_url, apple_exchange_code,
++    x_get_auth_url, x_exchange_code,
++    get_or_create_user, create_user_token,
++)
+ 
+ router = APIRouter()
+ ALLOWED_DOMAINS = {"gradeesolutions.com", "calculusresearch.io"}
+ 
+-# RFC 5322 simplified: local@domain with at least one dot in domain
+ _EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+ 
+ 
+@@ -28,12 +33,86 @@ class LoginResponse(BaseModel):
+     access_token: str
+     token_type: str = "bearer"
+ 
++
++class OAuthCallbackRequest(BaseModel):
++    code: str
++
++
++# ── Email login (domain-restricted) ────────────────────────────
++
++
+ @router.post("/login", response_model=LoginResponse)
+ async def login(request: LoginRequest):
+-    email = request.email  # already lowered/stripped by validator
++    email = request.email
+     domain = email.split("@")[1]
+     if domain not in ALLOWED_DOMAINS:
+         raise HTTPException(status_code=401, detail="Email domain is not authorized")
+-    email_hash = hashlib.sha256(email.encode()).hexdigest()
+-    token = create_access_token({"sub": email_hash, "domain": domain})
++    user = get_or_create_user(email=email, oauth_provider="email")
++    token = create_user_token(user)
+     return LoginResponse(access_token=token)
++
++
++# ── User profile ────────────────────────────────────────────────
++
++
++@router.get("/me")
++async def get_current_user_info(current_user: dict = Depends(get_current_user)):
++    """Return current user profile from JWT."""
++    return {
++        "id": current_user.get("sub"),
++        "email": current_user.get("email", ""),
++        "name": current_user.get("name", ""),
++        "avatar_url": current_user.get("avatar_url", ""),
++        "provider": current_user.get("provider", "email"),
++    }
++
++
++# ── Google OAuth ────────────────────────────────────────────────
++
++
++@router.get("/google")
++async def google_auth():
++    url = await google_get_auth_url()
++    return {"auth_url": url}
++
++
++@router.post("/google/callback", response_model=LoginResponse)
++async def google_callback(request: OAuthCallbackRequest):
++    user = await google_exchange_code(request.code)
++    if not user:
++        raise HTTPException(status_code=401, detail="Google authentication failed")
++    return LoginResponse(access_token=create_user_token(user))
++
++
++# ── Apple OAuth ─────────────────────────────────────────────────
++
++
++@router.get("/apple")
++async def apple_auth():
++    url = await apple_get_auth_url()
++    return {"auth_url": url}
++
++
++@router.post("/apple/callback", response_model=LoginResponse)
++async def apple_callback(request: OAuthCallbackRequest):
++    user = await apple_exchange_code(request.code)
++    if not user:
++        raise HTTPException(status_code=401, detail="Apple authentication failed")
++    return LoginResponse(access_token=create_user_token(user))
++
++
++# ── X (Twitter) OAuth ───────────────────────────────────────────
++
++
++@router.get("/x")
++async def x_auth():
++    url = await x_get_auth_url()
++    return {"auth_url": url}
++
++
++@router.post("/x/callback", response_model=LoginResponse)
++async def x_callback(request: OAuthCallbackRequest):
++    user = await x_exchange_code(request.code)
++    if not user:
++        raise HTTPException(status_code=401, detail="X authentication failed")
++    return LoginResponse(access_token=create_user_token(user))
+diff --git a/backend/routes/conversations.py b/backend/routes/conversations.py
+new file mode 100644
+index 0000000..484a2ed
+--- /dev/null
++++ b/backend/routes/conversations.py
+@@ -0,0 +1,335 @@
++"""Conversation history routes — CRUD for persistent chat threads."""
++
++import uuid
++from datetime import datetime, timezone
++from typing import Optional
++from fastapi import APIRouter, Depends, HTTPException
++from pydantic import BaseModel, Field
++from sqlmodel import Session, select, col, func
++
++from backend.auth.authenticator import get_current_user
++from backend.database import engine
++from backend.models import Conversation, Message
++
++router = APIRouter()
++
++
++# ── Request/Response models ─────────────────────────────────────
++
++
++class ConversationCreateRequest(BaseModel):
++    provider: str = ""
++    model: str = ""
++    mode: str = "direct"  # direct, specialist
++    specialist_id: Optional[str] = None
++
++
++class MessageSaveRequest(BaseModel):
++    role: str = Field(..., pattern=r"^(user|assistant)$")
++    content: str
++    model: str = ""
++    input_tokens: int = 0
++    output_tokens: int = 0
++    cost_usd: float = 0.0
++
++
++class ConversationUpdateRequest(BaseModel):
++    title: Optional[str] = None
++    provider: Optional[str] = None
++    model: Optional[str] = None
++
++
++class ConversationResponse(BaseModel):
++    uuid: str
++    title: str
++    provider: str
++    model: str
++    mode: str
++    specialist_id: Optional[str]
++    message_count: int = 0
++    created_at: str
++    updated_at: str
++    preview: str = ""  # first user message truncated
++
++
++class MessageResponse(BaseModel):
++    id: int
++    role: str
++    content: str
++    model: str
++    input_tokens: int
++    output_tokens: int
++    cost_usd: float
++    created_at: str
++
++
++# ── Helpers ──────────────────────────────────────────────────────
++
++
++def _get_user_id(current_user: dict) -> int:
++    """Extract user ID from JWT payload."""
++    user_id = current_user.get("sub")
++    if not user_id:
++        raise HTTPException(status_code=401, detail="Invalid user token")
++    return int(user_id)
++
++
++def _auto_title(content: str) -> str:
++    """Generate a short title from the first user message."""
++    content = content.strip()
++    if len(content) <= 50:
++        return content
++    # Cut at word boundary
++    truncated = content[:50]
++    last_space = truncated.rfind(" ")
++    if last_space > 20:
++        truncated = truncated[:last_space]
++    return truncated + "..."
++
++
++# ── Routes ───────────────────────────────────────────────────────
++
++
++@router.get("/")
++async def list_conversations(
++    limit: int = 50,
++    offset: int = 0,
++    current_user: dict = Depends(get_current_user),
++):
++    """List user's conversations, newest first."""
++    user_id = _get_user_id(current_user)
++
++    with Session(engine) as session:
++        # Get conversations with message count
++        statement = (
++            select(Conversation)
++            .where(Conversation.user_id == user_id)
++            .order_by(col(Conversation.updated_at).desc())
++            .offset(offset)
++            .limit(limit)
++        )
++        conversations = session.exec(statement).all()
++
++        result = []
++        for conv in conversations:
++            # Get message count
++            count_stmt = (
++                select(func.count(Message.id))
++                .where(Message.conversation_id == conv.id)
++            )
++            msg_count = session.exec(count_stmt).one()
++
++            # Get preview (first user message)
++            preview_stmt = (
++                select(Message.content)
++                .where(Message.conversation_id == conv.id)
++                .where(Message.role == "user")
++                .order_by(Message.id)
++                .limit(1)
++            )
++            preview_content = session.exec(preview_stmt).first()
++            preview = (preview_content or "")[:100]
++
++            result.append(ConversationResponse(
++                uuid=conv.uuid,
++                title=conv.title,
++                provider=conv.provider,
++                model=conv.model,
++                mode=conv.mode,
++                specialist_id=conv.specialist_id,
++                message_count=msg_count,
++                created_at=conv.created_at.isoformat(),
++                updated_at=conv.updated_at.isoformat(),
++                preview=preview,
++            ))
++
++        return {"conversations": result, "total": len(result)}
++
++
++@router.post("/")
++async def create_conversation(
++    request: ConversationCreateRequest,
++    current_user: dict = Depends(get_current_user),
++):
++    """Create a new conversation."""
++    user_id = _get_user_id(current_user)
++
++    conv = Conversation(
++        uuid=str(uuid.uuid4()),
++        user_id=user_id,
++        provider=request.provider,
++        model=request.model,
++        mode=request.mode,
++        specialist_id=request.specialist_id,
++    )
++
++    with Session(engine) as session:
++        session.add(conv)
++        session.commit()
++        session.refresh(conv)
++
++        return {
++            "uuid": conv.uuid,
++            "title": conv.title,
++            "created_at": conv.created_at.isoformat(),
++        }
++
++
++@router.get("/{conversation_uuid}")
++async def get_conversation(
++    conversation_uuid: str,
++    current_user: dict = Depends(get_current_user),
++):
++    """Load a conversation with all messages."""
++    user_id = _get_user_id(current_user)
++
++    with Session(engine) as session:
++        statement = (
++            select(Conversation)
++            .where(Conversation.uuid == conversation_uuid)
++            .where(Conversation.user_id == user_id)
++        )
++        conv = session.exec(statement).first()
++        if not conv:
++            raise HTTPException(status_code=404, detail="Conversation not found")
++
++        # Load messages
++        msg_stmt = (
++            select(Message)
++            .where(Message.conversation_id == conv.id)
++            .order_by(Message.id)
++        )
++        messages = session.exec(msg_stmt).all()
++
++        return {
++            "uuid": conv.uuid,
++            "title": conv.title,
++            "provider": conv.provider,
++            "model": conv.model,
++            "mode": conv.mode,
++            "specialist_id": conv.specialist_id,
++            "created_at": conv.created_at.isoformat(),
++            "updated_at": conv.updated_at.isoformat(),
++            "messages": [
++                MessageResponse(
++                    id=m.id,
++                    role=m.role,
++                    content=m.content,
++                    model=m.model,
++                    input_tokens=m.input_tokens,
++                    output_tokens=m.output_tokens,
++                    cost_usd=m.cost_usd,
++                    created_at=m.created_at.isoformat(),
++                )
++                for m in messages
++            ],
++        }
++
++
++@router.post("/{conversation_uuid}/messages")
++async def save_message(
++    conversation_uuid: str,
++    request: MessageSaveRequest,
++    current_user: dict = Depends(get_current_user),
++):
++    """Save a message to a conversation."""
++    user_id = _get_user_id(current_user)
++
++    with Session(engine) as session:
++        statement = (
++            select(Conversation)
++            .where(Conversation.uuid == conversation_uuid)
++            .where(Conversation.user_id == user_id)
++        )
++        conv = session.exec(statement).first()
++        if not conv:
++            raise HTTPException(status_code=404, detail="Conversation not found")
++
++        msg = Message(
++            conversation_id=conv.id,
++            role=request.role,
++            content=request.content,
++            model=request.model,
++            input_tokens=request.input_tokens,
++            output_tokens=request.output_tokens,
++            cost_usd=request.cost_usd,
++        )
++        session.add(msg)
++
++        # Auto-title on first user message
++        if conv.title == "New conversation" and request.role == "user":
++            conv.title = _auto_title(request.content)
++
++        # Update timestamp
++        conv.updated_at = datetime.now(timezone.utc)
++        session.add(conv)
++        session.commit()
++        session.refresh(msg)
++
++        return {
++            "id": msg.id,
++            "conversation_title": conv.title,
++        }
++
++
++@router.put("/{conversation_uuid}")
++async def update_conversation(
++    conversation_uuid: str,
++    request: ConversationUpdateRequest,
++    current_user: dict = Depends(get_current_user),
++):
++    """Update conversation metadata (title, model, etc.)."""
++    user_id = _get_user_id(current_user)
++
++    with Session(engine) as session:
++        statement = (
++            select(Conversation)
++            .where(Conversation.uuid == conversation_uuid)
++            .where(Conversation.user_id == user_id)
++        )
++        conv = session.exec(statement).first()
++        if not conv:
++            raise HTTPException(status_code=404, detail="Conversation not found")
++
++        if request.title is not None:
++            conv.title = request.title
++        if request.provider is not None:
++            conv.provider = request.provider
++        if request.model is not None:
++            conv.model = request.model
++
++        conv.updated_at = datetime.now(timezone.utc)
++        session.add(conv)
++        session.commit()
++
++        return {"uuid": conv.uuid, "title": conv.title}
++
++
++@router.delete("/{conversation_uuid}")
++async def delete_conversation(
++    conversation_uuid: str,
++    current_user: dict = Depends(get_current_user),
++):
++    """Delete a conversation and all its messages."""
++    user_id = _get_user_id(current_user)
++
++    with Session(engine) as session:
++        statement = (
++            select(Conversation)
++            .where(Conversation.uuid == conversation_uuid)
++            .where(Conversation.user_id == user_id)
++        )
++        conv = session.exec(statement).first()
++        if not conv:
++            raise HTTPException(status_code=404, detail="Conversation not found")
++
++        # Delete messages first
++        msg_stmt = select(Message).where(Message.conversation_id == conv.id)
++        messages = session.exec(msg_stmt).all()
++        for msg in messages:
++            session.delete(msg)
++
++        session.delete(conv)
++        session.commit()
++
++        return {"deleted": True}
+diff --git a/docker-compose.v2.yml b/docker-compose.v2.yml
+index 5bf564d..d9781c3 100644
+--- a/docker-compose.v2.yml
++++ b/docker-compose.v2.yml
+@@ -34,6 +34,13 @@ services:
+       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+       GROQ_API_KEY: ${GROQ_API_KEY:-}
+       COURTLISTENER_API_KEY: ${COURTLISTENER_API_KEY:-}
++      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
++      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
++      APPLE_OAUTH_CLIENT_ID: ${APPLE_OAUTH_CLIENT_ID:-}
++      APPLE_OAUTH_CLIENT_SECRET: ${APPLE_OAUTH_CLIENT_SECRET:-}
++      X_OAUTH_CLIENT_ID: ${X_OAUTH_CLIENT_ID:-}
++      X_OAUTH_CLIENT_SECRET: ${X_OAUTH_CLIENT_SECRET:-}
++      OAUTH_REDIRECT_BASE: ${OAUTH_REDIRECT_BASE:-http://localhost:3000}
+       TRITON_CHECKPOINT_DIR: /app/triton/checkpoints
+       TRITON_PATH: /app/triton
+     ports:
+diff --git a/frontend/src/components/ConversationList.tsx b/frontend/src/components/ConversationList.tsx
+new file mode 100644
+index 0000000..c393f8c
+--- /dev/null
++++ b/frontend/src/components/ConversationList.tsx
+@@ -0,0 +1,223 @@
++import { useState, useEffect } from 'react';
++import { Plus, Trash2, MessageSquare } from 'lucide-react';
++import { api } from '../api/client';
++
++interface ConversationItem {
++  uuid: string;
++  title: string;
++  provider: string;
++  model: string;
++  mode: string;
++  message_count: number;
++  updated_at: string;
++  preview: string;
++}
++
++interface ConversationListProps {
++  activeId: string | null;
++  onSelect: (uuid: string) => void;
++  onNew: () => void;
++}
++
++export default function ConversationList({ activeId, onSelect, onNew }: ConversationListProps) {
++  const [conversations, setConversations] = useState<ConversationItem[]>([]);
++  const [loading, setLoading] = useState(true);
++
++  const loadConversations = async () => {
++    try {
++      const data = await api.request<{ conversations: ConversationItem[] }>('/conversations/');
++      setConversations(data.conversations);
++    } catch {
++      // silently fail — user might not be authed yet
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  useEffect(() => {
++    loadConversations();
++  }, []);
++
++  // Refresh when activeId changes (new messages may have updated title)
++  useEffect(() => {
++    if (activeId) loadConversations();
++  }, [activeId]);
++
++  const handleDelete = async (e: React.MouseEvent, uuid: string) => {
++    e.stopPropagation();
++    try {
++      await api.delete(`/conversations/${uuid}`);
++      setConversations((prev) => prev.filter((c) => c.uuid !== uuid));
++      if (activeId === uuid) onNew();
++    } catch {
++      // ignore
++    }
++  };
++
++  const formatTime = (iso: string) => {
++    const d = new Date(iso);
++    const now = new Date();
++    const diffMs = now.getTime() - d.getTime();
++    const diffHours = diffMs / (1000 * 60 * 60);
++
++    if (diffHours < 1) return 'Just now';
++    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
++    if (diffHours < 48) return 'Yesterday';
++    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
++  };
++
++  if (loading) {
++    return (
++      <div style={{ padding: '12px', color: 'var(--cr-text-dim)', fontSize: '12px' }}>
++        Loading...
++      </div>
++    );
++  }
++
++  return (
++    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
++      {/* New chat button */}
++      <button
++        onClick={onNew}
++        style={{
++          display: 'flex',
++          alignItems: 'center',
++          gap: '8px',
++          margin: '8px 10px',
++          padding: '8px 12px',
++          borderRadius: 'var(--cr-radius-sm)',
++          border: '1px solid var(--cr-border)',
++          background: 'transparent',
++          color: 'var(--cr-text-muted)',
++          fontSize: '13px',
++          cursor: 'pointer',
++          transition: 'all 150ms',
++        }}
++        onMouseEnter={(e) => {
++          (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
++          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text)';
++        }}
++        onMouseLeave={(e) => {
++          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
++          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
++        }}
++      >
++        <Plus style={{ width: 14, height: 14 }} />
++        New chat
++      </button>
++
++      {/* Conversation list */}
++      <div
++        style={{
++          flex: 1,
++          overflowY: 'auto',
++          padding: '0 6px',
++        }}
++      >
++        {conversations.length === 0 && (
++          <div
++            style={{
++              padding: '20px 12px',
++              textAlign: 'center',
++              color: 'var(--cr-text-dim)',
++              fontSize: '12px',
++            }}
++          >
++            <MessageSquare
++              style={{ width: 20, height: 20, margin: '0 auto 8px', opacity: 0.4 }}
++            />
++            No conversations yet
++          </div>
++        )}
++
++        {conversations.map((conv) => {
++          const isActive = conv.uuid === activeId;
++          return (
++            <button
++              key={conv.uuid}
++              onClick={() => onSelect(conv.uuid)}
++              style={{
++                display: 'flex',
++                alignItems: 'flex-start',
++                gap: '8px',
++                width: '100%',
++                padding: '10px 10px',
++                margin: '1px 0',
++                borderRadius: 'var(--cr-radius-xs)',
++                border: 'none',
++                background: isActive ? 'var(--cr-charcoal-deep)' : 'transparent',
++                cursor: 'pointer',
++                textAlign: 'left',
++                transition: 'background 100ms',
++                position: 'relative',
++              }}
++              onMouseEnter={(e) => {
++                if (!isActive)
++                  (e.currentTarget as HTMLButtonElement).style.background =
++                    'rgba(42, 46, 50, 0.5)';
++              }}
++              onMouseLeave={(e) => {
++                if (!isActive)
++                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
++              }}
++            >
++              <div style={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
++                <div
++                  style={{
++                    fontSize: '13px',
++                    fontWeight: isActive ? 500 : 400,
++                    color: isActive ? 'var(--cr-text)' : 'var(--cr-text-muted)',
++                    overflow: 'hidden',
++                    textOverflow: 'ellipsis',
++                    whiteSpace: 'nowrap',
++                  }}
++                >
++                  {conv.title}
++                </div>
++                <div
++                  style={{
++                    fontSize: '11px',
++                    color: 'var(--cr-text-dim)',
++                    marginTop: '2px',
++                  }}
++                >
++                  {formatTime(conv.updated_at)}
++                  {conv.model && (
++                    <span style={{ marginLeft: '6px', opacity: 0.7 }}>
++                      {conv.model.split('/').pop()?.split('-').slice(0, 2).join('-')}
++                    </span>
++                  )}
++                </div>
++              </div>
++              {/* Delete button — shows on hover via CSS would be ideal, but inline works */}
++              <button
++                onClick={(e) => handleDelete(e, conv.uuid)}
++                style={{
++                  background: 'none',
++                  border: 'none',
++                  padding: '2px',
++                  cursor: 'pointer',
++                  color: 'var(--cr-text-dim)',
++                  opacity: 0.4,
++                  transition: 'opacity 150ms, color 150ms',
++                  flexShrink: 0,
++                }}
++                onMouseEnter={(e) => {
++                  e.currentTarget.style.opacity = '1';
++                  e.currentTarget.style.color = 'var(--cr-danger)';
++                }}
++                onMouseLeave={(e) => {
++                  e.currentTarget.style.opacity = '0.4';
++                  e.currentTarget.style.color = 'var(--cr-text-dim)';
++                }}
++                title="Delete conversation"
++              >
++                <Trash2 style={{ width: 13, height: 13 }} />
++              </button>
++            </button>
++          );
++        })}
++      </div>
++    </div>
++  );
++}
+diff --git a/frontend/src/components/Sidebar.tsx b/frontend/src/components/Sidebar.tsx
+index 40f730c..396fa3d 100644
+--- a/frontend/src/components/Sidebar.tsx
++++ b/frontend/src/components/Sidebar.tsx
+@@ -1,7 +1,16 @@
+ import { NavLink, useNavigate } from 'react-router-dom';
+ import { useAuth } from '../contexts/AuthContext';
+-import { Sparkles, MessageSquare, Brain, BarChart3, Settings, LogOut, ChevronRight } from 'lucide-react';
++import {
++  Sparkles,
++  MessageSquare,
++  Brain,
++  BarChart3,
++  Settings,
++  LogOut,
++  ChevronRight,
++} from 'lucide-react';
+ import clsx from 'clsx';
++import ConversationList from './ConversationList';
+ 
+ const navItems = [
+   { to: '/', icon: Sparkles, label: 'Chat' },
+@@ -11,35 +20,192 @@ const navItems = [
+   { to: '/settings', icon: Settings, label: 'Settings' },
+ ];
+ 
+-interface SidebarProps { onNavigate?: () => void; }
++interface SidebarProps {
++  onNavigate?: () => void;
++  activeConversationId?: string | null;
++  onSelectConversation?: (uuid: string) => void;
++  onNewConversation?: () => void;
++}
+ 
+-export default function Sidebar({ onNavigate }: SidebarProps) {
+-  const { logout } = useAuth();
++export default function Sidebar({
++  onNavigate,
++  activeConversationId = null,
++  onSelectConversation,
++  onNewConversation,
++}: SidebarProps) {
++  const { logout, user } = useAuth();
+   const navigate = useNavigate();
+-  const handleLogout = () => { logout(); navigate('/login'); onNavigate?.(); };
++  const handleLogout = () => {
++    logout();
++    navigate('/login');
++    onNavigate?.();
++  };
+ 
+   return (
+-    <aside className="h-screen flex flex-col" style={{ width: 'var(--sidebar-width)', background: 'var(--cr-charcoal)', borderRight: '1px solid var(--cr-border)' }}>
++    <aside
++      className="h-screen flex flex-col"
++      style={{
++        width: 'var(--sidebar-width)',
++        background: 'var(--cr-charcoal)',
++        borderRight: '1px solid var(--cr-border)',
++      }}
++    >
++      {/* Brand */}
+       <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--cr-border)' }}>
+-        <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--cr-green-400)', letterSpacing: '0.04em', margin: 0 }}>CALCULUS LABS</h1>
+-        <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>AI Portal v2.2</p>
++        <h1
++          style={{
++            fontFamily: "'Space Grotesk', sans-serif",
++            fontSize: '16px',
++            fontWeight: 700,
++            color: 'var(--cr-green-400)',
++            letterSpacing: '0.04em',
++            margin: 0,
++          }}
++        >
++          CALCULUS LABS
++        </h1>
++        <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>
++          AI Portal v2.2
++        </p>
+       </div>
+-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
++
++      {/* Nav */}
++      <nav className="py-3 px-3 space-y-1" style={{ borderBottom: '1px solid var(--cr-border)' }}>
+         {navItems.map(({ to, icon: Icon, label }) => (
+-          <NavLink key={to} to={to} end={to === '/'} onClick={() => onNavigate?.()}
+-            className={({ isActive }) => clsx('flex items-center gap-3 px-3 py-2.5 text-sm transition-all group', isActive ? 'font-medium' : '')}
+-            style={({ isActive }) => ({ borderRadius: 'var(--cr-radius-sm)', background: isActive ? 'var(--cr-charcoal-deep)' : 'transparent', color: isActive ? 'var(--cr-green-400)' : 'var(--cr-text-muted)', borderLeft: isActive ? '2px solid var(--cr-green-600)' : '2px solid transparent' })}>
++          <NavLink
++            key={to}
++            to={to}
++            end={to === '/'}
++            onClick={() => onNavigate?.()}
++            className={({ isActive }) =>
++              clsx(
++                'flex items-center gap-3 px-3 py-2 text-sm transition-all group',
++                isActive ? 'font-medium' : '',
++              )
++            }
++            style={({ isActive }) => ({
++              borderRadius: 'var(--cr-radius-sm)',
++              background: isActive ? 'var(--cr-charcoal-deep)' : 'transparent',
++              color: isActive ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
++              borderLeft: isActive
++                ? '2px solid var(--cr-green-600)'
++                : '2px solid transparent',
++            })}
++          >
+             <Icon className="w-[18px] h-[18px] shrink-0" />
+             <span className="flex-1">{label}</span>
+-            <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity" style={{ color: 'var(--cr-text-dim)' }} />
++            <ChevronRight
++              className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity"
++              style={{ color: 'var(--cr-text-dim)' }}
++            />
+           </NavLink>
+         ))}
+       </nav>
+-      <div className="px-3 py-4" style={{ borderTop: '1px solid var(--cr-border)' }}>
+-        <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 text-sm w-full transition-all" style={{ color: 'var(--cr-text-dim)', borderRadius: 'var(--cr-radius-sm)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-danger)'; }}
+-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-dim)'; }}>
+-          <LogOut className="w-[18px] h-[18px]" /><span>Sign Out</span>
++
++      {/* Conversation History */}
++      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
++        <div
++          style={{
++            padding: '10px 14px 4px',
++            fontSize: '10px',
++            fontWeight: 600,
++            color: 'var(--cr-text-dim)',
++            textTransform: 'uppercase',
++            letterSpacing: '0.08em',
++          }}
++        >
++          Recent chats
++        </div>
++        <div style={{ flex: 1, overflow: 'hidden' }}>
++          <ConversationList
++            activeId={activeConversationId}
++            onSelect={(uuid) => {
++              onSelectConversation?.(uuid);
++              navigate('/');
++              onNavigate?.();
++            }}
++            onNew={() => {
++              onNewConversation?.();
++              navigate('/');
++              onNavigate?.();
++            }}
++          />
++        </div>
++      </div>
++
++      {/* User + Sign Out */}
++      <div className="px-3 py-3" style={{ borderTop: '1px solid var(--cr-border)' }}>
++        {user && (
++          <div
++            style={{
++              display: 'flex',
++              alignItems: 'center',
++              gap: '8px',
++              padding: '4px 8px',
++              marginBottom: '6px',
++            }}
++          >
++            {user.avatar_url ? (
++              <img
++                src={user.avatar_url}
++                alt=""
++                style={{
++                  width: '24px',
++                  height: '24px',
++                  borderRadius: '50%',
++                  border: '1px solid var(--cr-border)',
++                }}
++              />
++            ) : (
++              <div
++                style={{
++                  width: '24px',
++                  height: '24px',
++                  borderRadius: '50%',
++                  background: 'var(--cr-green-900)',
++                  display: 'flex',
++                  alignItems: 'center',
++                  justifyContent: 'center',
++                  fontSize: '11px',
++                  fontWeight: 600,
++                  color: 'var(--cr-green-400)',
++                }}
++              >
++                {(user.name || user.email).charAt(0).toUpperCase()}
++              </div>
++            )}
++            <span
++              style={{
++                fontSize: '12px',
++                color: 'var(--cr-text-muted)',
++                overflow: 'hidden',
++                textOverflow: 'ellipsis',
++                whiteSpace: 'nowrap',
++              }}
++            >
++              {user.name || user.email}
++            </span>
++          </div>
++        )}
++        <button
++          onClick={handleLogout}
++          className="flex items-center gap-3 px-3 py-2 text-sm w-full transition-all"
++          style={{
++            color: 'var(--cr-text-dim)',
++            borderRadius: 'var(--cr-radius-sm)',
++            background: 'transparent',
++            border: 'none',
++            cursor: 'pointer',
++          }}
++          onMouseEnter={(e) => {
++            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-danger)';
++          }}
++          onMouseLeave={(e) => {
++            (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-dim)';
++          }}
++        >
++          <LogOut className="w-[18px] h-[18px]" />
++          <span>Sign Out</span>
+         </button>
+       </div>
+     </aside>
+diff --git a/frontend/src/contexts/AuthContext.tsx b/frontend/src/contexts/AuthContext.tsx
+index 1f78f2a..394bf34 100644
+--- a/frontend/src/contexts/AuthContext.tsx
++++ b/frontend/src/contexts/AuthContext.tsx
+@@ -1,10 +1,21 @@
+ import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+ import { api } from '../api/client';
+ 
++interface UserProfile {
++  id: string;
++  email: string;
++  name: string;
++  avatar_url: string;
++  provider: string;
++}
++
+ interface AuthContextType {
+   isAuthenticated: boolean;
+   isLoading: boolean;
++  user: UserProfile | null;
+   login: (email: string) => Promise<void>;
++  loginWithOAuth: (provider: 'google' | 'apple' | 'x') => Promise<void>;
++  handleOAuthCallback: (provider: string, code: string) => Promise<void>;
+   logout: () => void;
+   error: string | null;
+ }
+@@ -14,24 +25,55 @@ const AuthContext = createContext<AuthContextType | null>(null);
+ export function AuthProvider({ children }: { children: ReactNode }) {
+   const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const [isLoading, setIsLoading] = useState(true);
++  const [user, setUser] = useState<UserProfile | null>(null);
+   const [error, setError] = useState<string | null>(null);
+ 
+   useEffect(() => {
+     const token = localStorage.getItem('fc_token');
+     if (token) {
+       api.setToken(token);
+-      setIsAuthenticated(true);
++      // Load user profile
++      api.request<UserProfile>('/auth/me')
++        .then((profile) => {
++          setUser(profile);
++          setIsAuthenticated(true);
++        })
++        .catch(() => {
++          // Token expired or invalid
++          localStorage.removeItem('fc_token');
++          api.setToken(null);
++        })
++        .finally(() => setIsLoading(false));
++    } else {
++      setIsLoading(false);
++    }
++
++    // Check for OAuth callback params in URL
++    const params = new URLSearchParams(window.location.search);
++    const code = params.get('code');
++    const state = params.get('state');  // contains provider
++    if (code && state) {
++      handleOAuthCallback(state, code).then(() => {
++        // Clean URL
++        window.history.replaceState({}, '', window.location.pathname);
++      });
+     }
+-    setIsLoading(false);
+   }, []);
+ 
++  const _setAuth = (token: string) => {
++    api.setToken(token);
++    localStorage.setItem('fc_token', token);
++    setIsAuthenticated(true);
++  };
++
+   const login = async (email: string) => {
+     setError(null);
+     try {
+       const response = await api.post<{ access_token: string }>('/auth/login', { email });
+-      api.setToken(response.access_token);
+-      localStorage.setItem('fc_token', response.access_token);
+-      setIsAuthenticated(true);
++      _setAuth(response.access_token);
++      // Load profile
++      const profile = await api.request<UserProfile>('/auth/me');
++      setUser(profile);
+     } catch (err) {
+       const message = err instanceof Error ? err.message : 'Login failed';
+       setError(message);
+@@ -39,14 +81,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
+     }
+   };
+ 
++  const loginWithOAuth = async (provider: 'google' | 'apple' | 'x') => {
++    setError(null);
++    try {
++      const response = await api.request<{ auth_url: string }>(`/auth/${provider}`);
++      // Redirect to OAuth provider
++      window.location.href = response.auth_url;
++    } catch (err) {
++      const message = err instanceof Error ? err.message : 'OAuth redirect failed';
++      setError(message);
++      throw err;
++    }
++  };
++
++  const handleOAuthCallback = async (provider: string, code: string) => {
++    setError(null);
++    try {
++      const response = await api.post<{ access_token: string }>(
++        `/auth/${provider}/callback`,
++        { code },
++      );
++      _setAuth(response.access_token);
++      const profile = await api.request<UserProfile>('/auth/me');
++      setUser(profile);
++    } catch (err) {
++      const message = err instanceof Error ? err.message : 'OAuth login failed';
++      setError(message);
++    } finally {
++      setIsLoading(false);
++    }
++  };
++
+   const logout = () => {
+     api.setToken(null);
+     localStorage.removeItem('fc_token');
+     setIsAuthenticated(false);
++    setUser(null);
+   };
+ 
+   return (
+-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, error }}>
++    <AuthContext.Provider
++      value={{ isAuthenticated, isLoading, user, login, loginWithOAuth, handleOAuthCallback, logout, error }}
++    >
+       {children}
+     </AuthContext.Provider>
+   );
+diff --git a/frontend/src/pages/LoginPage.tsx b/frontend/src/pages/LoginPage.tsx
+index 9d81d3f..3c84447 100644
+--- a/frontend/src/pages/LoginPage.tsx
++++ b/frontend/src/pages/LoginPage.tsx
+@@ -1,48 +1,296 @@
+ import { useState, type FormEvent } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import { useAuth } from '../contexts/AuthContext';
+-import { Shield, AlertCircle } from 'lucide-react';
++import { Shield, AlertCircle, Mail } from 'lucide-react';
++
++/* ── Social icon SVGs (inline to avoid deps) ─────────────────── */
++
++function GoogleIcon() {
++  return (
++    <svg width="18" height="18" viewBox="0 0 24 24">
++      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
++      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
++      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
++      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
++    </svg>
++  );
++}
++
++function AppleIcon() {
++  return (
++    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
++      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
++    </svg>
++  );
++}
++
++function XIcon() {
++  return (
++    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
++      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
++    </svg>
++  );
++}
++
++/* ── Component ───────────────────────────────────────────────── */
+ 
+ export default function LoginPage() {
+   const [email, setEmail] = useState('');
+   const [loading, setLoading] = useState(false);
+-  const { login, error } = useAuth();
++  const [showEmail, setShowEmail] = useState(false);
++  const { login, loginWithOAuth, error } = useAuth();
+   const navigate = useNavigate();
+ 
+-  const handleSubmit = async (e: FormEvent) => {
++  const handleEmailSubmit = async (e: FormEvent) => {
+     e.preventDefault();
+     setLoading(true);
+-    try { await login(email); navigate('/'); } catch {} finally { setLoading(false); }
++    try {
++      await login(email);
++      navigate('/');
++    } catch {
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleOAuth = async (provider: 'google' | 'apple' | 'x') => {
++    setLoading(true);
++    try {
++      await loginWithOAuth(provider);
++      // OAuth redirects to provider — page will reload on callback
++    } catch {
++      setLoading(false);
++    }
++  };
++
++  const btnBase: React.CSSProperties = {
++    width: '100%',
++    display: 'flex',
++    alignItems: 'center',
++    justifyContent: 'center',
++    gap: '10px',
++    padding: '12px',
++    borderRadius: 'var(--cr-radius-sm)',
++    fontSize: '14px',
++    fontWeight: 500,
++    cursor: 'pointer',
++    transition: 'all 150ms',
++    border: 'none',
+   };
+ 
+   return (
+-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cr-charcoal-dark)' }}>
+-      <div style={{ width: '100%', maxWidth: '420px', padding: '40px 36px', background: 'var(--cr-charcoal)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius)' }}>
+-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '14px', background: 'var(--cr-green-900)', border: '1px solid var(--cr-green-700)', marginBottom: '16px' }}>
++    <div
++      className="min-h-screen flex items-center justify-center"
++      style={{ background: 'var(--cr-charcoal-dark)' }}
++    >
++      <div
++        style={{
++          width: '100%',
++          maxWidth: '420px',
++          padding: '40px 36px',
++          background: 'var(--cr-charcoal)',
++          border: '1px solid var(--cr-border)',
++          borderRadius: 'var(--cr-radius)',
++        }}
++      >
++        {/* Header */}
++        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
++          <div
++            style={{
++              display: 'inline-flex',
++              alignItems: 'center',
++              justifyContent: 'center',
++              width: '56px',
++              height: '56px',
++              borderRadius: '14px',
++              background: 'var(--cr-green-900)',
++              border: '1px solid var(--cr-green-700)',
++              marginBottom: '16px',
++            }}
++          >
+             <Shield style={{ width: '28px', height: '28px', color: 'var(--cr-green-400)' }} />
+           </div>
+-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '22px', fontWeight: 700, color: 'var(--cr-green-400)', letterSpacing: '0.04em', margin: '0 0 4px' }}>CALCULUS LABS</h1>
+-          <p style={{ fontSize: '12px', color: 'var(--cr-text-dim)', margin: 0 }}>AI Intelligence Portal v2.2</p>
++          <h1
++            style={{
++              fontFamily: "'Space Grotesk', sans-serif",
++              fontSize: '22px',
++              fontWeight: 700,
++              color: 'var(--cr-green-400)',
++              letterSpacing: '0.04em',
++              margin: '0 0 4px',
++            }}
++          >
++            CALCULUS LABS
++          </h1>
++          <p style={{ fontSize: '12px', color: 'var(--cr-text-dim)', margin: 0 }}>
++            AI Intelligence Portal v2.2
++          </p>
+         </div>
++
++        {/* Error */}
+         {error && (
+-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: 'var(--cr-radius-sm)', background: 'rgba(214, 69, 69, 0.1)', border: '1px solid rgba(214, 69, 69, 0.25)', color: 'var(--cr-danger)', fontSize: '13px', marginBottom: '16px' }}>
+-            <AlertCircle style={{ width: '16px', height: '16px', flexShrink: 0 }} /><span>{error}</span>
++          <div
++            style={{
++              display: 'flex',
++              alignItems: 'center',
++              gap: '8px',
++              padding: '10px 14px',
++              borderRadius: 'var(--cr-radius-sm)',
++              background: 'rgba(214, 69, 69, 0.1)',
++              border: '1px solid rgba(214, 69, 69, 0.25)',
++              color: 'var(--cr-danger)',
++              fontSize: '13px',
++              marginBottom: '16px',
++            }}
++          >
++            <AlertCircle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
++            <span>{error}</span>
+           </div>
+         )}
+-        <form onSubmit={handleSubmit}>
+-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--cr-text-muted)', marginBottom: '8px' }}>Email Address</label>
+-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@calculusresearch.io" required
+-            style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)', background: 'var(--cr-charcoal-deep)', color: 'var(--cr-text)', fontSize: '14px', outline: 'none', transition: 'border-color 150ms' }}
+-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; }}
+-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; }} />
+-          <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '6px' }}>Domain-restricted access: @calculusresearch.io</p>
+-          <button type="submit" disabled={loading || !email}
+-            style={{ width: '100%', marginTop: '24px', padding: '12px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-green-700)', background: 'var(--cr-green-900)', color: 'var(--cr-green-400)', fontFamily: "'Space Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, cursor: loading || !email ? 'not-allowed' : 'pointer', opacity: loading || !email ? 0.5 : 1, transition: 'all 150ms' }}>
+-            {loading ? 'Authenticating...' : 'Sign In'}
++
++        {/* OAuth Buttons */}
++        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
++          <button
++            onClick={() => handleOAuth('google')}
++            disabled={loading}
++            style={{
++              ...btnBase,
++              background: '#ffffff',
++              color: '#1f1f1f',
++            }}
++          >
++            <GoogleIcon />
++            Continue with Google
++          </button>
++
++          <button
++            onClick={() => handleOAuth('apple')}
++            disabled={loading}
++            style={{
++              ...btnBase,
++              background: '#000000',
++              color: '#ffffff',
++            }}
++          >
++            <AppleIcon />
++            Continue with Apple
++          </button>
++
++          <button
++            onClick={() => handleOAuth('x')}
++            disabled={loading}
++            style={{
++              ...btnBase,
++              background: '#14171a',
++              color: '#ffffff',
++            }}
++          >
++            <XIcon />
++            Continue with X
++          </button>
++        </div>
++
++        {/* Divider */}
++        <div
++          style={{
++            display: 'flex',
++            alignItems: 'center',
++            gap: '12px',
++            margin: '20px 0',
++          }}
++        >
++          <div style={{ flex: 1, height: '1px', background: 'var(--cr-border)' }} />
++          <span style={{ fontSize: '11px', color: 'var(--cr-text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
++            or
++          </span>
++          <div style={{ flex: 1, height: '1px', background: 'var(--cr-border)' }} />
++        </div>
++
++        {/* Email Login */}
++        {!showEmail ? (
++          <button
++            onClick={() => setShowEmail(true)}
++            style={{
++              ...btnBase,
++              background: 'transparent',
++              color: 'var(--cr-text-muted)',
++              border: '1px solid var(--cr-border)',
++            }}
++          >
++            <Mail style={{ width: 16, height: 16 }} />
++            Continue with email
+           </button>
+-        </form>
+-        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '28px' }}>Calculus Holdings LLC &middot; Secured with JWT authentication</p>
++        ) : (
++          <form onSubmit={handleEmailSubmit}>
++            <label
++              style={{
++                display: 'block',
++                fontSize: '12px',
++                fontWeight: 500,
++                color: 'var(--cr-text-muted)',
++                marginBottom: '8px',
++              }}
++            >
++              Email Address
++            </label>
++            <input
++              type="email"
++              value={email}
++              onChange={(e) => setEmail(e.target.value)}
++              placeholder="you@calculusresearch.io"
++              required
++              autoFocus
++              style={{
++                width: '100%',
++                padding: '12px 16px',
++                borderRadius: 'var(--cr-radius-sm)',
++                border: '1px solid var(--cr-border)',
++                background: 'var(--cr-charcoal-deep)',
++                color: 'var(--cr-text)',
++                fontSize: '14px',
++                outline: 'none',
++                transition: 'border-color 150ms',
++              }}
++              onFocus={(e) => {
++                e.currentTarget.style.borderColor = 'var(--cr-green-600)';
++              }}
++              onBlur={(e) => {
++                e.currentTarget.style.borderColor = 'var(--cr-border)';
++              }}
++            />
++            <p style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '6px' }}>
++              Domain-restricted: @calculusresearch.io or @gradeesolutions.com
++            </p>
++            <button
++              type="submit"
++              disabled={loading || !email}
++              style={{
++                ...btnBase,
++                marginTop: '16px',
++                background: 'var(--cr-green-900)',
++                color: 'var(--cr-green-400)',
++                border: '1px solid var(--cr-green-700)',
++                fontFamily: "'Space Grotesk', sans-serif",
++                fontWeight: 600,
++                opacity: loading || !email ? 0.5 : 1,
++                cursor: loading || !email ? 'not-allowed' : 'pointer',
++              }}
++            >
++              {loading ? 'Signing in...' : 'Sign In'}
++            </button>
++          </form>
++        )}
++
++        <p
++          style={{
++            textAlign: 'center',
++            fontSize: '11px',
++            color: 'var(--cr-text-dim)',
++            marginTop: '28px',
++          }}
++        >
++          Calculus Holdings LLC &middot; Secured with JWT authentication
++        </p>
+       </div>
+     </div>
+   );
+diff --git a/frontend/src/types/index.ts b/frontend/src/types/index.ts
+index bd1dcfb..027ccd1 100644
+--- a/frontend/src/types/index.ts
++++ b/frontend/src/types/index.ts
+@@ -101,3 +101,22 @@ export interface UsageLog {
+   latency_ms: number;
+   specialist_id?: string;
+ }
++
++// ── Conversations ────────────────────────────────────────────────
++
++export interface ConversationSummary {
++  uuid: string;
++  title: string;
++  provider: string;
++  model: string;
++  mode: string;
++  specialist_id?: string;
++  message_count: number;
++  created_at: string;
++  updated_at: string;
++  preview: string;
++}
++
++export interface ConversationDetail extends ConversationSummary {
++  messages: ChatMessage[];
++}
+diff --git a/requirements.txt b/requirements.txt
+index e3bd0a8..0ea472e 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -25,4 +25,5 @@ pydantic>=2.0.0
+ pydantic-settings>=2.0.0
+ PyYAML>=6.0
+ litellm>=1.40.0
+-google-genai>=1.0.0
+\ No newline at end of file
++google-genai>=1.0.0
++httpx>=0.27.0
+-- 
+2.43.0
+
+
+From 50ecd2b0adf4062e4ff191d432688b32273c3c42 Mon Sep 17 00:00:00 2001
+From: Sean <finance@calculusresearch.io>
+Date: Sat, 28 Feb 2026 21:26:25 +0000
+Subject: [PATCH 2/2] UI: collapsible provider accordions on main page,
+ specialists-only on specialist page
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ModelSelector grid mode: replaced 4-column card grid with collapsible
+accordion list per provider (expand/collapse with chevron). Selected
+provider auto-expands. Shows model count badge per provider.
+
+ChatPage (Specialists): specialists only — no LLM models. Full CR
+token migration (zero stale hex/var refs). Green active states,
+Bot icon, provider/model shown on specialist welcome screen.
+---
+ .../src/components/chat/ModelSelector.tsx     | 282 ++++++++++--------
+ frontend/src/pages/ChatPage.tsx               | 170 ++++++++---
+ 2 files changed, 292 insertions(+), 160 deletions(-)
+
+diff --git a/frontend/src/components/chat/ModelSelector.tsx b/frontend/src/components/chat/ModelSelector.tsx
+index 0fa605d..51415d9 100644
+--- a/frontend/src/components/chat/ModelSelector.tsx
++++ b/frontend/src/components/chat/ModelSelector.tsx
+@@ -1,5 +1,5 @@
+ import { useState, useRef, useEffect } from 'react';
+-import { ChevronDown, Crown, Sparkles, Zap } from 'lucide-react';
++import { ChevronDown, ChevronRight, Crown, Sparkles, Zap } from 'lucide-react';
+ import type { LLMProvider } from '../../types';
+ 
+ // Provider accent colors
+@@ -10,14 +10,13 @@ const PROVIDER_COLORS: Record<string, string> = {
+   grok: '#D64545',
+   deepseek: '#7C8CF5',
+   mistral: '#E8853D',
+-  groq: '#E8853D',  // orange (Groq brand)
++  groq: '#E8853D',
+ };
+ 
+-// Tier config
+-const TIER_CONFIG: Record<string, { icon: typeof Crown; color: string; label: string }> = {
+-  top: { icon: Crown, color: '#F2A41F', label: 'TOP' },
+-  mid: { icon: Sparkles, color: 'var(--cr-text-dim)', label: 'MID' },
+-  budget: { icon: Zap, color: 'var(--cr-green-600)', label: '💰' },
++const TIER_CONFIG: Record<string, { icon: typeof Crown; color: string }> = {
++  top: { icon: Crown, color: '#F2A41F' },
++  mid: { icon: Sparkles, color: 'var(--cr-text-dim)' },
++  budget: { icon: Zap, color: 'var(--cr-green-600)' },
+ };
+ 
+ interface ModelSelectorProps {
+@@ -34,7 +33,7 @@ function formatPrice(input?: number, output?: number): string {
+   return `$${input.toFixed(2)}/$${output.toFixed(0)}`;
+ }
+ 
+-// ── Grid Mode ───────────────────────────────────────────────────
++// ── Grid Mode — Collapsible accordions per provider ─────────────
+ 
+ function GridSelector({
+   providers,
+@@ -42,129 +41,194 @@ function GridSelector({
+   selectedModel,
+   onSelect,
+ }: Omit<ModelSelectorProps, 'mode'>) {
++  // Track which providers are expanded; default first provider open
++  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
++    const init: Record<string, boolean> = {};
++    providers.forEach((p, i) => {
++      init[p.id] = i === 0; // first provider open by default
++    });
++    return init;
++  });
++
++  // If selected provider changes, expand it
++  useEffect(() => {
++    if (selectedProvider) {
++      setExpanded((prev) => ({ ...prev, [selectedProvider]: true }));
++    }
++  }, [selectedProvider]);
++
++  const toggleProvider = (id: string) => {
++    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
++  };
++
+   return (
+     <div
+       style={{
+-        display: 'grid',
+-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+-        gap: '12px',
+-        maxWidth: '960px',
++        display: 'flex',
++        flexDirection: 'column',
++        gap: '6px',
++        maxWidth: '700px',
+         width: '100%',
+       }}
+     >
+       {providers.map((prov) => {
+         const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
++        const isExpanded = expanded[prov.id] ?? false;
++        const hasSelected = selectedProvider === prov.id;
++
+         return (
+           <div
+             key={prov.id}
+             style={{
+               background: 'var(--cr-charcoal)',
+               borderRadius: 'var(--cr-radius)',
+-              border: '1px solid var(--cr-border)',
+-              padding: '16px',
+-              display: 'flex',
+-              flexDirection: 'column',
+-              gap: '10px',
++              border: hasSelected ? `1px solid ${accent}40` : '1px solid var(--cr-border)',
++              overflow: 'hidden',
++              transition: 'border-color 150ms',
+             }}
+           >
+-            {/* Provider header */}
+-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
++            {/* Provider header — click to expand/collapse */}
++            <button
++              onClick={() => toggleProvider(prov.id)}
++              style={{
++                display: 'flex',
++                alignItems: 'center',
++                gap: '10px',
++                width: '100%',
++                padding: '12px 16px',
++                background: 'none',
++                border: 'none',
++                cursor: 'pointer',
++                transition: 'background 100ms',
++              }}
++              onMouseEnter={(e) => {
++                e.currentTarget.style.background = 'var(--cr-charcoal-deep)';
++              }}
++              onMouseLeave={(e) => {
++                e.currentTarget.style.background = 'transparent';
++              }}
++            >
+               <div
+                 style={{
+-                  width: '8px',
+-                  height: '8px',
++                  width: '10px',
++                  height: '10px',
+                   borderRadius: '50%',
+                   background: accent,
++                  flexShrink: 0,
+                 }}
+               />
+               <span
+                 style={{
+-                  fontSize: '13px',
++                  fontSize: '14px',
+                   fontWeight: 600,
+-                  color: 'var(--cr-mist)',
+-                  letterSpacing: '0.02em',
++                  color: 'var(--cr-text)',
++                  flex: 1,
++                  textAlign: 'left',
++                  letterSpacing: '0.01em',
+                 }}
+               >
+                 {prov.name}
+               </span>
+-            </div>
++              <span
++                style={{
++                  fontSize: '11px',
++                  color: 'var(--cr-text-dim)',
++                  marginRight: '4px',
++                }}
++              >
++                {prov.models.length} model{prov.models.length !== 1 ? 's' : ''}
++              </span>
++              {isExpanded ? (
++                <ChevronDown
++                  style={{ width: 16, height: 16, color: 'var(--cr-text-muted)', transition: 'transform 150ms' }}
++                />
++              ) : (
++                <ChevronRight
++                  style={{ width: 16, height: 16, color: 'var(--cr-text-muted)', transition: 'transform 150ms' }}
++                />
++              )}
++            </button>
+ 
+-            {/* Models */}
+-            {prov.models.map((m) => {
+-              const isSelected = selectedProvider === prov.id && selectedModel === m.id;
+-              const tier = TIER_CONFIG[m.tier] || TIER_CONFIG.mid;
+-              const TierIcon = tier.icon;
+-              return (
+-                <button
+-                  key={m.id}
+-                  onClick={() => onSelect(prov.id, m.id)}
+-                  style={{
+-                    display: 'flex',
+-                    flexDirection: 'column',
+-                    gap: '4px',
+-                    padding: '10px 12px',
+-                    borderRadius: 'var(--cr-radius-sm)',
+-                    border: isSelected ? `2px solid ${accent}` : '1px solid var(--cr-border)',
+-                    background: isSelected ? `${accent}15` : 'var(--cr-charcoal-dark)',
+-                    cursor: 'pointer',
+-                    textAlign: 'left',
+-                    width: '100%',
+-                    transition: 'all 150ms',
+-                  }}
+-                >
+-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+-                    <TierIcon style={{ width: '14px', height: '14px', color: tier.color, flexShrink: 0 }} />
+-                    <div style={{ flex: 1, minWidth: 0 }}>
+-                      <div
+-                        style={{
+-                          fontSize: '13px',
+-                          fontWeight: 500,
+-                          color: isSelected ? '#FFFFFF' : '#D0D8E0',
+-                          whiteSpace: 'nowrap',
+-                          overflow: 'hidden',
+-                          textOverflow: 'ellipsis',
+-                        }}
+-                      >
+-                        {m.name}
+-                      </div>
+-                    </div>
+-                    {m.context && (
+-                      <span
+-                        style={{
+-                          fontSize: '10px',
+-                          fontWeight: 500,
+-                          color: 'var(--cr-text-muted)',
+-                          background: 'var(--cr-charcoal-deep)',
+-                          padding: '1px 5px',
+-                          borderRadius: 'var(--cr-radius-xs)',
+-                          flexShrink: 0,
+-                        }}
+-                      >
+-                        {m.context}
+-                      </span>
+-                    )}
+-                  </div>
+-                  {m.description && (
+-                    <div
++            {/* Models list — collapsible */}
++            {isExpanded && (
++              <div style={{ padding: '0 8px 8px' }}>
++                {prov.models.map((m) => {
++                  const isSelected = selectedProvider === prov.id && selectedModel === m.id;
++                  const tier = TIER_CONFIG[m.tier] || TIER_CONFIG.mid;
++                  const TierIcon = tier.icon;
++                  return (
++                    <button
++                      key={m.id}
++                      onClick={() => onSelect(prov.id, m.id)}
+                       style={{
+-                        fontSize: '11px',
+-                        color: 'var(--cr-text-dim)',
+-                        lineHeight: '1.3',
+-                        overflow: 'hidden',
+-                        display: '-webkit-box',
+-                        WebkitLineClamp: 2,
+-                        WebkitBoxOrient: 'vertical',
++                        display: 'flex',
++                        alignItems: 'center',
++                        gap: '10px',
++                        width: '100%',
++                        padding: '10px 12px',
++                        margin: '2px 0',
++                        borderRadius: 'var(--cr-radius-sm)',
++                        border: isSelected ? `1px solid ${accent}` : '1px solid transparent',
++                        background: isSelected ? `${accent}15` : 'transparent',
++                        cursor: 'pointer',
++                        textAlign: 'left',
++                        transition: 'all 100ms',
++                      }}
++                      onMouseEnter={(e) => {
++                        if (!isSelected) e.currentTarget.style.background = 'var(--cr-charcoal-deep)';
++                      }}
++                      onMouseLeave={(e) => {
++                        if (!isSelected) e.currentTarget.style.background = 'transparent';
+                       }}
+                     >
+-                      {m.description}
+-                    </div>
+-                  )}
+-                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)' }}>
+-                    {formatPrice(m.input_price, m.output_price)}/1M
+-                  </div>
+-                </button>
+-              );
+-            })}
++                      <TierIcon style={{ width: 14, height: 14, color: tier.color, flexShrink: 0 }} />
++                      <div style={{ flex: 1, minWidth: 0 }}>
++                        <div
++                          style={{
++                            fontSize: '13px',
++                            fontWeight: isSelected ? 600 : 400,
++                            color: isSelected ? 'var(--cr-text)' : 'var(--cr-mist)',
++                          }}
++                        >
++                          {m.name}
++                        </div>
++                        {m.description && (
++                          <div
++                            style={{
++                              fontSize: '11px',
++                              color: 'var(--cr-text-dim)',
++                              marginTop: '1px',
++                              whiteSpace: 'nowrap',
++                              overflow: 'hidden',
++                              textOverflow: 'ellipsis',
++                            }}
++                          >
++                            {m.description}
++                          </div>
++                        )}
++                      </div>
++                      {m.context && (
++                        <span
++                          style={{
++                            fontSize: '10px',
++                            color: 'var(--cr-text-dim)',
++                            background: 'var(--cr-charcoal-deep)',
++                            padding: '2px 6px',
++                            borderRadius: 'var(--cr-radius-xs)',
++                            flexShrink: 0,
++                          }}
++                        >
++                          {m.context}
++                        </span>
++                      )}
++                      <span style={{ fontSize: '11px', color: 'var(--cr-text-dim)', flexShrink: 0 }}>
++                        {formatPrice(m.input_price, m.output_price)}/1M
++                      </span>
++                    </button>
++                  );
++                })}
++              </div>
++            )}
+           </div>
+         );
+       })}
+@@ -172,7 +236,7 @@ function GridSelector({
+   );
+ }
+ 
+-// ── Compact Mode ────────────────────────────────────────────────
++// ── Compact Mode (dropdown in header bar during chat) ────────────
+ 
+ function CompactSelector({
+   providers,
+@@ -183,7 +247,6 @@ function CompactSelector({
+   const [isOpen, setIsOpen] = useState(false);
+   const dropdownRef = useRef<HTMLDivElement>(null);
+ 
+-  // Close on outside click
+   useEffect(() => {
+     const handleClick = (e: MouseEvent) => {
+       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+@@ -194,7 +257,6 @@ function CompactSelector({
+     return () => document.removeEventListener('mousedown', handleClick);
+   }, [isOpen]);
+ 
+-  // Find selected model info
+   let selectedModelName = 'Select model';
+   let selectedAccent = 'var(--cr-green-600)';
+   let selectedContext = '';
+@@ -257,7 +319,7 @@ function CompactSelector({
+             position: 'absolute',
+             top: 'calc(100% + 6px)',
+             left: 0,
+-            minWidth: '320px',
++            minWidth: '340px',
+             maxHeight: '420px',
+             overflowY: 'auto',
+             background: 'var(--cr-charcoal-deep)',
+@@ -315,7 +377,7 @@ function CompactSelector({
+                         if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent';
+                       }}
+                     >
+-                      <TierIcon style={{ width: '13px', height: '13px', color: tier.color, flexShrink: 0 }} />
++                      <TierIcon style={{ width: 13, height: 13, color: tier.color, flexShrink: 0 }} />
+                       <div style={{ flex: 1, minWidth: 0 }}>
+                         <span
+                           style={{
+@@ -326,20 +388,6 @@ function CompactSelector({
+                         >
+                           {m.name}
+                         </span>
+-                        {m.description && (
+-                          <div
+-                            style={{
+-                              fontSize: '10px',
+-                              color: 'var(--cr-text-dim)',
+-                              whiteSpace: 'nowrap',
+-                              overflow: 'hidden',
+-                              textOverflow: 'ellipsis',
+-                              marginTop: '1px',
+-                            }}
+-                          >
+-                            {m.description}
+-                          </div>
+-                        )}
+                       </div>
+                       {m.context && (
+                         <span
+diff --git a/frontend/src/pages/ChatPage.tsx b/frontend/src/pages/ChatPage.tsx
+index 756b4c3..e1b9439 100644
+--- a/frontend/src/pages/ChatPage.tsx
++++ b/frontend/src/pages/ChatPage.tsx
+@@ -1,5 +1,5 @@
+ import { useState, useEffect, useRef, useCallback } from 'react';
+-import { ChevronDown, ChevronUp } from 'lucide-react';
++import { ChevronDown, ChevronUp, Bot } from 'lucide-react';
+ import { api } from '../api/client';
+ import type { Specialist } from '../types';
+ import { useChat } from '../hooks/useChat';
+@@ -88,56 +88,122 @@ export default function ChatPage() {
+       <div
+         className="hidden md:block p-4 overflow-y-auto"
+         style={{
+-          width: 256,
+-          borderRight: '1px solid #2A3A5C',
++          width: 260,
++          borderRight: '1px solid var(--cr-border)',
+           flexShrink: 0,
++          background: 'var(--cr-charcoal)',
+         }}
+       >
+-        <h2 className="text-sm font-semibold text-white mb-3">Specialists</h2>
++        <h2
++          style={{
++            fontSize: '12px',
++            fontWeight: 600,
++            color: 'var(--cr-text-dim)',
++            textTransform: 'uppercase',
++            letterSpacing: '0.06em',
++            marginBottom: '12px',
++          }}
++        >
++          Specialists
++        </h2>
+         {specialists.map((s) => (
+           <button
+             key={s.id}
+             onClick={() => setSelected(s)}
+-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm mb-1 transition-all"
+             style={{
+-              background: selected?.id === s.id ? 'var(--navy-light)' : 'transparent',
+-              color: selected?.id === s.id ? '#FFFFFF' : '#8899AA',
++              width: '100%',
++              textAlign: 'left',
++              padding: '10px 12px',
++              borderRadius: 'var(--cr-radius-sm)',
++              marginBottom: '3px',
++              border: 'none',
++              background: selected?.id === s.id ? 'var(--cr-charcoal-deep)' : 'transparent',
++              borderLeft: selected?.id === s.id ? '2px solid var(--cr-green-600)' : '2px solid transparent',
++              cursor: 'pointer',
++              transition: 'all 100ms',
++            }}
++            onMouseEnter={(e) => {
++              if (selected?.id !== s.id) e.currentTarget.style.background = 'rgba(42,46,50,0.5)';
++            }}
++            onMouseLeave={(e) => {
++              if (selected?.id !== s.id) e.currentTarget.style.background = 'transparent';
+             }}
+           >
+-            <div className="font-medium">{s.name}</div>
+-            <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
++            <div
++              style={{
++                fontSize: '13px',
++                fontWeight: selected?.id === s.id ? 500 : 400,
++                color: selected?.id === s.id ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
++              }}
++            >
++              {s.name}
++            </div>
++            <div
++              style={{
++                fontSize: '11px',
++                color: 'var(--cr-text-dim)',
++                marginTop: '2px',
++              }}
++            >
++              {s.description}
++            </div>
+           </button>
+         ))}
++        {specialists.length === 0 && (
++          <div style={{ color: 'var(--cr-text-dim)', fontSize: '12px', padding: '8px' }}>
++            Loading specialists...
++          </div>
++        )}
+       </div>
+ 
+       {/* Chat area */}
+       <div className="flex-1 flex flex-col" style={{ minWidth: 0, overflow: 'hidden' }}>
+         {/* Mobile specialist selector */}
+-        <div className="md:hidden" style={{ borderBottom: '1px solid #2A3A5C' }}>
++        <div className="md:hidden" style={{ borderBottom: '1px solid var(--cr-border)' }}>
+           <button
+             onClick={() => setShowSpecialistPanel(!showSpecialistPanel)}
+             className="w-full flex items-center justify-between px-4 py-3"
+-            style={{ color: '#FFFFFF' }}
++            style={{ color: 'var(--cr-text)', background: 'none', border: 'none', cursor: 'pointer' }}
+           >
+-            <span className="text-sm font-medium">
+-              {selected?.name ?? 'Select Specialist'}
+-            </span>
++            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
++              <Bot style={{ width: 16, height: 16, color: 'var(--cr-green-400)' }} />
++              <span style={{ fontSize: '14px', fontWeight: 500 }}>
++                {selected?.name ?? 'Select Specialist'}
++              </span>
++            </div>
+             {showSpecialistPanel ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+           </button>
+           {showSpecialistPanel && (
+-            <div className="px-3 pb-3 space-y-1">
++            <div style={{ padding: '0 8px 10px' }}>
+               {specialists.map((s) => (
+                 <button
+                   key={s.id}
+                   onClick={() => { setSelected(s); setShowSpecialistPanel(false); }}
+-                  className="w-full text-left px-3 py-2 rounded-lg text-sm transition-all"
+                   style={{
+-                    background: selected?.id === s.id ? 'var(--navy-light)' : 'transparent',
+-                    color: selected?.id === s.id ? '#FFFFFF' : '#8899AA',
++                    width: '100%',
++                    textAlign: 'left',
++                    padding: '10px 12px',
++                    margin: '2px 0',
++                    borderRadius: 'var(--cr-radius-sm)',
++                    border: 'none',
++                    background: selected?.id === s.id ? 'var(--cr-charcoal-deep)' : 'transparent',
++                    borderLeft: selected?.id === s.id ? '2px solid var(--cr-green-600)' : '2px solid transparent',
++                    cursor: 'pointer',
++                    transition: 'all 100ms',
+                   }}
+                 >
+-                  <div className="font-medium">{s.name}</div>
+-                  <div className="text-xs mt-0.5 opacity-60">{s.description}</div>
++                  <div
++                    style={{
++                      fontSize: '13px',
++                      fontWeight: selected?.id === s.id ? 500 : 400,
++                      color: selected?.id === s.id ? 'var(--cr-green-400)' : 'var(--cr-text-muted)',
++                    }}
++                  >
++                    {s.name}
++                  </div>
++                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginTop: '2px' }}>
++                    {s.description}
++                  </div>
+                 </button>
+               ))}
+             </div>
+@@ -169,34 +235,52 @@ export default function ChatPage() {
+                     gap: 12,
+                   }}
+                 >
+-                  <div style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 600 }}>
++                  <div
++                    style={{
++                      width: 48,
++                      height: 48,
++                      borderRadius: '12px',
++                      background: 'var(--cr-green-900)',
++                      display: 'flex',
++                      alignItems: 'center',
++                      justifyContent: 'center',
++                      marginBottom: '4px',
++                    }}
++                  >
++                    <Bot style={{ width: 24, height: 24, color: 'var(--cr-green-400)' }} />
++                  </div>
++                  <div style={{ color: 'var(--cr-text)', fontSize: '18px', fontWeight: 600 }}>
+                     {selected.name}
+                   </div>
+-                  <div style={{ color: '#8899AA', fontSize: 14, marginBottom: 8 }}>
+-                    Start a conversation with {selected.name}
++                  <div style={{ color: 'var(--cr-text-muted)', fontSize: '13px', maxWidth: 400 }}>
++                    {selected.description}
++                  </div>
++                  <div style={{ fontSize: '11px', color: 'var(--cr-text-dim)', marginBottom: '12px' }}>
++                    Powered by {selected.provider}/{selected.model}
+                   </div>
+-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
++                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 500 }}>
+                     {examplePrompts.map((prompt) => (
+                       <button
+                         key={prompt}
+                         onClick={() => sendMessage(prompt)}
+                         style={{
+-                          background: 'var(--navy-light)',
+-                          border: '1px solid #2A3A5C',
+-                          borderRadius: 20,
+-                          color: '#8899AA',
+-                          fontSize: 13,
++                          background: 'var(--cr-charcoal)',
++                          border: '1px solid var(--cr-border)',
++                          borderRadius: '20px',
++                          color: 'var(--cr-text-muted)',
++                          fontSize: '12px',
+                           padding: '6px 14px',
+                           cursor: 'pointer',
+-                          transition: 'background 200ms',
++                          transition: 'background 200ms, color 200ms',
++                        }}
++                        onMouseEnter={(e) => {
++                          (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal-deep)';
++                          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-mist)';
++                        }}
++                        onMouseLeave={(e) => {
++                          (e.currentTarget as HTMLButtonElement).style.background = 'var(--cr-charcoal)';
++                          (e.currentTarget as HTMLButtonElement).style.color = 'var(--cr-text-muted)';
+                         }}
+-                        onMouseEnter={(e) =>
+-                          ((e.currentTarget as HTMLButtonElement).style.background = '#2A3A5C')
+-                        }
+-                        onMouseLeave={(e) =>
+-                          ((e.currentTarget as HTMLButtonElement).style.background =
+-                            'var(--navy-light)')
+-                        }
+                       >
+                         {prompt}
+                       </button>
+@@ -226,10 +310,10 @@ export default function ChatPage() {
+                     bottom: 8,
+                     left: '50%',
+                     transform: 'translateX(-50%)',
+-                    background: 'var(--blue)',
++                    background: 'var(--cr-green-900)',
+                     border: 'none',
+                     borderRadius: 20,
+-                    color: '#fff',
++                    color: 'var(--cr-text)',
+                     fontSize: 12,
+                     padding: '5px 14px',
+                     cursor: 'pointer',
+@@ -250,10 +334,10 @@ export default function ChatPage() {
+                 style={{
+                   margin: '0 16px 8px',
+                   padding: '8px 12px',
+-                  background: '#3A1A1A',
+-                  border: '1px solid var(--red)',
++                  background: 'rgba(214, 69, 69, 0.08)',
++                  border: '1px solid var(--cr-danger)',
+                   borderRadius: 8,
+-                  color: '#FF8888',
++                  color: 'var(--cr-danger)',
+                   fontSize: 13,
+                 }}
+               >
+@@ -271,7 +355,7 @@ export default function ChatPage() {
+           </>
+         ) : (
+           <div className="flex-1 flex items-center justify-center">
+-            <p style={{ color: '#667788' }}>Select a specialist to begin</p>
++            <p style={{ color: 'var(--cr-text-dim)' }}>Select a specialist to begin</p>
+           </div>
+         )}
+       </div>
+-- 
+2.43.0
+

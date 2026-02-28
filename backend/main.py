@@ -11,6 +11,7 @@ from backend.routes import chat as chat_routes
 from backend.routes import specialists as specialist_routes
 from backend.routes import usage as usage_routes
 from backend.routes import direct_chat as direct_chat_routes
+from backend.routes import conversations as conversation_routes
 from backend.config.settings import settings
 from backend.errors.exceptions import PortalError
 from backend.middleware.rate_limiter import RateLimiterMiddleware
@@ -51,6 +52,7 @@ app.include_router(specialist_routes.router, prefix="/specialists", tags=["speci
 app.include_router(usage_routes.router, prefix="/usage", tags=["usage"])
 app.include_router(pipelines.router, prefix="/api/v2", tags=["pipelines"])
 app.include_router(direct_chat_routes.router, prefix="/chat/direct", tags=["direct-chat"])
+app.include_router(conversation_routes.router, prefix="/conversations", tags=["conversations"])
 
 
 @app.get("/")
@@ -61,3 +63,4 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "2.0.0"}
+
