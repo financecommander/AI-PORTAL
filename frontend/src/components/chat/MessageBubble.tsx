@@ -1,4 +1,4 @@
-import ReactMarkdown from 'react-markdown';
+
 import type { ChatMessage } from '../../types';
 import { FileText, Image as ImageIcon } from 'lucide-react';
 
@@ -65,7 +65,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
           <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
         ) : (
           <div className="prose prose-sm max-w-none" style={{ color: 'inherit' }}>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br/>') }} />
             {isStreaming && (
               <span className="animate-blink" style={{ color: 'var(--cr-green-600)', fontSize: 16, marginLeft: 2 }}>▌</span>
             )}
@@ -73,7 +73,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
         )}
 
         {/* Token info */}
-        {message.token_info && (
+        {message.tokens && (
           <div
             style={{
               marginTop: 8,
@@ -85,9 +85,8 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
               color: isUser ? 'rgba(255,255,255,0.6)' : 'var(--cr-text-muted)',
             }}
           >
-            {message.token_info.model && <span>{message.token_info.model}</span>}
-            {message.token_info.input_tokens != null && <span>{message.token_info.input_tokens}→{message.token_info.output_tokens} tok</span>}
-            {message.token_info.cost_usd != null && <span>${message.token_info.cost_usd.toFixed(4)}</span>}
+            <span>{message.tokens.input}→{message.tokens.output} tok</span>
+            {message.cost_usd != null && <span>${message.cost_usd.toFixed(4)}</span>}
           </div>
         )}
       </div>

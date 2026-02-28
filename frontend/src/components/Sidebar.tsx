@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
@@ -8,13 +8,14 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import ConversationList from './ConversationList';
 
 interface SidebarProps {
   activeConversationId?: string | null;
   onSelectConversation?: (id: string) => void;
   onNewConversation?: () => void;
+  onNavigate?: () => void;
 }
 
 const NAV_ITEMS = [
@@ -28,8 +29,9 @@ export default function Sidebar({
   activeConversationId,
   onSelectConversation,
   onNewConversation,
+  onNavigate,
 }: SidebarProps) {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -92,7 +94,7 @@ export default function Sidebar({
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => { navigate(item.path); onNavigate?.(); }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
-echo "🚀 AI Portal — Light Institutional Theme"
-echo "=========================================="
-cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌ Cannot find AI-PORTAL directory"; exit 1; }
+echo "🚀 AI Portal — Light Theme (TS fixes)"
+echo "======================================="
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌ Cannot find AI-PORTAL"; exit 1; }
 echo "📁 Working in: $(pwd)"
 echo ""
 mkdir -p 'frontend/src/components'
@@ -109,7 +109,7 @@ echo '  ✅ frontend/src/components/ConversationList.tsx'
 
 mkdir -p 'frontend/src/components'
 cat > 'frontend/src/components/Sidebar.tsx' << 'FILEEOF_frontend_src_components_Sidebar_tsx'
-import { useContext } from 'react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
@@ -119,13 +119,14 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import ConversationList from './ConversationList';
 
 interface SidebarProps {
   activeConversationId?: string | null;
   onSelectConversation?: (id: string) => void;
   onNewConversation?: () => void;
+  onNavigate?: () => void;
 }
 
 const NAV_ITEMS = [
@@ -139,8 +140,9 @@ export default function Sidebar({
   activeConversationId,
   onSelectConversation,
   onNewConversation,
+  onNavigate,
 }: SidebarProps) {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -203,7 +205,7 @@ export default function Sidebar({
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => { navigate(item.path); onNavigate?.(); }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -431,7 +433,7 @@ echo '  ✅ frontend/src/components/chat/ChatInput.tsx'
 
 mkdir -p 'frontend/src/components/chat'
 cat > 'frontend/src/components/chat/MessageBubble.tsx' << 'FILEEOF_frontend_src_components_chat_MessageBubble_tsx'
-import ReactMarkdown from 'react-markdown';
+
 import type { ChatMessage } from '../../types';
 import { FileText, Image as ImageIcon } from 'lucide-react';
 
@@ -498,7 +500,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
           <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
         ) : (
           <div className="prose prose-sm max-w-none" style={{ color: 'inherit' }}>
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br/>') }} />
             {isStreaming && (
               <span className="animate-blink" style={{ color: 'var(--cr-green-600)', fontSize: 16, marginLeft: 2 }}>▌</span>
             )}
@@ -506,7 +508,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
         )}
 
         {/* Token info */}
-        {message.token_info && (
+        {message.tokens && (
           <div
             style={{
               marginTop: 8,
@@ -518,9 +520,8 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
               color: isUser ? 'rgba(255,255,255,0.6)' : 'var(--cr-text-muted)',
             }}
           >
-            {message.token_info.model && <span>{message.token_info.model}</span>}
-            {message.token_info.input_tokens != null && <span>{message.token_info.input_tokens}→{message.token_info.output_tokens} tok</span>}
-            {message.token_info.cost_usd != null && <span>${message.token_info.cost_usd.toFixed(4)}</span>}
+            <span>{message.tokens.input}→{message.tokens.output} tok</span>
+            {message.cost_usd != null && <span>${message.cost_usd.toFixed(4)}</span>}
           </div>
         )}
       </div>
@@ -1191,12 +1192,12 @@ echo '  ✅ frontend/src/pages/LLMChatPage.tsx'
 
 mkdir -p 'frontend/src/pages'
 cat > 'frontend/src/pages/LoginPage.tsx' << 'FILEEOF_frontend_src_pages_LoginPage_tsx'
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { Shield, AlertCircle } from 'lucide-react';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1353,21 +1354,16 @@ echo '  ✅ frontend/src/pages/LoginPage.tsx'
 
 
 echo ""
-echo "📦 Staging and committing..."
+echo "📦 Committing..."
 git add -A
 git status --short
-git commit --no-gpg-sign -m "UI: light institutional theme — match Calculus Research dashboard
+git commit --no-gpg-sign -m "fix: TS errors — useAuth hook, token fields, onNavigate prop, remove react-markdown" || echo "Nothing to commit"
 
-Complete dark-to-light theme conversion across all 10 frontend files.
-White cards on #F7F9F8 surface, green-900 accents, subtle borders,
-Space Grotesk headings, Inter body. Calculus Research — Financial Innovations." || echo "Nothing to commit"
-
-echo ""
-echo "🚀 Pushing to GitHub..."
+echo "🚀 Pushing..."
 git push origin main
 
 echo ""
-echo "✅ Done! Now SSH to VM and run:"
+echo "✅ Done! On VM run:"
 echo "  cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main"
 echo "  sudo docker compose -f docker-compose.v2.yml build --no-cache frontend"
 echo "  sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"
