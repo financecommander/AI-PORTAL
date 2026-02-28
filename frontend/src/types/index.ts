@@ -70,7 +70,9 @@ export interface PipelineRun {
 export interface LLMModel {
   id: string;
   name: string;
-  tier: 'top' | 'mid';
+  tier: 'top' | 'mid' | 'budget';
+  context?: string;
+  description?: string;
   input_price: number;
   output_price: number;
 }
