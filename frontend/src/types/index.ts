@@ -65,6 +65,28 @@ export interface PipelineRun {
   created_at?: string;
 }
 
+// ── Direct LLM Chat ─────────────────────────────────────────────
+
+export interface LLMModel {
+  id: string;
+  name: string;
+  tier: 'top' | 'mid';
+  input_price: number;
+  output_price: number;
+}
+
+export interface LLMProvider {
+  id: string;
+  name: string;
+  models: LLMModel[];
+}
+
+export interface LLMModelsResponse {
+  providers: LLMProvider[];
+}
+
+// ── Usage ───────────────────────────────────────────────────────
+
 export interface UsageLog {
   id: number;
   user_hash: string;

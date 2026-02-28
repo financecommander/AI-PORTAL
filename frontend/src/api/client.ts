@@ -122,6 +122,60 @@ class ApiClient {
     }
   }
 
+  async streamDirectChat(
+    provider: string,
+    model: string,
+    message: string,
+    history: Array<{ role: string; content: string }>,
+    onChunk: (chunk: { content: string; is_final: boolean; input_tokens: number; output_tokens: number; cost_usd: number }) => void,
+    temperature: number = 0.7,
+    maxTokens: number = 4096,
+  ): Promise<void> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
+    const response = await fetch(`${BASE_URL}/chat/direct/stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        provider,
+        model,
+        message,
+        conversation_history: history,
+        temperature,
+        max_tokens: maxTokens,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Stream failed' }));
+      throw new Error(err.error || err.detail || 'Stream failed');
+    }
+    if (!response.body) throw new Error('No response body');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            onChunk(data);
+          } catch { /* skip malformed */ }
+        }
+      }
+    }
+  }
+
   connectPipelineWS(
     pipelineId: string,
     onEvent: (event: { type: string; pipeline_id: string; timestamp: string; data: Record<string, unknown> }) => void,
