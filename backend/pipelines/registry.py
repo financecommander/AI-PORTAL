@@ -13,6 +13,10 @@ from backend.pipelines.lex_intelligence import create_lex_intelligence
 from backend.pipelines.calculus_intelligence import create_calculus_intelligence
 from backend.pipelines.forge_intelligence import ForgeIntelligence
 from backend.pipelines.lead_ranking_pipeline import LeadRankingPipeline
+from backend.pipelines.underwriting_pipeline import UnderwritingPipeline
+from backend.pipelines.due_diligence_pipeline import DueDiligencePipeline
+from backend.pipelines.portfolio_monitoring_pipeline import PortfolioMonitoringPipeline
+from backend.pipelines.investor_reporting_pipeline import InvestorReportingPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +26,10 @@ _REGISTRY: dict[str, callable] = {
     "calculus_intelligence": create_calculus_intelligence,
     "forge_intelligence": lambda: ForgeIntelligence(),
     "lead_ranking": lambda: LeadRankingPipeline(),
+    "underwriting": lambda: UnderwritingPipeline(),
+    "due_diligence": lambda: DueDiligencePipeline(),
+    "portfolio_monitoring": lambda: PortfolioMonitoringPipeline(),
+    "investor_reporting": lambda: InvestorReportingPipeline(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
