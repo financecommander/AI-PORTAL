@@ -1,3 +1,8 @@
+#!/bin/bash
+set -e
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌"; exit 1; }
+mkdir -p 'backend/pipelines'
+cat > 'backend/pipelines/crew_pipeline.py' << 'FILEEOF_crew'
 """CrewAI pipeline wrapper with progress tracking and token tracking."""
 
 import asyncio
@@ -299,3 +304,19 @@ class CrewPipeline(BasePipeline):
         estimated_tokens = estimate_tokens("x" * input_length) * len(self.agents) * 2
         return calculate_cost("gpt-4o", estimated_tokens // 2, estimated_tokens // 2)
 
+FILEEOF_crew
+echo "✅ crew_pipeline.py fixed"
+git add -A
+git commit --no-gpg-sign -m "fix: pipeline _inject_query now strips previous query before appending new one
+
+Root cause: task descriptions are module-level singletons that persist across runs.
+_inject_query appended User Query but only checked if current query was already there.
+Running a second query would leave the old query text embedded in the description,
+causing agents to see mixed prompts from both runs.
+
+Fix: find and strip any existing User Query marker before appending the new one." || echo "Nothing"
+git push origin main
+echo "✅ Pushed. Backend change:"
+echo "  cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main"
+echo "  sudo docker compose -f docker-compose.v2.yml build --no-cache backend"
+echo "  sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"
