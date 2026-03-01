@@ -1,232 +1,350 @@
-# CALCULUS LABS AI PORTAL — ROADMAP
+# Calculus AI Platform — Modernization Roadmap
 
-**Owner**: Calculus Holdings LLC  
-**Current Version**: v2.1  
-**Goal**: Evolve from internal specialist chat and pipeline runner into the intelligent control plane for the Sovereign Enterprise — declarative multi-agent orchestration, institutional-grade legal/financial intelligence, and self-improving reasoning.
+> Convert the AI Portal from an AI SaaS playground into **Calculus Intelligence Infrastructure** —
+> a capital-grade Intelligence OS aligned with Calculus Research institutional positioning.
 
-Last updated: February 27, 2026
-
-## Current State (v2.1 — Deployed)
-
-What's live today:
-
-- **Lex Intelligence Ultimate**: 6-agent legal pipeline (GPT-4o, Grok 3 Mini, Gemini 2.5 Flash) with real-time WebSocket progress streaming
-- **Calculus Intelligence**: 6-agent heterogeneous deep reasoning pipeline with cross-model validation (GPT-4o, Grok, Gemini)
-- **Forge Intelligence**: registered stub for future code gen pipeline
-- **4 specialist chat agents** with SSE streaming (Claude Sonnet, GPT-4o, Claude Opus, Grok)
-- **Orchestra DSL foundation**: .orca YAML pipeline definitions auto-discovered and registered at startup
-- Token tracking and cost logging across all providers via CrewAI/LiteLLM
-- JWT auth, PostgreSQL, Docker Compose on GCP
+**Repo:** `financecommander/AI-PORTAL`
+**Last updated:** 2026-02-28
+**Target completion:** 9 weeks from Phase 0 sign-off
 
 ---
 
-## IMMEDIATE PRIORITY: Orchestra DSL Integration (v2.2)
+## Progress Tracker
 
-**Status**: Foundation deployed. Loader, builder, and registry auto-discovery are live.
+| Phase | Status | Commits | Key Milestone |
+|-------|--------|---------|---------------|
+| 0 — Design Governance | ✅ Complete | `19d446e`..`9dde5b6` | CR tokens, light theme, Financial Innovations branding |
+| 1 — Visual Hardening | 🟡 In Progress | `9dde5b6` | Light institutional theme live; density/contrast pending |
+| 2A — Pipelines → Engines | ⬜ Not Started | — | Rename, categorize, status indicators |
+| 2B — Specialists → Analyst Modules | ⬜ Not Started | — | Discipline-based org, analyst profiles |
+| 2C — Chat → Intelligence Console | ⬜ Not Started | — | Rectangular containers, command bar |
+| 3 — Cross-Platform Unification | ⬜ Not Started | — | Shared nav, layout lock, component library |
+| 4 — Functional Maturity | ⬜ Not Started | — | Metadata layer, state awareness, monitoring |
+| 5 — Institutional Polish | ⬜ Not Started | — | Density toggle, dark enterprise mode, data viz |
+| 6 — Platform Positioning | ⬜ Not Started | — | Full rebrand: Engines, Analyst Desks, Console |
 
-Orchestra lets you define pipelines in declarative YAML instead of Python. Drop an `.orca` file into `backend/pipelines/definitions/`, restart, and it appears in the UI. No code changes, no Docker rebuild for pipeline logic.
+---
 
-### What's built (deployed with v2.1):
+## Phase 0 — Design Governance ✅
 
-- `orch_pipeline.py` — Reads YAML config, builds crewai.LLM + Agent + Task objects, returns a CrewPipeline
-- `orch_loader.py` — Scans `definitions/` directory for .orca files, auto-registers each one
-- `registry.py` — Updated to call Orchestra discovery on first access; hand-coded pipelines take priority on name collisions
-- `financial_strategy.orca` — First Orchestra-defined pipeline (4 agents: Market Analyst, Risk Assessor, Quant Modeler, Strategist)
+**Status:** Complete
 
-### What's next for Orchestra:
+### Deliverables
 
-**Phase A — Parallel and branching execution (1 week)**
+- [x] Finalized UI tokens — `index.css` `:root` block with all `--cr-*` variables
+- [x] Component inventory freeze — 10 core components identified and standardized
+- [x] Layout system rules — sidebar (260px) + content area, 14px radius, 4px spacing scale
+- [x] Interaction rules — gold focus ring, green hover, `translateY(1px)` active
+- [x] Accessibility baseline — 40px min touch targets, visible focus ring, semantic HTML
+- [x] Light institutional theme — white cards on `#F7F9F8`, `#DDE6E1` borders
 
-Add `flow` directive support so .orca files can declare parallel branches:
+### Token Reference
 
-```yaml
-flow:
-  - decomposer >> [reasoner_a, reasoner_b]  # parallel
-  - [reasoner_a, reasoner_b] >> validator   # join
-  - validator >> synthesizer
+```
+Green 900: #0F4D2C    Green 600: #3E9B5F    Gold 500: #F2A41F
+Surface:   #F7F9F8    Surface 2: #EEF2F0    White:    #FFFFFF
+Border:    #DDE6E1    Mist:      #A9B7AE    Charcoal: #1C1F22
+Danger:    #D64545    Text:      #1C1F22    Muted:    #7A8A80
+Headings:  Space Grotesk          Body:      Inter
+Radius:    14px (cards)           8px (sm)   6px (xs)
 ```
 
-Implementation: Parse flow directives in `orch_pipeline.py`, translate parallel branches into CrewAI's async task execution or custom `asyncio.gather()` wrapper.
+---
 
-**Phase B — Quality gates enforcement (1 week)**
+## Phase 1 — Visual Hardening & Token Standardization 🟡
 
-The `gates` section in .orca files is currently parsed and stored as metadata but not enforced. Build gate evaluation into CrewPipeline's task_callback:
+**Status:** In progress — light theme deployed, density and contrast refinements pending
 
-```yaml
-gates:
-  - name: confidence_check
-    after: validator
-    rule: "confirmed_claims / total_claims > 0.6"
-    on_fail: escalate_to_human
+### Issues
+
+#### P1-1: Tailwind CDN Config Standardization
+- [x] Unified color tokens in `:root`
+- [x] All components use `var(--cr-*)` — zero stale hex outside provider brand colors
+- [ ] Remove legacy alias variables (`--navy`, `--blue`, `--green`, etc.)
+- [ ] Audit pipeline components for remaining inline styles
+
+#### P1-2: Typography Tightening
+- [x] Space Grotesk on all headings
+- [x] Inter on all body text
+- [ ] Reduce excessive vertical spacing in chat message area
+- [ ] Strengthen heading hierarchy — h1 24px/700, h2 18px/600, h3 15px/600
+- [ ] Increase KPI emphasis on Usage page
+- [ ] Improve table header clarity (uppercase, letter-spacing)
+
+#### P1-3: Contrast & Density Upgrade
+- [ ] Increase table density — reduce row padding from 16px to 10px
+- [ ] Strengthen borders — use `--cr-border-dark` (#C4D1CA) for table headers
+- [ ] Remove gray haze backgrounds — use pure `--cr-white` or `--cr-surface`
+- [ ] Normalize card padding to 20px consistently
+
+### Success Criteria
+
+- No pastel feel
+- Sharper table edges
+- Stronger financial data hierarchy
+- Visually matches Calculus Research dashboard at `127.0.0.1:8081`
+
+---
+
+## Phase 2 — Structural Re-Architecture
+
+### 2A — Pipelines → Intelligence Engines ⬜
+
+**Target:** `PipelinesPage.tsx` + pipeline components
+
+#### Issues
+
+##### P2A-1: Engine Categorization
+- [ ] Categorize engines into: Deal Origination, Portfolio Oversight, Research & Advisory
+- [ ] Create category header components with green-900 accent
+
+##### P2A-2: Engine Card Redesign
+- [ ] Add status indicators (Active / Beta / Disabled) with badge component
+- [ ] Add last run timestamp metadata
+- [ ] Replace "Run Pipeline →" with "Launch Engine"
+- [ ] Reduce vertical padding
+- [ ] Add execution log access link
+
+##### P2A-3: Status Badge Component
+- [ ] Create reusable `StatusBadge.tsx` — Active (green), Beta (gold), Disabled (muted)
+- [ ] Add to engine cards and sidebar nav
+
+#### Files to Modify
+- `frontend/src/pages/PipelinesPage.tsx`
+- `frontend/src/components/pipeline/` (all)
+- New: `frontend/src/components/ui/StatusBadge.tsx`
+
+---
+
+### 2B — Specialists → Analyst Modules ⬜
+
+**Target:** `ChatPage.tsx` + specialist components
+
+#### Issues
+
+##### P2B-1: Discipline-Based Organization
+- [ ] Reorganize specialists by discipline, not model provider
+- [ ] Categories: Credit Analysis, Market Research, Legal & Compliance, Operations, Technology
+- [ ] Collapse raw model access under "Core Model Access" section
+
+##### P2B-2: Analyst Profile Layout
+- [ ] Create `AnalystProfile.tsx` header with name, scope, capabilities
+- [ ] Move provider/model metadata to subtle tag
+- [ ] Add "Scope" section (what this analyst covers)
+- [ ] Add "Capabilities" section (what actions it can take)
+
+##### P2B-3: Structured Prompt Suggestions
+- [ ] Replace generic suggestion prompts with discipline-specific templates
+- [ ] Group by action type: Analyze, Research, Draft, Review
+
+#### Files to Modify
+- `frontend/src/pages/ChatPage.tsx`
+- `frontend/src/components/chat/SpecialistHeader.tsx`
+- New: `frontend/src/components/chat/AnalystProfile.tsx`
+
+---
+
+### 2C — Chat → Intelligence Console ⬜
+
+**Target:** `LLMChatPage.tsx` + `MessageBubble.tsx` + `ChatInput.tsx`
+
+#### Issues
+
+##### P2C-1: Message Container Redesign
+- [ ] Remove chat bubble shapes (rounded asymmetric corners)
+- [ ] Introduce rectangular institutional message containers
+- [ ] Add Query / Analysis / Output segmentation with labels
+
+##### P2C-2: Console Header
+- [ ] Add module header state indicator (active model, session context)
+- [ ] Add execution metadata panel (tokens, cost, latency per message)
+
+##### P2C-3: Command Bar
+- [ ] Replace chat textarea with compact command bar
+- [ ] Add command prefix support (`/analyze`, `/research`, `/draft`)
+- [ ] Maintain file attachment capability
+
+#### Files to Modify
+- `frontend/src/pages/LLMChatPage.tsx`
+- `frontend/src/components/chat/MessageBubble.tsx`
+- `frontend/src/components/chat/ChatInput.tsx`
+
+---
+
+## Phase 3 — Cross-Platform Unification ⬜
+
+### 3A — Navigation Alignment
+
+#### Issues
+
+##### P3A-1: Shared Top Nav
+- [ ] Create `TopNav.tsx` matching Calculus Research marketing nav structure
+- [ ] Include: logo, search field (desktop), notifications bell, user avatar
+- [ ] Active state: surface background + green-900 text
+
+##### P3A-2: Sidebar Unification
+- [ ] Align sidebar with marketing site sidebar pattern
+- [ ] Standardize active states across marketing, dashboard, AI nav
+- [ ] Remove dual visual language
+
+#### Files to Modify
+- `frontend/src/components/Layout.tsx`
+- `frontend/src/components/Sidebar.tsx`
+- New: `frontend/src/components/TopNav.tsx`
+
+---
+
+### 3B — Layout System Lock
+
+#### Issues
+
+##### P3B-1: Grid & Spacing Standards
+- [ ] Standardize max-width: 1280px for content area
+- [ ] Standardize gutters: 24px desktop, 16px mobile
+- [ ] Enforce 4px vertical rhythm throughout
+- [ ] Standardize header spacing: 24px below page header, 16px between sections
+
+---
+
+### 3C — Component Library
+
+#### Issues
+
+##### P3C-1: UI Kit Page
+- [ ] Create `UIKitPage.tsx` as live reference
+- [ ] Button variants: primary (green-900), secondary (border), ghost, danger
+- [ ] Card variants: stat card, content card, action card
+- [ ] Table variants: data table with sortable headers
+- [ ] Badge, Alert, Form control, Modal components
+
+#### Files to Create
+- `frontend/src/pages/UIKitPage.tsx`
+- `frontend/src/components/ui/Button.tsx`
+- `frontend/src/components/ui/Card.tsx`
+- `frontend/src/components/ui/Table.tsx`
+- `frontend/src/components/ui/Badge.tsx`
+
+---
+
+## Phase 4 — Functional Maturity ⬜
+
+### 4A — Operational Metadata Layer
+
+- [ ] Engine status (Active / Beta / Disabled) on all engine cards
+- [ ] Last run timestamp on engine cards
+- [ ] Execution health indicator (green/yellow/red)
+- [ ] Access level tag per engine (Admin / Analyst / Viewer)
+- [ ] Activity log link per engine
+
+### 4B — Intelligence State Awareness
+
+- [ ] Current module indicator in top nav
+- [ ] Workspace context display
+- [ ] Session metadata (duration, token count, cost)
+- [ ] Model selection displayed but muted (not primary UI)
+
+### 4C — Usage & Monitoring Upgrade
+
+- [ ] Clean KPI summary cards (matching dashboard style)
+- [ ] Token consumption chart (recharts, minimal gridlines)
+- [ ] Engine run metrics (runs/day, avg latency, error rate)
+- [ ] Analyst utilization (which specialists used most)
+
+#### Files to Modify
+- `frontend/src/pages/UsagePage.tsx`
+- `frontend/src/components/usage/` (all)
+
+---
+
+## Phase 5 — Institutional Polish ⬜
+
+### 5A — Density Mode Toggle
+
+- [ ] Standard density (current)
+- [ ] Dense mode (reduced padding, smaller font, tighter tables)
+- [ ] Persist preference in localStorage
+- [ ] Toggle in Settings page
+
+### 5B — Dark Enterprise Mode
+
+- [ ] Charcoal base (`#1C1F22`)
+- [ ] Controlled green accent
+- [ ] Gold focus ring (same)
+- [ ] Higher contrast tables
+- [ ] CSS variable swap — no component changes needed if tokens are clean
+
+### 5C — Data Visualization Upgrade
+
+- [ ] Minimal gridlines in all charts
+- [ ] No decorative gradients
+- [ ] Brand color discipline (green-900, green-600, gold-500 only)
+- [ ] Consistent legend system across all charts
+
+---
+
+## Phase 6 — Platform Positioning ⬜
+
+### Terminology Migration
+
+| Current | New |
+|---------|-----|
+| Pipelines | Intelligence Engines |
+| Specialists | Analyst Desks |
+| Chat | Intelligence Console |
+| Usage & Costs | Intelligence Metrics |
+
+### Issues
+
+##### P6-1: Rename in Sidebar Navigation
+- [ ] Update `Sidebar.tsx` nav labels
+- [ ] Update route paths if needed (`/pipelines` → `/engines`)
+
+##### P6-2: Rename in Page Headers
+- [ ] Update all `<h1>` and page titles
+- [ ] Update browser tab titles
+
+##### P6-3: Rename in Backend API
+- [ ] Add route aliases (keep old routes for backwards compat)
+- [ ] Update specialist → analyst desk terminology in responses
+
+---
+
+## Execution Priority
+
+```
+Week 1:  P1 — Visual hardening (density, contrast, typography)
+Week 2:  P2A — Pipelines → Intelligence Engines
+Week 3:  P2B — Specialists → Analyst Modules
+Week 3:  P2C — Chat → Intelligence Console
+Week 4:  P3 — Navigation unification + layout lock
+Week 5:  P3C + P4A — Component library + metadata layer
+Week 6:  P4B + P4C — State awareness + usage upgrade
+Week 7:  P5A + P5B — Density toggle + dark enterprise mode
+Week 8:  P5C + P6 — Data viz + positioning rebrand
+Week 9:  QA, polish, LP-ready review
 ```
 
-Implementation: After the specified task completes, evaluate the gate rule against the task output. On failure, either log a warning, inject a re-evaluation prompt, or flag for human review via WebSocket event.
+---
 
-**Phase C — Model hot-swap without restart (1-2 weeks)**
+## KPIs for Completion
 
-File watcher on the `definitions/` directory. When an .orca file is modified, rebuild that pipeline instance without restarting the backend. Enables model upgrades (e.g., `gpt-4o` → `gpt-5`) by editing one line in YAML.
+The redesign is successful when:
 
-**Phase D — Convert existing pipelines to .orca (ongoing)**
-
-Write `.orca` equivalents of `lex_intelligence.py` and `calculus_intelligence.py`. Once validated, the hand-coded Python versions become fallbacks. New pipelines should always be .orca first.
+- [ ] The platform feels proprietary — not generic SaaS
+- [ ] It resembles private capital infrastructure
+- [ ] It does not resemble an AI SaaS playground
+- [ ] It communicates operational seriousness
+- [ ] It visually aligns with Calculus Research dashboard
+- [ ] It could credibly be shown to institutional LPs
+- [ ] Every page passes the "would Sean show this to a fund allocator" test
 
 ---
 
-## Phase 0 — Stabilization & Cleanup (2-3 weeks, parallel with Orchestra)
+## Architecture Notes
 
-- **Rebrand consistently** to Calculus Labs across README, docs, frontend titles, email domain checks
-- **Remove legacy Streamlit** code (`app.py`, `.streamlit/`, `ui/`) — migrate any remaining views to React
-- **Fix bugs** from `PRIORITY_1_FIXES.md`
-- **Test coverage** >85% on WebSocket pipeline streaming and Orchestra loader
-- **Internal one-pager**: "What is Calculus AI Portal?" for team and investors
+**Frontend:** React + TypeScript + Vite, CSS custom properties (no Tailwind build)
+**Backend:** FastAPI + PostgreSQL, Docker Compose deployment
+**VM:** `fc-ai-portal.us-east1-b.c.ai-portal-488605.internal` (34.75.120.202)
+**Repo:** `github.com/financecommander/AI-PORTAL`
+**Branch:** `main` (direct push, bypass PR rule for velocity)
 
----
-
-## Phase 1 — UI Overhaul (v2.3, 2-3 weeks)
-
-Modernize the frontend with patterns from the best AI products of 2026.
-
-### 1A. Artifacts Pane (Claude-inspired)
-
-Resizable right sidebar that renders pipeline outputs as rich content: markdown, code syntax highlighting, tables, structured sections. When a pipeline completes, the final output appears in the artifacts pane instead of raw text in the chat area.
-
-Files to create: `ArtifactsPane.tsx`, `MarkdownRenderer.tsx`, `CodeBlock.tsx`
-
-### 1B. Agent Trace Visualizer
-
-Live timeline showing each agent's execution with model badges, duration bars, and expandable output previews. Shows parallel execution (where Orchestra enables it), contradiction flags between reasoning paths, and convergence points.
-
-Files to create: `AgentTraceVisualizer.tsx`, `AgentTimeline.tsx`, `ModelBadge.tsx`
-
-### 1C. Confidence & Sources Panel (Perplexity-inspired)
-
-For Calculus Intelligence: display per-claim confidence scores from the Adversarial Validator. Show agreement/disagreement map across reasoning agents. Link to sources when the Evidence Grounder is built (Phase 3).
-
-### 1D. Inline Output Editing (Canvas-inspired)
-
-Click into the final synthesized output and request targeted AI edits: "make this more concise", "add tax implications", "rewrite for a non-technical audience." Sends edit request through a single-agent call back to the synthesizer.
-
-### 1E. Pipeline Selector Upgrade
-
-One-click switch between all registered pipelines (hand-coded + Orchestra-discovered). Show agent count, model badges, estimated cost, and a "YAML-defined" badge for Orchestra pipelines.
-
----
-
-## Phase 2 — Legal & Fintech Depth + Business Integration (v2.4, 1-2 months)
-
-### 2A. Eureka Settlement Services Integration
-
-Add conditional trigger from Eureka: high-value precious metals transactions or instant-liquidity requests POST to `/api/v2/pipelines/run` with `pipeline_name: lex_intelligence`. Display compliance score and opinion link in portal UI.
-
-### 2B. Confidence Scoring & Human-in-Loop
-
-Per-agent HIGH/MEDIUM/LOW confidence with aggregated final score. When overall confidence is MEDIUM or below, or when agent divergence exceeds a threshold, trigger Slack/email alert for human review. Orchestra quality gates can enforce this declaratively.
-
-### 2C. Lex Intelligence Agent Alignment
-
-Upgrade model assignments as new models become available:
-- Legal Research Specialist → Claude Opus (if CrewAI tool_use conflict resolved)
-- Contract Specialist → Grok 4 Fast
-- Add parallel branches: statutory + constitutional analysis run simultaneously after case law research
-
-### 2D. Multi-Jurisdiction Support
-
-Add EU Statutory Agent (GDPR, AI Act compliance) and GCC/Sharia Specialist. Define as new .orca pipelines with jurisdiction-specific tools and knowledge.
-
-### 2E. Side-by-Side Pipeline Comparison
-
-Run the same query through multiple pipelines simultaneously. Split-pane view comparing Lex (legal-specific) vs Calculus (general reasoning) outputs.
-
----
-
-## Phase 3 — Memory, Self-Improvement & Scale (v2.5, 2-3 months)
-
-### 3A. Persistent Reasoning Memory
-
-Store successful reasoning traces in PostgreSQL with pgvector. When a new query resembles a past one, inject prior traces as context into the decomposer. Grok Heavy cannot do per-user persistent learning at scale.
-
-### 3B. Post-Query Feedback Loop
-
-After every pipeline run, a lightweight post-mortem agent evaluates: did reasoning paths converge? Were validator concerns resolved? This data adjusts routing weights — queries where Grok excels get routed to Grok, queries where Gemini excels get routed to Gemini.
-
-### 3C. Evidence Grounder Agent
-
-7th agent for Calculus Intelligence with web search and real-time data tools. Fact-checks claims from reasoning agents. Defined as a tool-equipped agent in the .orca file.
-
-### 3D. Confidence-Based Cascade
-
-Smart routing in Calculus Intelligence. Simple queries (complexity 1-4) → single model. Medium (5-7) → 3 agents. Hard (8-10) → full ensemble. The decomposer already scores complexity — this adds routing logic.
-
-### 3E. Forge Intelligence Build-Out
-
-Code generation pipeline: architecture design, implementation, code review, test generation, documentation. Defined in .orca format. Completes the three-pipeline suite.
-
-### 3F. Usage & ROI Dashboard
-
-Frontend view of per-user token costs, hours saved, confidence trends, pipeline comparison. All data already exists in PostgreSQL — just needs a React dashboard page.
-
----
-
-## Phase 4 — Sovereign Enterprise Integration (v3.0, Q3-Q4 2026)
-
-### 4A. API-First Integration Layer
-
-Secure endpoints for DFIP Ledger, SPV Architect, Structuring Agent, Seraph Shield. Signed webhook delivery from portal to downstream agents.
-
-### 4B. Orchestra Visual Editor
-
-Web-based pipeline builder. Drag agents into a flow, configure models and gates, Orchestra generates the .orca YAML. The Lex Terminal concept meets Orchestra DSL.
-
-### 4C. Execution Modes
-
-- **Fast**: 2-3 agents, single model, sub-10s. For quick questions.
-- **Standard**: full 6-agent pipeline. Current default.
-- **Maximum**: 8-12 agent ensemble with multi-round debate. For highest-stakes decisions.
-- **Private**: route sensitive subtasks through self-hosted models (Llama, DeepSeek-R1).
-
-### 4D. Multi-Round Debate Protocol
-
-After the validator identifies disputes, route them back through reasoning agents for a second round. Research shows 2-round debate resolves 80%+ of cross-model disagreements.
-
-### 4E. Edge & Mobile Access
-
-Responsive design + PWA support. EdgeForge toolkit integration for offline/low-latency runs.
-
-### 4F. Compliance & Governance Hardening
-
-EU AI Act classification (high-risk checks). Full audit trails + exportable logs. Orchestra gates enforce compliance rules declaratively. Periodic third-party security review.
-
-### 4G. Public Beta Consideration
-
-Phased rollout to trusted partners. Pricing tiers ($99-$499/mo) as independent multi-model fintech legal intelligence platform.
-
----
-
-## Success Metrics (End of 2026)
-
-- 95%+ test coverage on pipelines, WebSocket layer, and Orchestra loader
-- Average pipeline run < 90 seconds
-- >90% HIGH-confidence legal opinions on fintech queries
-- Eureka → Lex call latency < 5 seconds (cached responses)
-- 10+ .orca pipeline definitions in production
-- Zero major security incidents
-
-## Competitive Position
-
-| Dimension | Grok 4 Heavy | Calculus Intelligence (fully built) |
-|-----------|-------------|-------------------------------------|
-| Speed | Native advantage | Competitive with cascade routing |
-| Cost per query | $300/mo subscription | Pay-per-use, ~$0.15-0.25/query |
-| Peak accuracy (hard tasks) | Strong | Superior via model diversity |
-| Hallucination resistance | Good | Better via cross-model validation |
-| Customization | None | Full persistent memory + feedback loop |
-| Transparency | Black box | Full reasoning trace visible |
-| Domain specialization | Generic | Lex (legal), Forge (code), custom .orca |
-| Pipeline creation | Not possible | Drop a YAML file, restart, done |
-
-## Risks & Blockers
-
-- LLM provider API rate limits / cost spikes (mitigate: cascade routing, model diversity)
-- CourtListener API quota (mitigate: bulk hybrid fallback, caching)
-- CrewAI tool_use conflict with Anthropic models (mitigate: use OpenAI/Grok for tool-equipped agents)
-- Team bandwidth for frontend vs backend work (mitigate: Orchestra reduces backend work per pipeline)
