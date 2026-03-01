@@ -1,4 +1,8 @@
-"""OpenAI and Grok (xAI) provider. Grok uses same API with different base_url."""
+"""OpenAI and OpenAI-compatible providers (Grok, DeepSeek, Mistral, Groq).
+
+OpenAI newer models (GPT-4o+, GPT-5+, o-series) require `max_completion_tokens`.
+Third-party compatible APIs still use the classic `max_tokens` parameter.
+"""
 
 import time
 from openai import AsyncOpenAI
@@ -20,6 +24,16 @@ class OpenAIProvider(BaseProvider):
         super().__init__(name)
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
+    def _token_limit_kwargs(self, max_tokens: int) -> dict:
+        """Return the correct max-tokens parameter for this provider.
+
+        OpenAI native API uses `max_completion_tokens` (required for newer models).
+        Third-party OpenAI-compatible APIs (xAI, DeepSeek, Mistral, Groq) use `max_tokens`.
+        """
+        if self.name == "openai":
+            return {"max_completion_tokens": max_tokens}
+        return {"max_tokens": max_tokens}
+
     async def send_message(
         self, messages: list[dict], model: str,
         temperature: float = 0.7, max_tokens: int = 4096,
@@ -34,7 +48,7 @@ class OpenAIProvider(BaseProvider):
         try:
             response = await self.client.chat.completions.create(
                 model=model, messages=full_messages,
-                temperature=temperature, max_tokens=max_tokens,
+                temperature=temperature, **self._token_limit_kwargs(max_tokens),
             )
         except OpenAIAuthError:
             raise ProviderAuthError(self.name)
@@ -71,7 +85,7 @@ class OpenAIProvider(BaseProvider):
         try:
             stream = await self.client.chat.completions.create(
                 model=model, messages=full_messages,
-                temperature=temperature, max_tokens=max_tokens,
+                temperature=temperature, **self._token_limit_kwargs(max_tokens),
                 stream=True, stream_options={"include_usage": True},
             )
         except OpenAIAuthError:
