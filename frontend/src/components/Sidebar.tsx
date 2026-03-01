@@ -19,10 +19,10 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'Chat', icon: MessageSquare, path: '/' },
-  { label: 'Specialists', icon: Bot, path: '/specialists' },
-  { label: 'Pipelines', icon: Layers, path: '/pipelines' },
-  { label: 'Usage', icon: BarChart3, path: '/usage' },
+  { label: 'Console', icon: MessageSquare, path: '/' },
+  { label: 'Analyst Desks', icon: Bot, path: '/specialists' },
+  { label: 'Engines', icon: Layers, path: '/pipelines' },
+  { label: 'Metrics', icon: BarChart3, path: '/usage' },
 ];
 
 export default function Sidebar({

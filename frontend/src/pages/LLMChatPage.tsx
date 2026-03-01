@@ -101,11 +101,11 @@ export default function LLMChatPage() {
               Calculus Research
             </span>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--cr-text-muted)' }}>Direct LLM Access</div>
+          <div style={{ fontSize: 13, color: 'var(--cr-text-muted)' }}>Intelligence Console</div>
         </div>
 
         <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--cr-text)', textAlign: 'center', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
-          What do you want to know?
+          What do you need to analyze?
         </h1>
 
         <div style={{ width: '100%', maxWidth: 700 }}>

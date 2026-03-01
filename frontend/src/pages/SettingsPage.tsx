@@ -61,7 +61,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card title={`Intelligence Pipelines (${pipelines.length})`}>
+      <Card title={`Intelligence Engines (${pipelines.length})`}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {pipelines.map((p) => <Pill key={p.name} label={p.name} />)}
           {pipelines.length === 0 && <span style={{ color: 'var(--cr-text-muted)', fontSize: 13 }}>Loading...</span>}

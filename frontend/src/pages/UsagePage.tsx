@@ -54,7 +54,7 @@ export default function UsagePage() {
   return (
     <div style={{ padding: '28px 32px' }}>
       <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--cr-text)', marginBottom: 24 }}>
-        Usage & Costs
+        Intelligence Metrics
       </h1>
 
       {loading && (
@@ -88,7 +88,7 @@ export default function UsagePage() {
                   color: activeTab === tab ? 'var(--cr-text)' : 'var(--cr-text-muted)',
                   cursor: 'pointer', fontSize: 13, fontWeight: activeTab === tab ? 600 : 400,
                 }}>
-                  {tab === 'chat' ? 'Chat Logs' : 'Pipeline Runs'}
+                  {tab === 'chat' ? 'Console Logs' : 'Engine Runs'}
                 </button>
               ))}
             </div>

@@ -129,9 +129,6 @@ class LlamaProvider(BaseProvider):
     def get_available_models(self) -> List[str]:
         """Return list of available Llama models."""
         return [
-            "llama-4-8b",
-            "llama-4-70b",
-            "llama-4-405b",
         ]
 
     def format_attachment(self, attachment: ChatAttachment) -> dict:

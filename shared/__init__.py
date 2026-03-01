@@ -49,10 +49,13 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "grok-3": (5.00, 15.00),
     "grok-2": (2.00, 10.00),
     
+    # Groq (Llama) — hosted on Groq LPU
+    "meta-llama/llama-4-maverick-17b-128e-instruct": (0.20, 0.60),
+    "llama-4-maverick": (0.20, 0.60),
+    "meta-llama/llama-4-scout-17b-16e-instruct": (0.11, 0.34),
+    "llama-4-scout": (0.11, 0.34),
+    
     # Meta / Llama (self-hosted)
-    "llama-4-8b": (0.0, 0.0),
-    "llama-4-70b": (0.0, 0.0),
-    "llama-4-405b": (0.0, 0.0),
     
     # Scout / Maverick (self-hosted)
     "llama-4-scout-17b-16e-instruct": (0.0, 0.0),

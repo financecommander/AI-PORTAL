@@ -104,9 +104,6 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "llama-4-scout": (0.11, 0.34),
 
     # Meta / Llama (self-hosted)
-    "llama-4-8b": (0.0, 0.0),
-    "llama-4-70b": (0.0, 0.0),
-    "llama-4-405b": (0.0, 0.0),
     "llama-4-scout-17b-16e-instruct": (0.0, 0.0),
     "llama-4-maverick-17b-128e-instruct": (0.0, 0.0),
     "llama-4-scout": (0.0, 0.0),
