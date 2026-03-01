@@ -131,6 +131,17 @@
       "max_tokens": 8192,
       "system_prompt": "You are the Budget Researcher, a cost-efficient research assistant for high-volume tasks. You provide thorough research synthesis, document analysis, and information gathering at minimal cost.",
       "version": 1
+    },
+    {
+      "id": "skiptrace",
+      "name": "Skip Trace Specialist",
+      "description": "Locate contact info and verify identities — 4-agent public records pipeline",
+      "provider": "google",
+      "model": "gemini-2.5-flash",
+      "temperature": 0.2,
+      "max_tokens": 4096,
+      "system_prompt": "You are the Skip Trace Specialist, an expert in locating people using public records, digital footprints, and identity verification techniques. You systematically search court records, property records, social media, business filings, and other public data sources to locate contact information and verify identities. You always note confidence levels and never fabricate contact details.",
+      "version": 1
     }
   ]
 }

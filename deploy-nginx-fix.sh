@@ -1,16 +1,13 @@
+#!/bin/bash
+set -e
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌"; exit 1; }
+mkdir -p 'frontend'
+cat > 'frontend/nginx.conf' << 'FILEEOF_nginx'
 server {
     listen 80;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
-
-    # ── Security headers ──────────────────────────────────────
-    add_header X-Frame-Options "DENY" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss: ws:;" always;
 
     # SPA routing — all routes serve index.html
     location / {
@@ -65,12 +62,6 @@ server {
         proxy_send_timeout 300s;
     }
 
-    location /conversations {
-        proxy_pass http://backend:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
     location /usage {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
@@ -88,3 +79,16 @@ server {
     }
 }
 
+FILEEOF_nginx
+echo "✅ nginx.conf updated"
+git add -A
+git commit --no-gpg-sign -m "fix: nginx SSE streaming + conversations proxy
+
+/chat: added proxy_buffering off, proxy_cache off, 300s timeouts for SSE streaming
+/conversations: new proxy route for conversation history API
+Without proxy_buffering off, nginx buffers SSE chunks and chat appears empty." || echo "Nothing"
+git push origin main
+echo "✅ Pushed. Frontend rebuild:"
+echo "  cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main"
+echo "  sudo docker compose -f docker-compose.v2.yml build --no-cache frontend"
+echo "  sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"

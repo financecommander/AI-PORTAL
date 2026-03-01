@@ -15,6 +15,7 @@ from backend.pipelines.underwriting_pipeline import UnderwritingPipeline
 from backend.pipelines.due_diligence_pipeline import DueDiligencePipeline
 from backend.pipelines.portfolio_monitoring_pipeline import PortfolioMonitoringPipeline
 from backend.pipelines.investor_reporting_pipeline import InvestorReportingPipeline
+from backend.pipelines.skiptrace_pipeline import SkipTracePipeline
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ _REGISTRY: dict[str, callable] = {
     "due_diligence": lambda: DueDiligencePipeline(),
     "portfolio_monitoring": lambda: PortfolioMonitoringPipeline(),
     "investor_reporting": lambda: InvestorReportingPipeline(),
+    "skiptrace": lambda: SkipTracePipeline(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
