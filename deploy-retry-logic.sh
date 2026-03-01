@@ -1,3 +1,8 @@
+#!/bin/bash
+set -e
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌"; exit 1; }
+mkdir -p 'backend/pipelines'
+cat > 'backend/pipelines/crew_pipeline.py' << 'FILEEOF_crew'
 """CrewAI pipeline wrapper with progress tracking and token tracking."""
 
 import asyncio
@@ -354,3 +359,18 @@ class CrewPipeline(BasePipeline):
         estimated_tokens = estimate_tokens("x" * input_length) * len(self.agents) * 2
         return calculate_cost("gpt-4o", estimated_tokens // 2, estimated_tokens // 2)
 
+FILEEOF_crew
+echo "✅ crew_pipeline.py updated with retry logic"
+git add -A
+git commit --no-gpg-sign -m "feat: auto-retry pipeline on connection drops (2 retries, exponential backoff)
+
+Retries on: incomplete chunked read, peer closed connection, connection reset,
+read timed out, remote disconnected. Waits 3s then 6s between retries.
+Rebuilds Crew instance on retry to reset internal state.
+Sends 'retry' event to frontend WebSocket for UI feedback.
+Non-retryable errors fail immediately as before." || echo "Nothing"
+git push origin main
+echo "✅ Pushed. Backend rebuild:"
+echo "  cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main"
+echo "  sudo docker compose -f docker-compose.v2.yml build --no-cache backend"
+echo "  sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"
