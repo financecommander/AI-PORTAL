@@ -1,3 +1,8 @@
+#!/bin/bash
+set -e
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌"; exit 1; }
+mkdir -p 'frontend/src/pages'
+cat > 'frontend/src/pages/LoginPage.tsx' << 'FILEEOF_LoginPage'
 import { useState } from 'react';
 import { Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -211,3 +216,9 @@ export default function LoginPage() {
   );
 }
 
+FILEEOF_LoginPage
+echo "✅ LoginPage updated"
+git add -A
+git commit --no-gpg-sign -m "feat: add Google/Apple/X OAuth buttons to login page (light theme)" || echo "Nothing"
+git push origin main
+echo "✅ Pushed. On VM: cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main && sudo docker compose -f docker-compose.v2.yml build --no-cache frontend && sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"
