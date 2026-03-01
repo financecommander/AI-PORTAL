@@ -36,14 +36,6 @@
   --cr-radius-xs: 6px;
 
   /* Legacy aliases */
-  --navy: var(--cr-surface);
-  --navy-light: var(--cr-surface-2);
-  --navy-dark: var(--cr-white);
-  --blue: var(--cr-green-600);
-  --blue-light: var(--cr-green-400);
-  --green: var(--cr-green-600);
-  --orange: var(--cr-gold-500);
-  --red: var(--cr-danger);
 }
 
 * { box-sizing: border-box; }

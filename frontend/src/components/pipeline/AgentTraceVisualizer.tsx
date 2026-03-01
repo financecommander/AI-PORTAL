@@ -147,7 +147,7 @@ export default function AgentTraceVisualizer({
             style={{
               width: `${percentage}%`,
               height: '100%',
-              backgroundColor: 'var(--orange)',
+              backgroundColor: 'var(--cr-gold-500)',
               borderRadius: '2px',
               transition: 'width 0.3s ease',
             }}
@@ -440,7 +440,7 @@ export default function AgentTraceVisualizer({
                   justifyContent: 'center',
                 }}
               >
-                <Clock size={16} color="var(--orange)" />
+                <Clock size={16} color="var(--cr-gold-500)" />
               </div>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--cr-text-muted)' }}>Duration</div>

@@ -1,8 +1,6 @@
 import type { UsageLog } from '../../types';
 
-interface StatsCardsProps {
-  logs: UsageLog[];
-}
+interface StatsCardsProps { logs: UsageLog[]; }
 
 function formatTokenCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -17,27 +15,20 @@ export default function StatsCards({ logs }: StatsCardsProps) {
   const totalQueries = logs.length;
 
   const cards = [
-    { label: 'Total Cost', value: `$${totalCost.toFixed(4)}` },
-    { label: 'Total Tokens', value: formatTokenCount(totalTokens) },
-    { label: 'Avg Latency', value: `${(avgLatency / 1000).toFixed(2)}s` },
-    { label: 'Total Queries', value: String(totalQueries) },
+    { label: 'Total Cost', value: `$${totalCost.toFixed(4)}`, accent: 'var(--cr-green-600)' },
+    { label: 'Total Tokens', value: formatTokenCount(totalTokens), accent: 'var(--cr-green-900)' },
+    { label: 'Avg Latency', value: `${(avgLatency / 1000).toFixed(2)}s`, accent: 'var(--cr-text)' },
+    { label: 'Total Queries', value: String(totalQueries), accent: 'var(--cr-text)' },
   ];
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       {cards.map((card) => (
-        <div
-          key={card.label}
-          style={{
-            background: 'var(--navy)',
-            borderRadius: 12,
-            padding: 20,
-          }}
-        >
-          <div style={{ fontSize: 11, color: '#8899AA', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div key={card.label} style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20 }}>
+          <div style={{ fontSize: 11, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 600 }}>
             {card.label}
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--blue)' }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: card.accent, fontFamily: "'Space Grotesk', sans-serif" }}>
             {card.value}
           </div>
         </div>
@@ -45,3 +36,4 @@ export default function StatsCards({ logs }: StatsCardsProps) {
     </div>
   );
 }
+
