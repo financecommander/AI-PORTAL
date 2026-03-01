@@ -13,6 +13,7 @@ from backend.models import UsageLog
 from backend.specialists.manager import get_specialist
 from backend.providers.factory import get_provider
 from backend.utils.file_handler import process_attachments
+from backend.tools.executor import execute_with_tools
 
 router = APIRouter()
 
@@ -100,12 +101,14 @@ async def send_message(
         specialist["provider"],
     )
 
-    response = await provider.send_message(
+    response = await execute_with_tools(
+        provider=provider,
         messages=messages,
         model=specialist["model"],
         temperature=specialist.get("temperature", 0.7),
         max_tokens=specialist.get("max_tokens", 4096),
         system_prompt=specialist.get("system_prompt"),
+        specialist_id=request.specialist_id,
     )
 
     # Log usage
