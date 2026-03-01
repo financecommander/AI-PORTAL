@@ -1,3 +1,8 @@
+#!/bin/bash
+set -e
+cd /workspaces/AI-PORTAL 2>/dev/null || cd ~/AI-PORTAL 2>/dev/null || { echo "❌"; exit 1; }
+mkdir -p 'backend/config'
+cat > 'backend/config/specialists.json' << 'FILEEOF_specialists'
 {
   "specialists": [
     {
@@ -134,3 +139,15 @@
     }
   ]
 }
+FILEEOF_specialists
+echo "✅ specialists.json updated (12 specialists, 5 direct chats removed)"
+git add -A
+git commit --no-gpg-sign -m "fix: remove 5 duplicate direct-chat specialists (Grok/ChatGPT/Gemini/DeepSeek/Llama)
+
+These are redundant with the main Chat page direct LLM access.
+12 purpose-built specialists remain." || echo "Nothing"
+git push origin main
+echo "✅ Pushed. Backend change — rebuild both:"
+echo "  cd ~/AI-PORTAL && git fetch origin main && git reset --hard origin/main"
+echo "  sudo docker compose -f docker-compose.v2.yml build --no-cache backend"
+echo "  sudo docker compose -f docker-compose.v2.yml up -d --force-recreate"
