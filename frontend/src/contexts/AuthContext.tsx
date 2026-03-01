@@ -15,7 +15,7 @@ interface AuthContextType {
   user: UserProfile | null;
   login: (email: string) => Promise<void>;
   loginWithOAuth: (provider: 'google' | 'apple' | 'x') => Promise<void>;
-  handleOAuthCallback: (provider: string, code: string) => Promise<void>;
+  handleOAuthCallback: (provider: string, code: string, state?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
 }
@@ -51,9 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check for OAuth callback params in URL
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-    const state = params.get('state');  // contains provider
+    const state = params.get('state');  // format: {provider}:{signed_token}
     if (code && state) {
-      handleOAuthCallback(state, code).then(() => {
+      // Extract provider from state prefix (before the colon)
+      const colonIdx = state.indexOf(':');
+      const provider = colonIdx > 0 ? state.slice(0, colonIdx) : state;
+      handleOAuthCallback(provider, code, state).then(() => {
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname);
       });
@@ -95,12 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleOAuthCallback = async (provider: string, code: string) => {
+  const handleOAuthCallback = async (provider: string, code: string, state?: string) => {
     setError(null);
     try {
       const response = await api.post<{ access_token: string; refresh_token: string }>(
         `/auth/${provider}/callback`,
-        { code },
+        { code, state: state || '' },
       );
       _setAuth(response.access_token, response.refresh_token);
       const profile = await api.request<UserProfile>('/auth/me');

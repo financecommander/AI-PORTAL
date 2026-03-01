@@ -2,12 +2,17 @@
 
 Lightweight implementation using direct HTTP calls to OAuth providers.
 No heavy dependencies — just httpx for async HTTP.
+
+Security:
+- All providers use HMAC-signed state tokens for CSRF protection.
+- X/Twitter uses proper PKCE (S256) with cryptographic code_verifier.
 """
 
 import os
 import logging
 from typing import Optional
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 import httpx
 from sqlmodel import Session, select
@@ -15,6 +20,7 @@ from sqlmodel import Session, select
 from backend.database import engine
 from backend.models import User
 from backend.auth.jwt_handler import create_access_token
+from backend.auth.oauth_state import create_oauth_state, generate_pkce_pair
 
 logger = logging.getLogger(__name__)
 
@@ -90,18 +96,24 @@ def create_user_token(user: User) -> str:
 # ── Google OAuth ────────────────────────────────────────────────
 
 
-async def google_get_auth_url() -> str:
-    """Get Google OAuth authorization URL."""
+async def google_get_auth_url() -> tuple[str, str]:
+    """Get Google OAuth authorization URL with signed state token.
+
+    Returns (auth_url, state_token).
+    """
     redirect_uri = _get_redirect_uri("google")
-    return (
+    state = create_oauth_state("google")
+    url = (
         "https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
         f"redirect_uri={redirect_uri}&"
         "response_type=code&"
         "scope=openid+email+profile&"
         "access_type=offline&"
-        "prompt=consent"
+        "prompt=consent&"
+        f"state={quote(state, safe='')}"
     )
+    return url, state
 
 
 async def google_exchange_code(code: str) -> Optional[User]:
@@ -149,17 +161,23 @@ async def google_exchange_code(code: str) -> Optional[User]:
 # ── Apple OAuth ─────────────────────────────────────────────────
 
 
-async def apple_get_auth_url() -> str:
-    """Get Apple Sign In authorization URL."""
+async def apple_get_auth_url() -> tuple[str, str]:
+    """Get Apple Sign In authorization URL with signed state token.
+
+    Returns (auth_url, state_token).
+    """
     redirect_uri = _get_redirect_uri("apple")
-    return (
+    state = create_oauth_state("apple")
+    url = (
         "https://appleid.apple.com/auth/authorize?"
         f"client_id={APPLE_CLIENT_ID}&"
         f"redirect_uri={redirect_uri}&"
         "response_type=code&"
         "scope=name+email&"
-        "response_mode=form_post"
+        "response_mode=form_post&"
+        f"state={quote(state, safe='')}"
     )
+    return url, state
 
 
 async def apple_exchange_code(code: str) -> Optional[User]:
@@ -209,23 +227,31 @@ async def apple_exchange_code(code: str) -> Optional[User]:
 # ── X (Twitter) OAuth 2.0 PKCE ─────────────────────────────────
 
 
-async def x_get_auth_url(state: str = "random") -> str:
-    """Get X OAuth 2.0 authorization URL."""
+async def x_get_auth_url() -> tuple[str, str]:
+    """Get X OAuth 2.0 authorization URL with real PKCE (S256) and signed state.
+
+    Returns (auth_url, state_token).
+    The code_verifier is embedded inside the signed state token so it can
+    be recovered during the callback without server-side session storage.
+    """
     redirect_uri = _get_redirect_uri("x")
-    return (
+    verifier, challenge = generate_pkce_pair()
+    state = create_oauth_state("x", code_verifier=verifier)
+    url = (
         "https://twitter.com/i/oauth2/authorize?"
-        f"response_type=code&"
+        "response_type=code&"
         f"client_id={X_CLIENT_ID}&"
         f"redirect_uri={redirect_uri}&"
-        f"scope=tweet.read+users.read+offline.access&"
-        f"state={state}&"
-        "code_challenge=challenge&"
-        "code_challenge_method=plain"
+        "scope=tweet.read+users.read+offline.access&"
+        f"state={quote(state, safe='')}&"
+        f"code_challenge={challenge}&"
+        "code_challenge_method=S256"
     )
+    return url, state
 
 
-async def x_exchange_code(code: str) -> Optional[User]:
-    """Exchange X auth code for user info."""
+async def x_exchange_code(code: str, code_verifier: str) -> Optional[User]:
+    """Exchange X auth code for user info using the real PKCE code_verifier."""
     redirect_uri = _get_redirect_uri("x")
 
     async with httpx.AsyncClient() as client:
@@ -236,7 +262,7 @@ async def x_exchange_code(code: str) -> Optional[User]:
                 "client_id": X_CLIENT_ID,
                 "redirect_uri": redirect_uri,
                 "grant_type": "authorization_code",
-                "code_verifier": "challenge",
+                "code_verifier": code_verifier,
             },
             auth=(X_CLIENT_ID, X_CLIENT_SECRET),
         )
