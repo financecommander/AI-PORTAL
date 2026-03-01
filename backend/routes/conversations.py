@@ -337,11 +337,13 @@ async def delete_conversation(
         if not conv:
             raise HTTPException(status_code=404, detail="Conversation not found")
 
-        # Delete messages first
+        # Delete messages first — flush before conversation delete to
+        # guarantee correct ordering (DB may lack ON DELETE CASCADE).
         msg_stmt = select(Message).where(Message.conversation_id == conv.id)
         messages = session.exec(msg_stmt).all()
         for msg in messages:
             session.delete(msg)
+        session.flush()  # force message DELETEs to DB before conv DELETE
 
         session.delete(conv)
         session.commit()
