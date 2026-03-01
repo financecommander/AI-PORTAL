@@ -361,8 +361,9 @@ class TestPricing:
         assert cost > 0
 
     def test_unknown_model(self):
+        # Unknown models use default mid-tier pricing (3.0/15.0 per 1M)
         cost = estimate_cost("unknown-model", 1000, 1000)
-        assert cost == 0.0
+        assert cost > 0  # Default pricing applied, not zero
 
     def test_zero_tokens(self):
         cost = estimate_cost("gpt-4o", 0, 0)

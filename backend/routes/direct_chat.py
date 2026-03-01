@@ -308,6 +308,9 @@ _PROVIDER_KEY_ATTRS: dict[str, str] = {
     "anthropic": "anthropic_api_key",
     "google": "google_api_key",
     "grok": "xai_api_key",
+    "deepseek": "deepseek_api_key",
+    "mistral": "mistral_api_key",
+    "groq": "groq_api_key",
 }
 
 

@@ -182,6 +182,53 @@ class ApiClient {
     }
   }
 
+  // ── Conversation persistence ───────────────────────────────────
+
+  async createConversation(
+    provider: string,
+    model: string,
+    mode: string = 'direct',
+  ): Promise<{ uuid: string; title: string; created_at: string }> {
+    return this.post('/conversations/', { provider, model, mode });
+  }
+
+  async loadConversation(
+    uuid: string,
+  ): Promise<{
+    uuid: string;
+    title: string;
+    provider: string;
+    model: string;
+    mode: string;
+    specialist_id?: string;
+    messages: Array<{
+      id: number;
+      role: string;
+      content: string;
+      model: string;
+      input_tokens: number;
+      output_tokens: number;
+      cost_usd: number;
+      created_at: string;
+    }>;
+  }> {
+    return this.request(`/conversations/${uuid}`);
+  }
+
+  async saveMessage(
+    conversationUuid: string,
+    msg: {
+      role: string;
+      content: string;
+      model?: string;
+      input_tokens?: number;
+      output_tokens?: number;
+      cost_usd?: number;
+    },
+  ): Promise<{ id: number; conversation_title: string }> {
+    return this.post(`/conversations/${conversationUuid}/messages`, msg);
+  }
+
   connectPipelineWS(
     pipelineId: string,
     onEvent: (event: { type: string; pipeline_id: string; timestamp: string; data: Record<string, unknown> }) => void,

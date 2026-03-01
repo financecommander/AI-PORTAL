@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -7,6 +7,9 @@ import Sidebar from './Sidebar';
 export default function Layout() {
   const { isAuthenticated, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cr-surface)' }}>
@@ -15,6 +18,19 @@ export default function Layout() {
   );
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // Active conversation from URL: /?c=<uuid>
+  const activeConversationId = location.pathname === '/' ? searchParams.get('c') : null;
+
+  const handleSelectConversation = (uuid: string) => {
+    navigate(`/?c=${uuid}`);
+    setSidebarOpen(false);
+  };
+
+  const handleNewConversation = () => {
+    navigate('/');
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--cr-surface)' }}>
@@ -32,7 +48,12 @@ export default function Layout() {
       {sidebarOpen && <div className="md:hidden fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={() => setSidebarOpen(false)} />}
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 h-screen z-50 transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar onNavigate={() => setSidebarOpen(false)} />
+        <Sidebar
+          activeConversationId={activeConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+          onNavigate={() => setSidebarOpen(false)}
+        />
       </div>
       {/* Main content */}
       <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0"><Outlet /></main>

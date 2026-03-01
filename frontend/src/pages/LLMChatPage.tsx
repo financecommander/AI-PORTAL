@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, ChevronDown, Sparkles, AlertTriangle } from 'lucide-react';
 import { api } from '../api/client';
 import type { LLMProvider } from '../types';
@@ -15,19 +16,23 @@ const SUGGESTION_PROMPTS = [
 ];
 
 export default function LLMChatPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [providers, setProviders] = useState<LLMProvider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [loadingModels, setLoadingModels] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [loadingConversation, setLoadingConversation] = useState(false);
 
-  const { messages, isStreaming, error, sendMessage, stopStreaming, clearChat } =
+  const { messages, isStreaming, error, conversationUuid, sendMessage, stopStreaming, clearChat, loadConversation } =
     useDirectChat(selectedProvider, selectedModel);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollPill, setShowScrollPill] = useState(false);
+  const loadedConvRef = useRef<string | null>(null);
 
+  // Load model catalog on mount
   useEffect(() => {
     api
       .request<{ providers: LLMProvider[] }>('/chat/direct/models')
@@ -51,6 +56,33 @@ export default function LLMChatPage() {
       })
       .finally(() => setLoadingModels(false));
   }, []);
+
+  // Load conversation from URL param ?c=<uuid>
+  const conversationParam = searchParams.get('c');
+  useEffect(() => {
+    if (conversationParam && conversationParam !== loadedConvRef.current && !loadingModels) {
+      loadedConvRef.current = conversationParam;
+      setLoadingConversation(true);
+      loadConversation(conversationParam).then((meta) => {
+        if (meta) {
+          setSelectedProvider(meta.provider);
+          setSelectedModel(meta.model);
+        }
+        setLoadingConversation(false);
+      });
+    }
+    // Clear loaded ref when URL param is removed
+    if (!conversationParam) {
+      loadedConvRef.current = null;
+    }
+  }, [conversationParam, loadingModels, loadConversation]);
+
+  // Sync conversation UUID back to URL
+  useEffect(() => {
+    if (conversationUuid && conversationUuid !== searchParams.get('c')) {
+      setSearchParams({ c: conversationUuid }, { replace: true });
+    }
+  }, [conversationUuid, searchParams, setSearchParams]);
 
   const isAtBottom = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -81,6 +113,12 @@ export default function LLMChatPage() {
     setSelectedModel(model);
   };
 
+  const handleNewChat = () => {
+    clearChat();
+    setSearchParams({}, { replace: true });
+    loadedConvRef.current = null;
+  };
+
   let selectedModelName = '';
   for (const prov of providers) {
     for (const m of prov.models) {
@@ -92,10 +130,12 @@ export default function LLMChatPage() {
 
   const hasMessages = messages.length > 0;
 
-  if (loadingModels) {
+  if (loadingModels || loadingConversation) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cr-surface)' }}>
-        <div style={{ color: 'var(--cr-text-muted)', fontSize: 14 }}>Loading models...</div>
+        <div style={{ color: 'var(--cr-text-muted)', fontSize: 14 }}>
+          {loadingConversation ? 'Loading conversation...' : 'Loading models...'}
+        </div>
       </div>
     );
   }
@@ -176,7 +216,7 @@ export default function LLMChatPage() {
         <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />
         <button
-          onClick={() => clearChat()}
+          onClick={handleNewChat}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
             borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)',
