@@ -119,8 +119,11 @@ async def send_message(
         latency_ms=response.latency_ms,
         specialist_id=request.specialist_id,
     )
-    session.add(log)
-    session.commit()
+    try:
+        session.add(log)
+        session.commit()
+    except Exception:
+        session.rollback()
 
     return ChatResponse(
         content=response.content,
@@ -180,7 +183,10 @@ async def stream_message(
                 latency_ms=0,
                 specialist_id=request.specialist_id,
             )
-            session.add(log)
-            session.commit()
+            try:
+                session.add(log)
+                session.commit()
+            except Exception:
+                session.rollback()
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

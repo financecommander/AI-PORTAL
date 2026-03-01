@@ -1,15 +1,17 @@
-"""Authentication routes — email + OAuth (Google, Apple, X)."""
+"""Authentication routes — email + OAuth (Google, Apple, X) with refresh tokens."""
 
 import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 from backend.auth.authenticator import get_current_user
+from backend.auth.jwt_handler import create_refresh_token, decode_refresh_token
 from backend.auth.oauth import (
     google_get_auth_url, google_exchange_code,
     apple_get_auth_url, apple_exchange_code,
     x_get_auth_url, x_exchange_code,
     get_or_create_user, create_user_token,
 )
+from backend.models import User
 
 router = APIRouter()
 ALLOWED_DOMAINS = {"gradeesolutions.com", "calculusresearch.io"}
@@ -31,11 +33,25 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 
 class OAuthCallbackRequest(BaseModel):
     code: str
+
+
+def _make_refresh(user: User) -> str:
+    """Build a refresh token from a User model."""
+    return create_refresh_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "provider": user.oauth_provider,
+    })
 
 
 # ── Email login (domain-restricted) ────────────────────────────
@@ -48,8 +64,30 @@ async def login(request: LoginRequest):
     if domain not in ALLOWED_DOMAINS:
         raise HTTPException(status_code=401, detail="Email domain is not authorized")
     user = get_or_create_user(email=email, oauth_provider="email")
-    token = create_user_token(user)
-    return LoginResponse(access_token=token)
+    return LoginResponse(
+        access_token=create_user_token(user),
+        refresh_token=_make_refresh(user),
+    )
+
+
+# ── Token refresh ──────────────────────────────────────────────
+
+
+@router.post("/refresh", response_model=LoginResponse)
+async def refresh_token(request: RefreshRequest):
+    """Exchange a valid refresh token for a new access + refresh token pair."""
+    payload = decode_refresh_token(request.refresh_token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    user = get_or_create_user(
+        email=payload.get("email", ""),
+        oauth_provider=payload.get("provider", "email"),
+    )
+    return LoginResponse(
+        access_token=create_user_token(user),
+        refresh_token=_make_refresh(user),
+    )
 
 
 # ── User profile ────────────────────────────────────────────────
@@ -81,7 +119,7 @@ async def google_callback(request: OAuthCallbackRequest):
     user = await google_exchange_code(request.code)
     if not user:
         raise HTTPException(status_code=401, detail="Google authentication failed")
-    return LoginResponse(access_token=create_user_token(user))
+    return LoginResponse(access_token=create_user_token(user), refresh_token=_make_refresh(user))
 
 
 # ── Apple OAuth ─────────────────────────────────────────────────
@@ -98,7 +136,7 @@ async def apple_callback(request: OAuthCallbackRequest):
     user = await apple_exchange_code(request.code)
     if not user:
         raise HTTPException(status_code=401, detail="Apple authentication failed")
-    return LoginResponse(access_token=create_user_token(user))
+    return LoginResponse(access_token=create_user_token(user), refresh_token=_make_refresh(user))
 
 
 # ── X (Twitter) OAuth ───────────────────────────────────────────
@@ -115,5 +153,5 @@ async def x_callback(request: OAuthCallbackRequest):
     user = await x_exchange_code(request.code)
     if not user:
         raise HTTPException(status_code=401, detail="X authentication failed")
-    return LoginResponse(access_token=create_user_token(user))
+    return LoginResponse(access_token=create_user_token(user), refresh_token=_make_refresh(user))
 

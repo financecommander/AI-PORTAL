@@ -1,15 +1,18 @@
 """Conversation history routes — CRUD for persistent chat threads."""
 
-import uuid
+import re
+import uuid as uuid_mod
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select, col, func
 
 from backend.auth.authenticator import get_current_user
 from backend.database import engine
 from backend.models import Conversation, Message
+
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 router = APIRouter()
 
@@ -72,6 +75,13 @@ def _get_user_id(current_user: dict) -> int:
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid user token")
     return int(user_id)
+
+
+def _validate_uuid(value: str) -> str:
+    """Validate that a path parameter is a proper UUID4 string."""
+    if not _UUID_RE.match(value):
+        raise HTTPException(status_code=400, detail="Invalid conversation UUID format")
+    return value
 
 
 def _auto_title(content: str) -> str:
@@ -155,7 +165,7 @@ async def create_conversation(
     user_id = _get_user_id(current_user)
 
     conv = Conversation(
-        uuid=str(uuid.uuid4()),
+        uuid=str(uuid_mod.uuid4()),
         user_id=user_id,
         provider=request.provider,
         model=request.model,
@@ -181,6 +191,7 @@ async def get_conversation(
     current_user: dict = Depends(get_current_user),
 ):
     """Load a conversation with all messages."""
+    _validate_uuid(conversation_uuid)
     user_id = _get_user_id(current_user)
 
     with Session(engine) as session:
@@ -233,6 +244,7 @@ async def save_message(
     current_user: dict = Depends(get_current_user),
 ):
     """Save a message to a conversation."""
+    _validate_uuid(conversation_uuid)
     user_id = _get_user_id(current_user)
 
     with Session(engine) as session:
@@ -279,6 +291,7 @@ async def update_conversation(
     current_user: dict = Depends(get_current_user),
 ):
     """Update conversation metadata (title, model, etc.)."""
+    _validate_uuid(conversation_uuid)
     user_id = _get_user_id(current_user)
 
     with Session(engine) as session:
@@ -311,6 +324,7 @@ async def delete_conversation(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a conversation and all its messages."""
+    _validate_uuid(conversation_uuid)
     user_id = _get_user_id(current_user)
 
     with Session(engine) as session:

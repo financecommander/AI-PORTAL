@@ -10,6 +10,7 @@ interface RequestOptions {
 
 class ApiClient {
   private token: string | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   setToken(token: string | null) {
     this.token = token;
@@ -17,6 +18,43 @@ class ApiClient {
 
   getToken(): string | null {
     return this.token;
+  }
+
+  setRefreshToken(token: string | null) {
+    if (token) localStorage.setItem('fc_refresh', token);
+    else localStorage.removeItem('fc_refresh');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('fc_refresh');
+  }
+
+  /**
+   * Attempt to refresh the access token using the stored refresh token.
+   * Returns true if successful, false otherwise. De-duplicates concurrent calls.
+   */
+  private async tryRefresh(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
+    const refresh = this.getRefreshToken();
+    if (!refresh) return false;
+
+    this.refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refresh }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return false;
+        const data = await res.json();
+        this.token = data.access_token;
+        localStorage.setItem('fc_token', data.access_token);
+        this.setRefreshToken(data.refresh_token);
+        return true;
+      })
+      .catch(() => false)
+      .finally(() => { this.refreshPromise = null; });
+
+    return this.refreshPromise;
   }
 
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -28,15 +66,29 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
+    let response = await fetch(`${BASE_URL}${path}`, {
       method: options.method || 'GET',
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
 
+    // On 401, try refreshing the token once before giving up
+    if (response.status === 401 && path !== '/auth/refresh') {
+      const refreshed = await this.tryRefresh();
+      if (refreshed) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+        response = await fetch(`${BASE_URL}${path}`, {
+          method: options.method || 'GET',
+          headers,
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+      }
+    }
+
     if (response.status === 401) {
       this.token = null;
       localStorage.removeItem('fc_token');
+      localStorage.removeItem('fc_refresh');
       window.location.href = '/login';
       throw new Error('Unauthorized');
     }

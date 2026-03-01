@@ -399,8 +399,9 @@ async def stream_direct_chat(
                 }
                 yield f"data: {json.dumps(data)}\n\n"
         except Exception as e:
-            logger.error("Direct chat stream error: %s", e)
-            error_data = {"content": "", "is_final": True, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0, "error": str(e)}
+            logger.error("Direct chat stream error: %s", e, exc_info=True)
+            # Send generic error to client — full details stay in server logs
+            error_data = {"content": "", "is_final": True, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0, "error": "An error occurred while processing your request."}
             yield f"data: {json.dumps(error_data)}\n\n"
             return
 

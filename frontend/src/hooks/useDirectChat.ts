@@ -30,6 +30,7 @@ export function useDirectChat(
   const abortRef = useRef<AbortController | null>(null);
   const stoppedRef = useRef(false);
   const conversationUuidRef = useRef<string | null>(null);
+  const creatingConvRef = useRef<Promise<string | null> | null>(null);
 
   // Keep ref in sync with state (for use in callbacks without stale closures)
   useEffect(() => {
@@ -67,6 +68,7 @@ export function useDirectChat(
     setError(null);
     setConversationUuid(null);
     conversationUuidRef.current = null;
+    creatingConvRef.current = null;
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
@@ -109,17 +111,26 @@ export function useDirectChat(
     setError(null);
     stoppedRef.current = false;
 
-    // Create conversation on first message if none exists
+    // Create conversation on first message if none exists (with race-condition guard)
     let uuid = conversationUuidRef.current;
     if (!uuid) {
-      try {
-        const conv = await api.createConversation(provider, model, 'direct');
-        uuid = conv.uuid;
-        setConversationUuid(uuid);
-        conversationUuidRef.current = uuid;
-      } catch (err) {
-        console.error('Failed to create conversation:', err);
-        // Continue without persistence — don't block the user
+      // If another sendMessage call is already creating the conversation, wait for it
+      if (creatingConvRef.current) {
+        uuid = await creatingConvRef.current;
+      } else {
+        const promise = api.createConversation(provider, model, 'direct')
+          .then((conv) => {
+            setConversationUuid(conv.uuid);
+            conversationUuidRef.current = conv.uuid;
+            return conv.uuid;
+          })
+          .catch((err) => {
+            console.error('Failed to create conversation:', err);
+            return null;  // Continue without persistence
+          })
+          .finally(() => { creatingConvRef.current = null; });
+        creatingConvRef.current = promise;
+        uuid = await promise;
       }
     }
 

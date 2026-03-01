@@ -1,7 +1,8 @@
 """Specialist CRUD routes."""
 
+import re
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from backend.auth.authenticator import get_current_user
 from backend.specialists.manager import (
@@ -10,6 +11,15 @@ from backend.specialists.manager import (
 )
 
 router = APIRouter()
+
+_SAFE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
+
+
+def _validate_specialist_id(sid: str) -> str:
+    """Validate specialist ID is alphanumeric with underscores/hyphens."""
+    if not _SAFE_ID_RE.match(sid):
+        raise HTTPException(status_code=400, detail="Invalid specialist ID format")
+    return sid
 
 
 class SpecialistCreateRequest(BaseModel):
@@ -39,6 +49,7 @@ async def list_specialists(user: dict = Depends(get_current_user)):
 
 @router.get("/{specialist_id}")
 async def get_one(specialist_id: str, user: dict = Depends(get_current_user)):
+    _validate_specialist_id(specialist_id)
     return get_specialist(specialist_id)
 
 
@@ -49,11 +60,13 @@ async def create(data: SpecialistCreateRequest, user: dict = Depends(get_current
 
 @router.put("/{specialist_id}")
 async def update(specialist_id: str, data: SpecialistUpdateRequest, user: dict = Depends(get_current_user)):
+    _validate_specialist_id(specialist_id)
     # Only send fields that were explicitly provided (not None)
     return update_specialist(specialist_id, data.model_dump(exclude_none=True))
 
 
 @router.delete("/{specialist_id}")
 async def delete(specialist_id: str, user: dict = Depends(get_current_user)):
+    _validate_specialist_id(specialist_id)
     delete_specialist(specialist_id)
     return {"deleted": True}

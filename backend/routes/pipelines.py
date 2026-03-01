@@ -67,8 +67,8 @@ async def _run_pipeline_background(
 
     try:
         pipeline = get_pipeline(pipeline_name)
-    except KeyError as e:
-        await ws_manager.send_event(pipeline_id, "error", {"message": str(e)})
+    except KeyError:
+        await ws_manager.send_event(pipeline_id, "error", {"message": "Pipeline not found."})
         return
 
     async def on_progress(event_type: str, data: dict):
@@ -118,7 +118,8 @@ async def _run_pipeline_background(
                 session.add(run)
                 session.commit()
 
-        await ws_manager.send_event(pipeline_id, "error", {"message": str(e)})
+        # Generic message to client — full trace is in server logs above
+        await ws_manager.send_event(pipeline_id, "error", {"message": "Pipeline execution failed. Check server logs for details."})
 
 
 @router.post("/pipelines/run", response_model=PipelineExecuteResponse)
@@ -205,6 +206,15 @@ async def pipeline_websocket(
     if not payload:
         await websocket.close(code=1008, reason="Invalid authentication token")
         return
+
+    # --- Ownership check: verify this user launched this pipeline ---
+    user_hash = payload.get("sub", "")
+    with Session(engine) as db_session:
+        stmt = select(PipelineRun).where(PipelineRun.pipeline_id == pipeline_id)
+        run = db_session.exec(stmt).first()
+        if not run or run.user_hash != user_hash:
+            await websocket.close(code=4003, reason="Pipeline not found or access denied")
+            return
 
     # --- Phase 2: register and relay events ---
     await ws_manager.connect_accepted(pipeline_id, websocket)

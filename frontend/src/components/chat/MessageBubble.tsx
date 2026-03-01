@@ -60,12 +60,12 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
           </div>
         )}
 
-        {/* Content */}
+        {/* Content — no dangerouslySetInnerHTML to prevent XSS */}
         {isUser ? (
           <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
         ) : (
-          <div className="prose prose-sm max-w-none" style={{ color: 'inherit' }}>
-            <div dangerouslySetInnerHTML={{ __html: message.content.replace(/\n/g, '<br/>') }} />
+          <div className="prose prose-sm max-w-none" style={{ color: 'inherit', whiteSpace: 'pre-wrap' }}>
+            {message.content}
             {isStreaming && (
               <span className="animate-blink" style={{ color: 'var(--cr-green-600)', fontSize: 16, marginLeft: 2 }}>▌</span>
             )}

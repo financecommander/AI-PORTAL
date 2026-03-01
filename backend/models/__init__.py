@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import Optional
+from sqlalchemy import Column, Integer, ForeignKey
 from sqlmodel import SQLModel, Field
 
 
@@ -69,7 +70,9 @@ class Conversation(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     uuid: str = Field(index=True, unique=True)  # public-facing ID
-    user_id: int = Field(index=True, foreign_key="users.id")
+    user_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True),
+    )
     title: str = Field(default="New conversation")
     provider: str = Field(default="")
     model: str = Field(default="")
@@ -85,7 +88,9 @@ class Message(SQLModel, table=True):
     __tablename__ = "messages"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    conversation_id: int = Field(index=True, foreign_key="conversations.id")
+    conversation_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), index=True),
+    )
     role: str  # user, assistant
     content: str
     model: str = Field(default="")

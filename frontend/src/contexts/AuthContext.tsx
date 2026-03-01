@@ -60,17 +60,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const _setAuth = (token: string) => {
+  const _setAuth = (token: string, refreshToken?: string) => {
     api.setToken(token);
     localStorage.setItem('fc_token', token);
+    if (refreshToken) api.setRefreshToken(refreshToken);
     setIsAuthenticated(true);
   };
 
   const login = async (email: string) => {
     setError(null);
     try {
-      const response = await api.post<{ access_token: string }>('/auth/login', { email });
-      _setAuth(response.access_token);
+      const response = await api.post<{ access_token: string; refresh_token: string }>('/auth/login', { email });
+      _setAuth(response.access_token, response.refresh_token);
       // Load profile
       const profile = await api.request<UserProfile>('/auth/me');
       setUser(profile);
@@ -97,11 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleOAuthCallback = async (provider: string, code: string) => {
     setError(null);
     try {
-      const response = await api.post<{ access_token: string }>(
+      const response = await api.post<{ access_token: string; refresh_token: string }>(
         `/auth/${provider}/callback`,
         { code },
       );
-      _setAuth(response.access_token);
+      _setAuth(response.access_token, response.refresh_token);
       const profile = await api.request<UserProfile>('/auth/me');
       setUser(profile);
     } catch (err) {
@@ -114,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     api.setToken(null);
+    api.setRefreshToken(null);
     localStorage.removeItem('fc_token');
     setIsAuthenticated(false);
     setUser(null);
