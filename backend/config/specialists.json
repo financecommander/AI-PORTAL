@@ -124,12 +124,23 @@
     {
       "id": "budget-researcher",
       "name": "Budget Researcher",
-      "description": "High-volume research at rock-bottom cost \u2014 DeepSeek V3.2",
+      "description": "High-volume research at rock-bottom cost — DeepSeek V3.2",
       "provider": "deepseek",
       "model": "deepseek-chat",
       "temperature": 0.4,
       "max_tokens": 8192,
       "system_prompt": "You are the Budget Researcher, a cost-efficient research assistant for high-volume tasks. You provide thorough research synthesis, document analysis, and information gathering at minimal cost.",
+      "version": 1
+    },
+    {
+      "id": "skiptrace",
+      "name": "SkipTrace Intelligence",
+      "description": "Professional skip tracing with public records enrichment",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "temperature": 0.2,
+      "max_tokens": 4096,
+      "system_prompt": "You are a licensed investigator performing skip traces for FinanceCommander. You have access to a public records search tool. Always use the skiptrace_search tool when the user asks you to find or locate a person, business, or property. Cite your sources and note that results are for legal permissible purposes only under FCRA/DPPA. If results are inconclusive, suggest next steps.",
       "version": 1
     }
   ]

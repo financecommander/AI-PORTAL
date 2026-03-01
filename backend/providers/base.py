@@ -13,6 +13,7 @@ class ProviderResponse:
     output_tokens: int
     latency_ms: float
     cost_usd: float = 0.0
+    tool_calls: list[dict] | None = None
 
 
 @dataclass
@@ -50,4 +51,15 @@ class BaseProvider(ABC):
             content=response.content, is_final=True,
             input_tokens=response.input_tokens, output_tokens=response.output_tokens,
             model=response.model, latency_ms=response.latency_ms, cost_usd=response.cost_usd,
+        )
+
+    async def send_message_with_tools(
+        self, messages: list[dict], model: str,
+        temperature: float = 0.7, max_tokens: int = 4096,
+        system_prompt: str | None = None,
+        tools: list[dict] | None = None,
+    ) -> ProviderResponse:
+        return await self.send_message(
+            messages=messages, model=model, temperature=temperature,
+            max_tokens=max_tokens, system_prompt=system_prompt,
         )

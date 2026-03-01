@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from backend.database import init_db
+from backend.tools import register_all_tools
 from backend.routes import pipelines
 from backend.routes import auth as auth_routes
 from backend.routes import chat as chat_routes
@@ -20,6 +21,7 @@ from backend.middleware.rate_limiter import RateLimiterMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    register_all_tools()
     yield
 
 
