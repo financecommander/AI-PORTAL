@@ -20,6 +20,7 @@ export interface Attachment {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  _id?: string;                 // Stable key for React lists
   attachments?: Attachment[];   // Files attached to this message (user messages only)
   tokens?: { input: number; output: number };
   cost_usd?: number;

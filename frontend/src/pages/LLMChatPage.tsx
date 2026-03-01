@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, ChevronDown, Sparkles } from 'lucide-react';
+import { Plus, ChevronDown, Sparkles, AlertTriangle } from 'lucide-react';
 import { api } from '../api/client';
 import type { LLMProvider } from '../types';
 import { useDirectChat } from '../hooks/useDirectChat';
@@ -19,6 +19,7 @@ export default function LLMChatPage() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [loadingModels, setLoadingModels] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
 
   const { messages, isStreaming, error, sendMessage, stopStreaming, clearChat } =
     useDirectChat(selectedProvider, selectedModel);
@@ -32,14 +33,22 @@ export default function LLMChatPage() {
       .request<{ providers: LLMProvider[] }>('/chat/direct/models')
       .then((data) => {
         setProviders(data.providers);
+        setCatalogError(null);
         if (data.providers.length > 0) {
           const first = data.providers[0];
           setSelectedProvider(first.id);
           const topModel = first.models.find((m) => m.tier === 'top');
           setSelectedModel(topModel?.id ?? first.models[0].id);
+        } else {
+          setCatalogError('No LLM providers are configured. Contact your administrator.');
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error('Failed to load model catalog:', err);
+        setCatalogError(
+          err instanceof Error ? err.message : 'Failed to load models. Please refresh the page.',
+        );
+      })
       .finally(() => setLoadingModels(false));
   }, []);
 
@@ -108,13 +117,22 @@ export default function LLMChatPage() {
           What do you need to analyze?
         </h1>
 
+        {catalogError && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
+            <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
+            {catalogError}
+          </div>
+        )}
+
         <div style={{ width: '100%', maxWidth: 700 }}>
           <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={!selectedModel} specialistName={selectedModelName || undefined} />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="grid" />
-        </div>
+        {providers.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="grid" />
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
           {SUGGESTION_PROMPTS.map((prompt) => (
@@ -172,7 +190,11 @@ export default function LLMChatPage() {
 
       <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto" style={{ padding: 16 }}>
         {messages.map((msg, idx) => (
-          <MessageBubble key={idx} message={msg} isStreaming={isStreaming && idx === messages.length - 1 && msg.role === 'assistant'} />
+          <MessageBubble
+            key={msg._id || `msg-${idx}`}
+            message={msg}
+            isStreaming={isStreaming && idx === messages.length - 1 && msg.role === 'assistant'}
+          />
         ))}
         <div ref={messagesEndRef} />
       </div>
@@ -195,4 +217,3 @@ export default function LLMChatPage() {
     </div>
   );
 }
-

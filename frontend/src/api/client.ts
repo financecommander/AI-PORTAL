@@ -130,6 +130,7 @@ class ApiClient {
     onChunk: (chunk: { content: string; is_final: boolean; input_tokens: number; output_tokens: number; cost_usd: number }) => void,
     temperature: number = 0.7,
     maxTokens: number = 4096,
+    signal?: AbortSignal,
   ): Promise<void> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
@@ -145,6 +146,7 @@ class ApiClient {
         temperature,
         max_tokens: maxTokens,
       }),
+      signal,
     });
 
     if (!response.ok) {
@@ -157,22 +159,26 @@ class ApiClient {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            onChunk(data);
-          } catch { /* skip malformed */ }
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              onChunk(data);
+            } catch { /* skip malformed */ }
+          }
         }
       }
+    } finally {
+      reader.releaseLock();
     }
   }
 

@@ -1,16 +1,19 @@
 """Direct LLM chat — provider/model selection without specialists."""
 
 import json
+import logging
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from backend.auth.authenticator import get_current_user
+from backend.config.settings import settings
 from backend.database import get_session
 from backend.models import UsageLog
 from backend.providers.factory import get_provider
 from sqlmodel import Session
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -293,17 +296,30 @@ PROVIDERS_CATALOG = [
     },
 ]
 
-# Build a lookup set for validation
-_VALID_MODELS: dict[str, str] = {}  # model_id -> provider_id
+# Build a lookup set for validation: model_id -> provider_id
+_VALID_MODELS: dict[str, str] = {}
 for _prov in PROVIDERS_CATALOG:
     for _m in _prov["models"]:
         _VALID_MODELS[_m["id"]] = _prov["id"]
 
+# Map provider_id -> settings attribute name for API key check
+_PROVIDER_KEY_ATTRS: dict[str, str] = {
+    "openai": "openai_api_key",
+    "anthropic": "anthropic_api_key",
+    "google": "google_api_key",
+    "grok": "xai_api_key",
+}
+
 
 @router.get("/models")
 async def list_models(user: dict = Depends(get_current_user)):
-    """Return the curated model catalog for the direct chat UI."""
-    return {"providers": PROVIDERS_CATALOG}
+    """Return the model catalog, filtered to providers with configured API keys."""
+    available = []
+    for prov in PROVIDERS_CATALOG:
+        key_attr = _PROVIDER_KEY_ATTRS.get(prov["id"])
+        if key_attr and getattr(settings, key_attr, ""):
+            available.append(prov)
+    return {"providers": available}
 
 
 # ── Streaming Chat ───────────────────────────────────────────────
@@ -330,12 +346,27 @@ async def stream_direct_chat(
 ):
     """Stream a direct LLM response — no specialist, user picks provider + model."""
 
-    # Validate provider/model combo
+    # Validate model exists in catalog
     if request.model not in _VALID_MODELS:
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=400,
             content={"error": f"Unknown model '{request.model}'. Use GET /chat/direct/models for available models."},
+        )
+
+    # Validate provider/model pairing
+    expected_provider = _VALID_MODELS[request.model]
+    if request.provider != expected_provider:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Model '{request.model}' belongs to provider '{expected_provider}', not '{request.provider}'."},
+        )
+
+    # Check API key is configured
+    key_attr = _PROVIDER_KEY_ATTRS.get(request.provider)
+    if key_attr and not getattr(settings, key_attr, ""):
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"API key for {request.provider} is not configured. Contact your administrator."},
         )
 
     provider = get_provider(request.provider)
@@ -346,25 +377,31 @@ async def stream_direct_chat(
 
     async def event_generator():
         final_chunk = None
-        async for chunk in provider.stream_message(
-            messages=messages,
-            model=request.model,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            system_prompt="You are a helpful AI assistant.",
-        ):
-            if chunk.is_final:
-                final_chunk = chunk
-            data = {
-                "content": chunk.content,
-                "is_final": chunk.is_final,
-                "input_tokens": chunk.input_tokens,
-                "output_tokens": chunk.output_tokens,
-                "cost_usd": chunk.cost_usd,
-            }
-            yield f"data: {json.dumps(data)}\n\n"
+        try:
+            async for chunk in provider.stream_message(
+                messages=messages,
+                model=request.model,
+                temperature=request.temperature,
+                max_tokens=request.max_tokens,
+                system_prompt="You are a helpful AI assistant.",
+            ):
+                if chunk.is_final:
+                    final_chunk = chunk
+                data = {
+                    "content": chunk.content,
+                    "is_final": chunk.is_final,
+                    "input_tokens": chunk.input_tokens,
+                    "output_tokens": chunk.output_tokens,
+                    "cost_usd": chunk.cost_usd,
+                }
+                yield f"data: {json.dumps(data)}\n\n"
+        except Exception as e:
+            logger.error("Direct chat stream error: %s", e)
+            error_data = {"content": "", "is_final": True, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0, "error": str(e)}
+            yield f"data: {json.dumps(error_data)}\n\n"
+            return
 
-        # Log usage
+        # Log usage with actual latency
         if final_chunk and final_chunk.input_tokens:
             log = UsageLog(
                 user_hash=user.get("sub", "unknown"),
@@ -373,7 +410,7 @@ async def stream_direct_chat(
                 input_tokens=final_chunk.input_tokens,
                 output_tokens=final_chunk.output_tokens,
                 cost_usd=final_chunk.cost_usd,
-                latency_ms=0,
+                latency_ms=final_chunk.latency_ms,
                 specialist_id="direct",
             )
             session.add(log)
