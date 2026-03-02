@@ -8,9 +8,13 @@ Security:
 import logging
 import re
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
 from backend.auth.authenticator import get_current_user
+
+security = HTTPBearer()
 from backend.auth.jwt_handler import create_refresh_token, decode_refresh_token
+from backend.auth.token_blacklist import revoke_token
 from backend.auth.oauth import (
     google_get_auth_url, google_exchange_code,
     apple_get_auth_url, apple_exchange_code,
@@ -48,6 +52,10 @@ class LoginResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str = ""
 
 
 class OAuthCallbackRequest(BaseModel):
@@ -113,6 +121,29 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
         "avatar_url": current_user.get("avatar_url", ""),
         "provider": current_user.get("provider", "email"),
     }
+
+
+# ── Logout (session revocation) ────────────────────────────────
+
+
+@router.post("/logout")
+async def logout(
+    request: LogoutRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """Revoke the current access token and optional refresh token.
+
+    Both tokens are added to the in-memory blacklist so they can no
+    longer be used, even before their natural expiry.
+    """
+    # Blacklist the access token from the Authorization header
+    revoke_token(credentials.credentials)
+
+    # Blacklist the refresh token if provided
+    if request.refresh_token:
+        revoke_token(request.refresh_token)
+
+    return {"logged_out": True}
 
 
 # ── Google OAuth ────────────────────────────────────────────────

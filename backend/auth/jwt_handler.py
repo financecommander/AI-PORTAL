@@ -1,9 +1,10 @@
-"""JWT authentication handler — access + refresh tokens."""
+"""JWT authentication handler — access + refresh tokens with blacklist."""
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from backend.config.settings import settings
+from backend.auth.token_blacklist import is_revoked
 
 # Refresh tokens live 7 days; access tokens use settings.jwt_expiration_hours (default 24h)
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -38,9 +39,11 @@ def create_refresh_token(data: dict) -> str:
 def decode_access_token(token: str) -> Optional[dict]:
     """Decode and verify a JWT access token.
 
-    Returns the payload dict or ``None`` if the token is invalid/expired.
-    Rejects refresh tokens used as access tokens.
+    Returns the payload dict or ``None`` if the token is invalid/expired,
+    is a refresh token, or has been revoked (blacklisted).
     """
+    if is_revoked(token):
+        return None
     try:
         payload = jwt.decode(
             token,
@@ -58,9 +61,11 @@ def decode_access_token(token: str) -> Optional[dict]:
 def decode_refresh_token(token: str) -> Optional[dict]:
     """Decode and verify a JWT refresh token.
 
-    Returns the payload dict or ``None`` if the token is invalid/expired
-    or is not a refresh token.
+    Returns the payload dict or ``None`` if the token is invalid/expired,
+    is not a refresh token, or has been revoked (blacklisted).
     """
+    if is_revoked(token):
+        return None
     try:
         payload = jwt.decode(
             token,

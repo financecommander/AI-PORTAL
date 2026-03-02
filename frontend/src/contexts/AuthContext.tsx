@@ -117,6 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Revoke tokens server-side (best-effort, don't block on failure)
+    const refreshToken = localStorage.getItem('fc_refresh') || '';
+    api.post('/auth/logout', { refresh_token: refreshToken }).catch(() => {});
+
+    // Clear client-side state immediately
     api.setToken(null);
     api.setRefreshToken(null);
     localStorage.removeItem('fc_token');
