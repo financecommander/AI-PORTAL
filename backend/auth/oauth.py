@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from urllib.parse import quote
 
 import httpx
+from jose import jwt as jose_jwt, JWTError
 from sqlmodel import Session, select
 
 from backend.database import engine
@@ -158,6 +159,61 @@ async def google_exchange_code(code: str) -> Optional[User]:
         )
 
 
+# ── Apple JWKS cache for id_token verification ─────────────────
+
+_apple_jwks: dict = {}
+_apple_jwks_fetched: float = 0.0
+APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
+APPLE_JWKS_TTL = 3600  # re-fetch keys every hour
+
+
+async def _get_apple_jwks() -> dict:
+    """Fetch and cache Apple's public JWKS keys for id_token verification."""
+    global _apple_jwks, _apple_jwks_fetched
+    import time
+    now = time.time()
+    if _apple_jwks and (now - _apple_jwks_fetched) < APPLE_JWKS_TTL:
+        return _apple_jwks
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(APPLE_JWKS_URL, timeout=10)
+            if resp.status_code == 200:
+                _apple_jwks = resp.json()
+                _apple_jwks_fetched = now
+                logger.info("Refreshed Apple JWKS keys (%d keys)", len(_apple_jwks.get("keys", [])))
+            else:
+                logger.error("Failed to fetch Apple JWKS: %s", resp.status_code)
+    except Exception:
+        logger.error("Error fetching Apple JWKS", exc_info=True)
+    return _apple_jwks
+
+
+async def _verify_apple_id_token(id_token: str) -> Optional[dict]:
+    """Verify Apple id_token JWT signature using Apple's public JWKS keys.
+
+    Returns the decoded payload or None if verification fails.
+    Validates: signature, issuer (appleid.apple.com), audience (our client_id).
+    """
+    jwks = await _get_apple_jwks()
+    if not jwks or "keys" not in jwks:
+        logger.error("Apple JWKS not available; cannot verify id_token")
+        return None
+
+    try:
+        # python-jose will match the token's 'kid' header against the JWKS
+        payload = jose_jwt.decode(
+            id_token,
+            jwks,
+            algorithms=["RS256"],
+            audience=APPLE_CLIENT_ID,
+            issuer="https://appleid.apple.com",
+        )
+        return payload
+    except JWTError as e:
+        logger.error("Apple id_token verification failed: %s", e)
+        return None
+
+
 # ── Apple OAuth ─────────────────────────────────────────────────
 
 
@@ -200,16 +256,15 @@ async def apple_exchange_code(code: str) -> Optional[User]:
             return None
 
         tokens = token_resp.json()
-        # Apple returns id_token as JWT — decode to get email
-        import json
-        import base64
-
         id_token = tokens.get("id_token", "")
-        # Decode JWT payload (middle segment) without verification
-        # (we already verified via Apple's token endpoint)
-        payload_b64 = id_token.split(".")[1]
-        payload_b64 += "=" * (4 - len(payload_b64) % 4)  # pad
-        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+        if not id_token:
+            logger.error("Apple auth: no id_token in response")
+            return None
+
+        # Verify id_token signature against Apple's JWKS public keys
+        payload = await _verify_apple_id_token(id_token)
+        if not payload:
+            return None
 
         email = payload.get("email", "")
         if not email:
