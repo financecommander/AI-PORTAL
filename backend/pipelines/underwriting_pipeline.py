@@ -84,7 +84,7 @@ class UnderwritingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Property Analyzer"})
 
-        property_analysis, a1_tokens = await self._run_property_analyzer(query)
+        property_analysis, a1_tokens = await self._run_property_analyzer(query, on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -112,7 +112,7 @@ class UnderwritingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Cash Flow Modeler"})
 
-        cashflow_analysis, a2_tokens = await self._run_cashflow_modeler(query, property_analysis)
+        cashflow_analysis, a2_tokens = await self._run_cashflow_modeler(query, property_analysis, on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -141,7 +141,7 @@ class UnderwritingPipeline(BasePipeline):
             await on_progress("agent_start", {"agent": "Structure Optimizer"})
 
         structure_analysis, a3_tokens = await self._run_structure_optimizer(
-            query, property_analysis, cashflow_analysis,
+            query, property_analysis, cashflow_analysis, on_progress,
         )
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
@@ -171,7 +171,7 @@ class UnderwritingPipeline(BasePipeline):
             await on_progress("agent_start", {"agent": "Memo Generator"})
 
         final_memo, a4_tokens = await self._run_memo_generator(
-            query, property_analysis, cashflow_analysis, structure_analysis,
+            query, property_analysis, cashflow_analysis, structure_analysis, on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -211,7 +211,7 @@ class UnderwritingPipeline(BasePipeline):
 
     # ── Agent Implementations ───────────────────────────────────────
 
-    async def _run_property_analyzer(self, query: str) -> tuple[str, dict]:
+    async def _run_property_analyzer(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 1: Analyze property, market comps, and valuation."""
         provider = get_provider("google")
 
@@ -226,21 +226,14 @@ class UnderwritingPipeline(BasePipeline):
             "Be quantitative and specific."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Property Analyzer", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash",
-            temperature=0.3,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.3, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_cashflow_modeler(self, query: str, property_analysis: str) -> tuple[str, dict]:
+    async def _run_cashflow_modeler(self, query: str, property_analysis: str, on_progress=None) -> tuple[str, dict]:
         """Agent 2: Build cash flow projections."""
         provider = get_provider("google")
 
@@ -261,22 +254,15 @@ class UnderwritingPipeline(BasePipeline):
             f"Property Analysis:\n{property_analysis[:3000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Cash Flow Modeler", provider=provider,
             messages=[{"role": "user", "content": user_content}],
-            model="gemini-2.5-flash",
-            temperature=0.3,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.3, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
     async def _run_structure_optimizer(
-        self, query: str, property_analysis: str, cashflow_analysis: str,
+        self, query: str, property_analysis: str, cashflow_analysis: str, on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 3: Recommend optimal loan structure."""
         provider = get_provider("google")
@@ -300,23 +286,16 @@ class UnderwritingPipeline(BasePipeline):
             f"Cash Flow Model:\n{cashflow_analysis[:2000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Structure Optimizer", provider=provider,
             messages=[{"role": "user", "content": user_content}],
-            model="gemini-2.5-flash",
-            temperature=0.3,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.3, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_memo_generator(
         self, query: str, property_analysis: str,
-        cashflow_analysis: str, structure_analysis: str,
+        cashflow_analysis: str, structure_analysis: str, on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Generate IC underwriting memo."""
         provider = get_provider("openai")
@@ -349,16 +328,9 @@ class UnderwritingPipeline(BasePipeline):
             f"Structure Recommendations:\n{structure_analysis[:2500]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Memo Generator", provider=provider,
             messages=[{"role": "user", "content": user_content}],
-            model="gpt-4o",
-            temperature=0.4,
-            max_tokens=4096,
-            system_prompt=system_prompt,
+            model="gpt-4o", temperature=0.4, max_tokens=4096,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }

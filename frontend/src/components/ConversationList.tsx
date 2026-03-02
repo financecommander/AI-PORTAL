@@ -37,6 +37,18 @@ export default function ConversationList({ activeId, onSelect, onNew }: Conversa
     if (activeId) fetchConversations();
   }, [activeId, fetchConversations]);
 
+  // Re-fetch after 3s if any conversation still has the default title
+  // (LLM title generation is async and takes ~1-2s)
+  useEffect(() => {
+    const hasDefaultTitle = conversations.some(
+      (c) => c.title === 'New conversation' || !c.title,
+    );
+    if (hasDefaultTitle) {
+      const timer = setTimeout(fetchConversations, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [conversations, fetchConversations]);
+
   const handleDelete = async (e: React.MouseEvent, uuid: string) => {
     e.stopPropagation();
     try {

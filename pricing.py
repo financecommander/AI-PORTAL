@@ -110,6 +110,71 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
 }
 
 
+# ── Context Window Sizes (tokens) ──────────────────────────────
+# Used by auto-summarizer to decide when to compress history.
+# Values from PROVIDERS_CATALOG in direct_chat.py and provider docs.
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    # OpenAI
+    "gpt-5.2": 400_000,
+    "gpt-5": 400_000,
+    "gpt-4.1": 1_000_000,
+    "gpt-4.1-mini": 1_000_000,
+    "gpt-4.1-nano": 1_000_000,
+    "o3-mini": 200_000,
+    "o3": 200_000,
+    "gpt-4o": 128_000,
+    "gpt-4o-mini": 128_000,
+    "gpt-4-turbo": 128_000,
+    "gpt-3.5-turbo": 16_000,
+    # Anthropic
+    "claude-opus-4-6": 200_000,
+    "claude-sonnet-4-6": 200_000,
+    "claude-opus-4-5": 200_000,
+    "claude-sonnet-4-5-20250929": 200_000,
+    "claude-sonnet-4-5": 200_000,
+    "claude-haiku-4-5-20251001": 200_000,
+    "claude-haiku-4-5": 200_000,
+    "claude-opus-4": 200_000,
+    "claude-sonnet-4": 200_000,
+    "claude-haiku-4": 200_000,
+    "claude-3-opus": 200_000,
+    "claude-3-sonnet": 200_000,
+    "claude-3-haiku": 200_000,
+    # Google
+    "gemini-3.1-pro-preview": 1_000_000,
+    "gemini-3-pro-preview": 1_000_000,
+    "gemini-3-flash-preview": 1_000_000,
+    "gemini-2.5-pro": 1_000_000,
+    "gemini-2.5-flash": 1_000_000,
+    "gemini-2.0-flash": 1_000_000,
+    "gemini-2.0-pro": 1_000_000,
+    "gemini-1.5-pro": 2_000_000,
+    "gemini-1.5-flash": 1_000_000,
+    # xAI / Grok
+    "grok-4": 256_000,
+    "grok-4-1-fast": 2_000_000,
+    "grok-3": 131_000,
+    "grok-3-mini": 131_000,
+    # DeepSeek
+    "deepseek-reasoner": 128_000,
+    "deepseek-chat": 128_000,
+    "deepseek-r1": 128_000,
+    "deepseek-v3": 128_000,
+    # Mistral
+    "mistral-large-latest": 131_000,
+    "mistral-medium-latest": 131_000,
+    "mistral-small-latest": 131_000,
+    # Groq (Llama)
+    "meta-llama/llama-4-maverick-17b-128e-instruct": 128_000,
+    "meta-llama/llama-4-scout-17b-16e-instruct": 128_000,
+}
+
+
+def get_context_window(model: str) -> int:
+    """Get context window size for a model (default 128K if unknown)."""
+    return MODEL_CONTEXT_WINDOWS.get(model, 128_000)
+
+
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     """
     Calculate cost for token usage.

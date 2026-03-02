@@ -1,6 +1,7 @@
 """Chat routes — single-specialist conversations with file attachment support."""
 
 import json
+import logging
 from typing import Optional
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -13,6 +14,8 @@ from backend.models import UsageLog
 from backend.specialists.manager import get_specialist
 from backend.providers.factory import get_provider
 from backend.utils.file_handler import process_attachments
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -150,6 +153,13 @@ async def stream_message(
         request.attachments,
         specialist["provider"],
     )
+
+    # Auto-summarize if history exceeds ~70% of model context window
+    try:
+        from backend.utils.summarizer import summarize_history
+        messages, _ = await summarize_history(messages, specialist["model"])
+    except Exception as e:
+        logger.warning("Summarization check failed (continuing with full history): %s", e)
 
     async def event_generator():
         final_chunk = None

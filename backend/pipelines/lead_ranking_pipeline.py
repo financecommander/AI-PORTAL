@@ -21,7 +21,6 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +253,7 @@ class LeadRankingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Data Validator"})
 
-        leads, validation_report, a1_tokens = await self._run_data_validator(query)
+        leads, validation_report, a1_tokens = await self._run_data_validator(query, on_progress=on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -288,7 +287,7 @@ class LeadRankingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Lead Scorer"})
 
-        scored_leads, scoring_summary = self._run_lead_scorer(leads)
+        scored_leads, scoring_summary = self._run_lead_scorer(leads, on_progress=on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -313,7 +312,7 @@ class LeadRankingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Risk Analyzer"})
 
-        scored_leads, risk_summary, a3_tokens = await self._run_risk_analyzer(scored_leads)
+        scored_leads, risk_summary, a3_tokens = await self._run_risk_analyzer(scored_leads, on_progress=on_progress)
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
         agent_breakdown.append({
@@ -343,6 +342,7 @@ class LeadRankingPipeline(BasePipeline):
 
         final_report, a4_tokens = await self._run_report_generator(
             query, scored_leads, scoring_summary, risk_summary,
+            on_progress=on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -385,7 +385,7 @@ class LeadRankingPipeline(BasePipeline):
     # ── Agent Implementations ───────────────────────────────────────
 
     async def _run_data_validator(
-        self, query: str,
+        self, query: str, on_progress=None,
     ) -> tuple[list[dict], str, dict]:
         """Agent 1: Parse CSV from query text, or use LLM extraction."""
         tokens: dict[str, Any] = {"input": 0, "output": 0, "cost": 0.0, "model": "csv-parser"}
@@ -419,23 +419,26 @@ class LeadRankingPipeline(BasePipeline):
             "Return ONLY valid JSON, no markdown."
         )
 
-        response: ProviderResponse = await provider.send_message(
+        content, token_info = await self._stream_agent_response(
+            agent_name="Data Validator",
+            provider=provider,
             messages=[{"role": "user", "content": query}],
             model="gpt-4o-mini",
             temperature=0.1,
             max_tokens=4096,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
         tokens = {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
+            "input": token_info.get("input", 0),
+            "output": token_info.get("output", 0),
+            "cost": token_info.get("cost", 0.0),
             "model": "gpt-4o-mini",
         }
 
         try:
-            text = response.content.strip()
+            text = content.strip()
             if text.startswith("```"):
                 text = text.split("```")[1]
                 if text.startswith("json"):
@@ -450,7 +453,7 @@ class LeadRankingPipeline(BasePipeline):
         except (json.JSONDecodeError, KeyError) as e:
             return [], f"Failed to parse LLM extraction output: {e}", tokens
 
-    def _run_lead_scorer(self, leads: list[dict]) -> tuple[list[dict], str]:
+    def _run_lead_scorer(self, leads: list[dict], on_progress=None) -> tuple[list[dict], str]:
         """Agent 2: Apply composite scoring. Pure computation, no LLM."""
         for lead in leads:
             score = composite_score(lead)
@@ -472,7 +475,7 @@ class LeadRankingPipeline(BasePipeline):
         return leads, summary
 
     async def _run_risk_analyzer(
-        self, leads: list[dict],
+        self, leads: list[dict], on_progress=None,
     ) -> tuple[list[dict], str, dict]:
         """Agent 3: Generate AI risk memos for Tier 1/2 leads.
 
@@ -531,20 +534,23 @@ class LeadRankingPipeline(BasePipeline):
                 continue
 
             try:
-                response = await provider.send_message(
+                content, token_info = await self._stream_agent_response(
+                    agent_name="Risk Analyzer",
+                    provider=provider,
                     messages=[{"role": "user", "content": f"Borrower Notes:\n{notes}"}],
                     model=model_name,
                     temperature=0.2,
                     max_tokens=512,
                     system_prompt=system_prompt,
+                    on_progress=on_progress,
                 )
 
-                tokens["input"] += response.input_tokens
-                tokens["output"] += response.output_tokens
-                tokens["cost"] += response.cost_usd
+                tokens["input"] += token_info.get("input", 0)
+                tokens["output"] += token_info.get("output", 0)
+                tokens["cost"] += token_info.get("cost", 0.0)
                 tokens["calls"] += 1
 
-                text = response.content.strip()
+                text = content.strip()
                 if "```json" in text:
                     text = text.split("```json")[1].split("```")[0].strip()
                 elif "```" in text:
@@ -570,6 +576,7 @@ class LeadRankingPipeline(BasePipeline):
         scored_leads: list[dict],
         scoring_summary: str,
         risk_summary: str,
+        on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Generate executive report using GPT-4o."""
         provider = get_provider("openai")
@@ -594,18 +601,13 @@ class LeadRankingPipeline(BasePipeline):
             f"Full Scored Data:\n{leads_table[:8000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Report Generator",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gpt-4o",
             temperature=0.4,
             max_tokens=4096,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        tokens = {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-        return response.content, tokens

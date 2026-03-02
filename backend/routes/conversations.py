@@ -1,5 +1,7 @@
 """Conversation history routes — CRUD for persistent chat threads."""
 
+import asyncio
+import logging
 import re
 import uuid as uuid_mod
 from datetime import datetime, timezone
@@ -11,6 +13,8 @@ from sqlmodel import Session, select, col, func
 from backend.auth.authenticator import get_current_user
 from backend.database import engine
 from backend.models import Conversation, Message
+
+logger = logging.getLogger(__name__)
 
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
@@ -85,7 +89,7 @@ def _validate_uuid(value: str) -> str:
 
 
 def _auto_title(content: str) -> str:
-    """Generate a short title from the first user message."""
+    """Generate a short title from the first user message (truncation fallback)."""
     content = content.strip()
     if len(content) <= 50:
         return content
@@ -95,6 +99,26 @@ def _auto_title(content: str) -> str:
     if last_space > 20:
         truncated = truncated[:last_space]
     return truncated + "..."
+
+
+async def _generate_and_save_title(
+    conv_id: int, conv_uuid: str, user_msg: str, assistant_msg: str
+):
+    """Background task: generate LLM title and update conversation."""
+    try:
+        from backend.utils.title_generator import generate_title
+        title = await generate_title(user_msg, assistant_msg)
+        if title and title != "New conversation":
+            with Session(engine) as session:
+                conv = session.get(Conversation, conv_id)
+                if conv and conv.title == "New conversation":
+                    conv.title = title
+                    conv.updated_at = datetime.now(timezone.utc)
+                    session.add(conv)
+                    session.commit()
+                    logger.info("Auto-titled conversation %s: '%s'", conv_uuid, title)
+    except Exception as e:
+        logger.warning("Title generation failed for %s: %s", conv_uuid, e)
 
 
 # ── Routes ───────────────────────────────────────────────────────
@@ -268,9 +292,26 @@ async def save_message(
         )
         session.add(msg)
 
-        # Auto-title on first user message
-        if conv.title == "New conversation" and request.role == "user":
-            conv.title = _auto_title(request.content)
+        # Auto-title on first assistant message (has both Q and A for LLM title)
+        if conv.title == "New conversation" and request.role == "assistant":
+            # Get the first user message for context
+            first_user_msg = session.exec(
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .where(Message.role == "user")
+                .order_by(col(Message.id))
+                .limit(1)
+            ).first()
+            if first_user_msg:
+                # Fire-and-forget async LLM title generation
+                asyncio.create_task(_generate_and_save_title(
+                    conv.id, conv.uuid,
+                    first_user_msg.content, request.content,
+                ))
+                # Set a placeholder so the user sees something immediately
+                conv.title = _auto_title(first_user_msg.content)
+            else:
+                conv.title = _auto_title(request.content)
 
         # Update timestamp
         conv.updated_at = datetime.now(timezone.utc)

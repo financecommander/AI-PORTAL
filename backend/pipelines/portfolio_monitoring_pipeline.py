@@ -18,7 +18,6 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +83,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Covenant Monitor"})
 
-        covenant_report, a1_tokens = await self._run_covenant_monitor(query)
+        covenant_report, a1_tokens = await self._run_covenant_monitor(query, on_progress=on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -112,7 +111,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Early Warning Radar"})
 
-        warning_report, a2_tokens = await self._run_early_warning(query, covenant_report)
+        warning_report, a2_tokens = await self._run_early_warning(query, covenant_report, on_progress=on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -141,7 +140,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
             await on_progress("agent_start", {"agent": "Watchlist Manager"})
 
         watchlist_report, a3_tokens = await self._run_watchlist_manager(
-            query, covenant_report, warning_report,
+            query, covenant_report, warning_report, on_progress=on_progress,
         )
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
@@ -171,7 +170,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
             await on_progress("agent_start", {"agent": "Surveillance Reporter"})
 
         final_report, a4_tokens = await self._run_surveillance_reporter(
-            query, covenant_report, warning_report, watchlist_report,
+            query, covenant_report, warning_report, watchlist_report, on_progress=on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -208,7 +207,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
 
     # ── Agent Implementations ───────────────────────────────────────
 
-    async def _run_covenant_monitor(self, query: str) -> tuple[str, dict]:
+    async def _run_covenant_monitor(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 1: Financial covenant compliance testing."""
         provider = get_provider("google")
 
@@ -225,21 +224,18 @@ class PortfolioMonitoringPipeline(BasePipeline):
             "Include specific numbers. Use a table format."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Covenant Monitor",
+            provider=provider,
             messages=[{"role": "user", "content": query}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_early_warning(self, query: str, covenant_report: str) -> tuple[str, dict]:
+    async def _run_early_warning(self, query: str, covenant_report: str, on_progress=None) -> tuple[str, dict]:
         """Agent 2: Market and borrower stress signals."""
         provider = get_provider("google")
 
@@ -264,22 +260,19 @@ class PortfolioMonitoringPipeline(BasePipeline):
             f"Covenant Status:\n{covenant_report[:2000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Early Warning Radar",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
     async def _run_watchlist_manager(
-        self, query: str, covenant_report: str, warning_report: str,
+        self, query: str, covenant_report: str, warning_report: str, on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 3: Risk rating migration and watchlist actions."""
         provider = get_provider("google")
@@ -304,23 +297,20 @@ class PortfolioMonitoringPipeline(BasePipeline):
             f"Early Warning Signals:\n{warning_report[:2000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Watchlist Manager",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_surveillance_reporter(
         self, query: str, covenant_report: str,
-        warning_report: str, watchlist_report: str,
+        warning_report: str, watchlist_report: str, on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Portfolio surveillance dashboard report."""
         provider = get_provider("openai")
@@ -353,16 +343,13 @@ class PortfolioMonitoringPipeline(BasePipeline):
             f"Watchlist Actions:\n{watchlist_report[:2500]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Surveillance Reporter",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gpt-4o",
             temperature=0.3,
             max_tokens=4096,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }

@@ -378,8 +378,17 @@ async def stream_direct_chat(
         + [{"role": "user", "content": request.message}]
     )
 
+    # Auto-summarize if history exceeds ~70% of model context window
+    was_summarized = False
+    try:
+        from backend.utils.summarizer import summarize_history
+        messages, was_summarized = await summarize_history(messages, request.model)
+    except Exception as e:
+        logger.warning("Summarization check failed (continuing with full history): %s", e)
+
     async def event_generator():
         final_chunk = None
+        first_chunk = True
         try:
             async for chunk in provider.stream_message(
                 messages=messages,
@@ -397,6 +406,10 @@ async def stream_direct_chat(
                     "output_tokens": chunk.output_tokens,
                     "cost_usd": chunk.cost_usd,
                 }
+                # Signal to frontend that history was summarized
+                if first_chunk and was_summarized:
+                    data["summarized"] = True
+                first_chunk = False
                 yield f"data: {json.dumps(data)}\n\n"
         except Exception as e:
             logger.error("Direct chat stream error: %s", e, exc_info=True)

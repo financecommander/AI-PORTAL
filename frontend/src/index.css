@@ -86,3 +86,20 @@ h1, h2, h3, h4, h5, h6 {
 button:active:not(:disabled) { transform: translateY(1px); }
 ::selection { background: var(--cr-green-600); color: #FFFFFF; }
 
+/* Thinking dots animation for streaming indicator */
+@keyframes thinking-pulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Markdown content styles for assistant messages */
+.markdown-content > :first-child { margin-top: 0; }
+.markdown-content > :last-child { margin-bottom: 0; }
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--cr-border);
+  margin: 12px 0;
+}
+.markdown-content strong { font-weight: 600; }
+.markdown-content em { font-style: italic; }
+

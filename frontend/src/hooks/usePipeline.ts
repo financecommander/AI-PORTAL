@@ -90,7 +90,18 @@ export function usePipeline(): UsePipelineReturn {
       if (event.type === 'agent_start') {
         const agentName = event.data.agent as string;
         setAgents(prev =>
-          prev.map(a => a.name === agentName ? { ...a, status: 'running' } : a)
+          prev.map(a => a.name === agentName ? { ...a, status: 'running', output: '' } : a)
+        );
+      } else if (event.type === 'agent_token') {
+        // Live text streaming from an agent
+        const agentName = event.data.agent as string;
+        const content = event.data.content as string;
+        setAgents(prev =>
+          prev.map(a =>
+            a.name === agentName
+              ? { ...a, output: (a.output || '') + content }
+              : a
+          )
         );
       } else if (event.type === 'agent_complete') {
         const agentName = event.data.agent as string;
