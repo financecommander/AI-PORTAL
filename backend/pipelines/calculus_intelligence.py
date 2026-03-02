@@ -30,7 +30,7 @@ def create_calculus_intelligence() -> CrewPipeline:
     grok_llm = LLM(model="xai/grok-4-1-fast", api_key=settings.xai_api_key or "dummy", use_native=False)
     gemini_llm = LLM(model="gemini/gemini-3-flash-preview", api_key=settings.google_api_key or "dummy", temperature=0.3, use_native=False)
     deepseek_llm = LLM(model="deepseek/deepseek-reasoner", api_key=settings.deepseek_api_key or "dummy", temperature=0.2, use_native=False)
-    claude_llm = LLM(model="anthropic/claude-sonnet-4-5-20250929", api_key=settings.anthropic_api_key or "dummy", temperature=0.2, use_native=False)
+    claude_llm = LLM(model="anthropic/claude-sonnet-4-6", api_key=settings.anthropic_api_key or "dummy", temperature=0.2, max_tokens=4000, use_native=False)
 
     # --- Agent Definitions ---
 
