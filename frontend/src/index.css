@@ -114,9 +114,15 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .markdown-content strong { font-weight: 600; }
 .markdown-content em { font-style: italic; }
 
-/* Tech / data-center background for portal pages */
+/* Tech background for portal pages — brand-matched */
 .tech-grid-bg {
   position: relative;
+  background:
+    /* Fine dot grid */
+    radial-gradient(circle, var(--cr-green-900) 0.6px, transparent 0.6px),
+    /* Base gradient wash */
+    linear-gradient(160deg, #F4F8F5 0%, #EBF3EE 30%, #E4EDE7 60%, #EDF3EF 100%);
+  background-size: 24px 24px, 100% 100%;
 }
 
 .tech-grid-bg::before {
@@ -126,11 +132,28 @@ button:active:not(:disabled) { transform: translateY(1px); }
   left: var(--sidebar-width);
   right: 0;
   bottom: 0;
-  background-image:
-    linear-gradient(135deg, rgba(247,249,248,0.72), rgba(237,247,240,0.68)),
-    url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1920&q=80');
-  background-size: cover;
-  background-position: center;
+  background:
+    /* Accent glow — top right */
+    radial-gradient(ellipse at 85% 8%, rgba(15, 77, 44, 0.07) 0%, transparent 50%),
+    /* Accent glow — bottom left */
+    radial-gradient(ellipse at 15% 85%, rgba(242, 164, 31, 0.05) 0%, transparent 45%),
+    /* Subtle horizontal lines */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 59px,
+      rgba(15, 77, 44, 0.04) 59px,
+      rgba(15, 77, 44, 0.04) 60px
+    ),
+    /* Subtle vertical lines */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 59px,
+      rgba(15, 77, 44, 0.04) 59px,
+      rgba(15, 77, 44, 0.04) 60px
+    );
+  background-size: 100% 100%, 100% 100%, 60px 60px, 60px 60px;
   pointer-events: none;
   z-index: 0;
 }
