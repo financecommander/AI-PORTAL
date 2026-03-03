@@ -176,7 +176,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 /* Finance district — chat pages, login, leadops */
 .page-bg.bg-finance {
   background:
-    linear-gradient(180deg, rgba(247,249,248,0.94), rgba(247,249,248,0.97)),
+    linear-gradient(180deg, rgba(247,249,248,0.60), rgba(247,249,248,0.60)),
     url('/images/finance-district.jpg');
   background-size: cover;
   background-position: center;
@@ -191,7 +191,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 /* AI grid — console / intelligence pages */
 .page-bg.bg-ai-grid {
   background:
-    linear-gradient(180deg, rgba(247,249,248,0.95), rgba(247,249,248,0.98)),
+    linear-gradient(180deg, rgba(247,249,248,0.60), rgba(247,249,248,0.60)),
     url('/images/ai-grid.jpg');
   background-size: cover;
   background-position: center;
@@ -206,7 +206,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 /* Data center — engines, metrics, settings */
 .page-bg.bg-datacenter {
   background:
-    linear-gradient(180deg, rgba(247,249,248,0.93), rgba(247,249,248,0.97)),
+    linear-gradient(180deg, rgba(247,249,248,0.60), rgba(247,249,248,0.60)),
     url('/images/datacenter.jpg');
   background-size: cover;
   background-position: center;
@@ -221,7 +221,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 /* ---- Terminal mode overrides ---- */
 html.terminal .page-bg.bg-finance {
   background:
-    linear-gradient(180deg, rgba(11,15,20,0.93), rgba(11,15,20,0.96)),
+    linear-gradient(180deg, rgba(11,15,20,0.60), rgba(11,15,20,0.60)),
     url('/images/finance-district.jpg');
   background-size: cover;
   background-position: center;
@@ -229,7 +229,7 @@ html.terminal .page-bg.bg-finance {
 }
 html.terminal .page-bg.bg-ai-grid {
   background:
-    linear-gradient(180deg, rgba(11,15,20,0.92), rgba(11,15,20,0.96)),
+    linear-gradient(180deg, rgba(11,15,20,0.60), rgba(11,15,20,0.60)),
     url('/images/ai-grid.jpg');
   background-size: cover;
   background-position: center;
@@ -237,7 +237,7 @@ html.terminal .page-bg.bg-ai-grid {
 }
 html.terminal .page-bg.bg-datacenter {
   background:
-    linear-gradient(180deg, rgba(11,15,20,0.91), rgba(11,15,20,0.95)),
+    linear-gradient(180deg, rgba(11,15,20,0.60), rgba(11,15,20,0.60)),
     url('/images/datacenter.jpg');
   background-size: cover;
   background-position: center;
