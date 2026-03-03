@@ -116,10 +116,9 @@ function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
 
     let animId: number;
     const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]|/\\';
@@ -127,37 +126,36 @@ function MatrixRain() {
     let columns: number;
     let drops: number[];
 
-    function resize() {
+    const resize = () => {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
       columns = Math.floor(canvas.width / fontSize);
       drops = Array(columns).fill(1).map(() => Math.random() * -100);
-    }
+    };
 
     resize();
     window.addEventListener('resize', resize);
 
-    function draw() {
-      ctx!.fillStyle = 'rgba(247, 249, 248, 0.04)';
-      ctx!.fillRect(0, 0, canvas.width, canvas.height);
-      ctx!.font = `${fontSize}px monospace`;
+    const draw = () => {
+      ctx.fillStyle = 'rgba(247, 249, 248, 0.04)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${fontSize}px monospace`;
 
       for (let i = 0; i < columns; i++) {
         const char = chars[Math.floor(Math.random() * chars.length)];
         const x = i * fontSize;
         const y = drops[i] * fontSize;
 
-        // Gradient green with varying opacity
         const brightness = Math.random();
         if (brightness > 0.95) {
-          ctx!.fillStyle = 'rgba(26, 107, 60, 0.35)';
+          ctx.fillStyle = 'rgba(26, 107, 60, 0.35)';
         } else if (brightness > 0.8) {
-          ctx!.fillStyle = 'rgba(62, 155, 95, 0.25)';
+          ctx.fillStyle = 'rgba(62, 155, 95, 0.25)';
         } else {
-          ctx!.fillStyle = 'rgba(15, 77, 44, 0.12)';
+          ctx.fillStyle = 'rgba(15, 77, 44, 0.12)';
         }
 
-        ctx!.fillText(char, x, y);
+        ctx.fillText(char, x, y);
 
         if (y > canvas.height && Math.random() > 0.975) {
           drops[i] = 0;
@@ -166,7 +164,7 @@ function MatrixRain() {
       }
 
       animId = requestAnimationFrame(draw);
-    }
+    };
 
     draw();
 
