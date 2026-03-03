@@ -1,5 +1,6 @@
 """Chat routes — single-specialist conversations with file attachment support."""
 
+import asyncio
 import json
 import logging
 from typing import Optional
@@ -14,6 +15,7 @@ from backend.models import UsageLog
 from backend.specialists.manager import get_specialist
 from backend.providers.factory import get_provider
 from backend.utils.file_handler import process_attachments
+from backend.utils.distillation_logger import log_conversation_turn
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +130,21 @@ async def send_message(
     except Exception:
         session.rollback()
 
+    # Log conversation turn for distillation
+    asyncio.create_task(log_conversation_turn(
+        user_hash=user.get("sub", "unknown"),
+        source="specialist",
+        provider=specialist["provider"],
+        model=specialist["model"],
+        specialist_id=request.specialist_id,
+        system_prompt=specialist.get("system_prompt", ""),
+        user_prompt=request.message,
+        assistant_response=response.content,
+        input_tokens=response.input_tokens,
+        output_tokens=response.output_tokens,
+        cost_usd=response.cost_usd,
+    ))
+
     return ChatResponse(
         content=response.content,
         model=response.model,
@@ -163,6 +180,7 @@ async def stream_message(
 
     async def event_generator():
         final_chunk = None
+        response_text = ""
         async for chunk in provider.stream_message(
             messages=messages,
             model=specialist["model"],
@@ -172,6 +190,8 @@ async def stream_message(
         ):
             if chunk.is_final:
                 final_chunk = chunk
+            if chunk.content:
+                response_text += chunk.content
             data = {
                 "content": chunk.content,
                 "is_final": chunk.is_final,
@@ -198,5 +218,20 @@ async def stream_message(
                 session.commit()
             except Exception:
                 session.rollback()
+
+            # Log conversation turn for distillation
+            asyncio.create_task(log_conversation_turn(
+                user_hash=user.get("sub", "unknown"),
+                source="specialist",
+                provider=specialist["provider"],
+                model=specialist["model"],
+                specialist_id=request.specialist_id,
+                system_prompt=specialist.get("system_prompt", ""),
+                user_prompt=request.message,
+                assistant_response=response_text,
+                input_tokens=final_chunk.input_tokens,
+                output_tokens=final_chunk.output_tokens,
+                cost_usd=final_chunk.cost_usd,
+            ))
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

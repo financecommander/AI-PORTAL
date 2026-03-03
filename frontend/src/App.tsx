@@ -8,6 +8,7 @@ import ChatPage from './pages/ChatPage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
 import SettingsPage from './pages/SettingsPage';
+import SwarmPage from './pages/SwarmPage';
 
 function LoginGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="specialists" element={<ChatPage />} />
               <Route path="pipelines" element={<PipelinesPage />} />
               <Route path="usage" element={<UsagePage />} />
+              <Route path="swarm" element={<SwarmPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

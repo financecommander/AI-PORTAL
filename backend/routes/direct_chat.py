@@ -1,5 +1,6 @@
 """Direct LLM chat — provider/model selection without specialists."""
 
+import asyncio
 import json
 import logging
 from fastapi import APIRouter, Depends
@@ -11,6 +12,7 @@ from backend.config.settings import settings
 from backend.database import get_session
 from backend.models import UsageLog
 from backend.providers.factory import get_provider
+from backend.utils.distillation_logger import log_conversation_turn
 from sqlmodel import Session
 
 logger = logging.getLogger(__name__)
@@ -281,7 +283,7 @@ PROVIDERS_CATALOG = [
                 "name": "Llama 4 Maverick",
                 "tier": "top",
                 "context": "128K",
-                "description": "Meta's flagship MoE model via Groq — 562 tok/s, multimodal",
+                "description": "Meta's flagship MoE model via Groq -- 562 tok/s, multimodal",
                 "input_price": 0.20, "output_price": 0.60
             },
             {
@@ -289,7 +291,7 @@ PROVIDERS_CATALOG = [
                 "name": "Llama 4 Scout",
                 "tier": "mid",
                 "context": "128K",
-                "description": "Fast general-purpose MoE via Groq — 594 tok/s, reasoning & code",
+                "description": "Fast general-purpose MoE via Groq -- 594 tok/s, reasoning & code",
                 "input_price": 0.11, "output_price": 0.34
             },
         ]
@@ -298,6 +300,13 @@ PROVIDERS_CATALOG = [
         "id": "ollama",
         "name": "Ollama (Local)",
         "models": [],  # Populated dynamically from Ollama API
+    },
+    {
+        "id": "local-llama",
+        "name": "Local Llama (Distilled)",
+        "models": [
+            {"id": "llama-3.1-8b-distilled", "name": "Llama 3.1 8B (Fine-tuned)", "tier": "free", "input_price": 0, "output_price": 0},
+        ],
     },
 ]
 
@@ -317,6 +326,7 @@ _PROVIDER_KEY_ATTRS: dict[str, str] = {
     "mistral": "mistral_api_key",
     "groq": "groq_api_key",
     "ollama": "ollama_base_url",
+    "local-llama": "local_llama_base_url",
 }
 
 
@@ -459,6 +469,7 @@ async def stream_direct_chat(
     async def event_generator():
         final_chunk = None
         first_chunk = True
+        response_text = ""
         try:
             async for chunk in provider.stream_message(
                 messages=messages,
@@ -469,6 +480,8 @@ async def stream_direct_chat(
             ):
                 if chunk.is_final:
                     final_chunk = chunk
+                if chunk.content:
+                    response_text += chunk.content
                 data = {
                     "content": chunk.content,
                     "is_final": chunk.is_final,
@@ -502,5 +515,20 @@ async def stream_direct_chat(
             )
             session.add(log)
             session.commit()
+
+            # Log conversation turn for distillation
+            asyncio.create_task(log_conversation_turn(
+                user_hash=user.get("sub", "unknown"),
+                source="direct",
+                provider=request.provider,
+                model=request.model,
+                specialist_id="direct",
+                system_prompt="You are a helpful AI assistant.",
+                user_prompt=request.message,
+                assistant_response=response_text,
+                input_tokens=final_chunk.input_tokens,
+                output_tokens=final_chunk.output_tokens,
+                cost_usd=final_chunk.cost_usd,
+            ))
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

@@ -12,7 +12,14 @@ export default defineConfig({
       '/specialists': 'http://localhost:8000',
       '/api': 'http://localhost:8000',
       '/usage': 'http://localhost:8000',
+      '/distillation': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      '/swarm': {
+        target: process.env.SWARM_URL || 'http://34.74.80.83:8080',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/swarm/, ''),
+        ws: true,
+      },
     },
   },
 })

@@ -50,6 +50,7 @@ _MODEL_KEY_MAP = {
     "gemini": "google",
     "anthropic/": "anthropic",
     "claude": "anthropic",
+    "llama": "local-llama",
 }
 
 
@@ -63,6 +64,7 @@ def _resolve_api_key(model: str) -> str:
                 "xai": settings.xai_api_key,
                 "google": settings.google_api_key,
                 "anthropic": settings.anthropic_api_key,
+                "local-llama": "not-needed",
             }
             return key_map.get(provider, "") or "dummy"
     # Default to OpenAI
@@ -91,7 +93,11 @@ def build_llm(model: str, temperature: float = 0.4) -> LLM:
         "api_key": _resolve_api_key(model),
         "temperature": temperature,
     }
-    if _needs_native_bypass(model):
+    # Local Llama via OpenAI-compatible API (vLLM/Ollama)
+    if model.lower().startswith("llama") and settings.local_llama_base_url:
+        kwargs["base_url"] = settings.local_llama_base_url
+        kwargs["model"] = f"openai/{model}"
+    elif _needs_native_bypass(model):
         kwargs["use_native"] = False
     return LLM(**kwargs)
 

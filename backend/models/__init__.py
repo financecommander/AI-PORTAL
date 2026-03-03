@@ -126,3 +126,26 @@ class TrainingData(SQLModel, table=True):
     exported: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+# ── v2.4: Conversation turns for knowledge distillation ──────
+
+
+class ConversationTurn(SQLModel, table=True):
+    """Logged conversation turn for knowledge distillation training data."""
+
+    __tablename__ = "conversation_turns"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_hash: str = Field(index=True)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    source: str = Field(index=True)  # "specialist", "direct", "pipeline"
+    provider: str
+    model: str
+    specialist_id: Optional[str] = None
+    system_prompt: Optional[str] = None
+    user_prompt: str
+    assistant_response: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float = 0.0
+    exported: bool = Field(default=False, index=True)
