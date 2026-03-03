@@ -149,12 +149,111 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .markdown-content strong { font-weight: 600; }
 .markdown-content em { font-style: italic; }
 
-/* Subtle brand background for portal pages */
+/* ---- Branded page backgrounds ---- */
+.page-bg {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.page-bg::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Finance district — chat pages, login, leadops */
+.page-bg.bg-finance {
+  background:
+    linear-gradient(180deg, rgba(247,249,248,0.94), rgba(247,249,248,0.97)),
+    url('/images/finance-district.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+.page-bg.bg-finance::before {
+  background:
+    radial-gradient(ellipse at 75% 10%, rgba(15, 77, 44, 0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(242, 164, 31, 0.03) 0%, transparent 45%);
+}
+
+/* AI grid — console / intelligence pages */
+.page-bg.bg-ai-grid {
+  background:
+    linear-gradient(180deg, rgba(247,249,248,0.95), rgba(247,249,248,0.98)),
+    url('/images/ai-grid.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+.page-bg.bg-ai-grid::before {
+  background:
+    radial-gradient(ellipse at 60% 15%, rgba(15, 77, 44, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 85%, rgba(242, 164, 31, 0.04) 0%, transparent 40%);
+}
+
+/* Data center — engines, metrics, settings */
+.page-bg.bg-datacenter {
+  background:
+    linear-gradient(180deg, rgba(247,249,248,0.93), rgba(247,249,248,0.97)),
+    url('/images/datacenter.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+.page-bg.bg-datacenter::before {
+  background:
+    radial-gradient(ellipse at 70% 20%, rgba(15, 77, 44, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 25% 75%, rgba(242, 164, 31, 0.04) 0%, transparent 45%);
+}
+
+/* ---- Terminal mode overrides ---- */
+html.terminal .page-bg.bg-finance {
+  background:
+    linear-gradient(180deg, rgba(11,15,20,0.93), rgba(11,15,20,0.96)),
+    url('/images/finance-district.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+html.terminal .page-bg.bg-ai-grid {
+  background:
+    linear-gradient(180deg, rgba(11,15,20,0.92), rgba(11,15,20,0.96)),
+    url('/images/ai-grid.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+html.terminal .page-bg.bg-datacenter {
+  background:
+    linear-gradient(180deg, rgba(11,15,20,0.91), rgba(11,15,20,0.95)),
+    url('/images/datacenter.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+html.terminal .page-bg::before {
+  background:
+    radial-gradient(ellipse at 75% 10%, rgba(15, 77, 44, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(242, 164, 31, 0.06) 0%, transparent 45%);
+}
+
+/* Legacy alias for SwarmPage */
 .tech-grid-bg {
   position: relative;
   background: var(--cr-bg);
 }
-
 .tech-grid-bg::before {
   content: '';
   position: fixed;
@@ -168,13 +267,11 @@ button:active:not(:disabled) { transform: translateY(1px); }
   pointer-events: none;
   z-index: 0;
 }
-
 html.terminal .tech-grid-bg::before {
   background:
     radial-gradient(ellipse at 75% 10%, rgba(15, 77, 44, 0.12) 0%, transparent 55%),
     radial-gradient(ellipse at 20% 80%, rgba(242, 164, 31, 0.06) 0%, transparent 45%);
 }
-
 .tech-grid-bg > * {
   position: relative;
   z-index: 1;

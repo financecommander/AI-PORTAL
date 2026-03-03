@@ -35,7 +35,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div className="tech-grid-bg" style={{ padding: '28px 32px', maxWidth: 800, minHeight: '100vh' }}>
+    <div className="page-bg bg-datacenter" style={{ padding: '28px 32px', maxWidth: 800, minHeight: '100vh' }}>
       <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--cr-text)', marginBottom: 24 }}>
         Settings
       </h1>

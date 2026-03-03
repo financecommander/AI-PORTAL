@@ -40,7 +40,7 @@ export default function LeadOpsPage() {
 
   return (
     <div
-      className="tech-grid-bg"
+      className="page-bg bg-finance"
       style={{
         flex: 1,
         display: 'flex',

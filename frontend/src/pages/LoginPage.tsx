@@ -23,12 +23,12 @@ export default function LoginPage() {
 
   return (
     <div
+      className="page-bg bg-finance"
       style={{
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--cr-surface)',
         padding: 24,
       }}
     >

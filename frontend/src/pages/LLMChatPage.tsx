@@ -143,7 +143,7 @@ export default function LLMChatPage() {
 
   if (!hasMessages) {
     return (
-      <div className="tech-grid-bg" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto' }}>
+      <div className="page-bg bg-ai-grid" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
           <div style={{ textAlign: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
@@ -214,7 +214,7 @@ export default function LLMChatPage() {
   }
 
   return (
-    <div className="flex flex-col tech-grid-bg" style={{ height: '100vh' }}>
+    <div className="flex flex-col page-bg bg-ai-grid" style={{ height: '100vh' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-panel)', position: 'relative', zIndex: 1 }}>
         <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />

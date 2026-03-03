@@ -63,7 +63,7 @@ export default function PipelinesPage() {
   const isRunning = status !== 'idle';
 
   return (
-    <div className="tech-grid-bg" style={{ padding: '32px', maxWidth: '900px', margin: '0 auto', minHeight: '100vh' }}>
+    <div className="page-bg bg-datacenter" style={{ padding: '32px', maxWidth: '900px', margin: '0 auto', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         {isRunning && (
