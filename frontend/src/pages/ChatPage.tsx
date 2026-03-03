@@ -39,7 +39,7 @@ export default function ChatPage() {
   }, [messages, isAtBottom]);
 
   return (
-    <div className="flex" style={{ height: '100vh', background: 'var(--cr-surface)' }}>
+    <div className="flex tech-grid-bg" style={{ height: '100vh' }}>
       {/* Desktop specialist sidebar */}
       <div className="hidden md:block overflow-y-auto" style={{ width: 260, borderRight: '1px solid var(--cr-border)', background: 'var(--cr-white)', padding: 16, flexShrink: 0 }}>
         <h2 style={{ fontSize: 11, fontWeight: 600, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, padding: '0 4px' }}>

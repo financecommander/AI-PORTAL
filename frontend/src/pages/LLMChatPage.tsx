@@ -7,7 +7,7 @@ import { useDirectChat } from '../hooks/useDirectChat';
 import MessageBubble from '../components/chat/MessageBubble';
 import ChatInput from '../components/chat/ChatInput';
 import ModelSelector from '../components/chat/ModelSelector';
-import TechBackground from '../components/TechBackground';
+
 
 const SUGGESTION_PROMPTS = [
   'Explain CRE cap rate compression and its impact on deal underwriting',
@@ -143,9 +143,8 @@ export default function LLMChatPage() {
 
   if (!hasMessages) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto', background: 'var(--cr-surface)', position: 'relative' }}>
-        <TechBackground />
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
+      <div className="tech-grid-bg" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
           <div style={{ textAlign: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
               <Sparkles style={{ width: 24, height: 24, color: 'var(--cr-green-600)' }} />
@@ -215,8 +214,7 @@ export default function LLMChatPage() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: '100vh', background: 'var(--cr-surface)', position: 'relative' }}>
-      <TechBackground />
+    <div className="flex flex-col tech-grid-bg" style={{ height: '100vh' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-white)', position: 'relative', zIndex: 1 }}>
         <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />
