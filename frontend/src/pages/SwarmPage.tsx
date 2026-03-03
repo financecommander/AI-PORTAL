@@ -266,12 +266,12 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
     const apiNotes = [versionStr, workersStr].filter(Boolean).join(', ') || (loading ? 'Checking...' : '');
 
     return [
-      { name: 'Swarm API', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiNotes },
-      { name: 'PostgreSQL 16', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Accepting connections' : '' },
-      { name: 'Redis 7', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Cache active' : '' },
-      { name: 'Prometheus', status: 'up', notes: 'Scraping metrics' },
-      { name: 'Grafana', status: 'up', notes: 'Dashboards ready' },
-      { name: 'Jaeger', status: 'up', notes: 'Tracing active' },
+      { name: 'Hive Mind Core', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiNotes },
+      { name: 'Memory Nexus', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Synapses linked' : '' },
+      { name: 'Creep Cache', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Spreading active' : '' },
+      { name: 'Overseer Eye', status: 'up', notes: 'Scanning telemetry' },
+      { name: 'Neural Cortex', status: 'up', notes: 'Dashboards online' },
+      { name: 'Nydus Network', status: 'up', notes: 'Trace tunnels open' },
     ];
   })();
 
