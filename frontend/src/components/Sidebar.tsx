@@ -52,7 +52,7 @@ export default function Sidebar({
       {/* Brand */}
       <div style={{ padding: '20px 20px 16px' }}>
         <a
-          href="https://calculusresearch.io"
+          href="http://34.26.53.11"
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
