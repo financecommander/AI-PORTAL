@@ -84,6 +84,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-pulse-glow { animation: subtlePulse 2s ease-in-out infinite; }
 button:active:not(:disabled) { transform: translateY(1px); }
+
+/* Sidebar nav hover — gold underline */
+.sidebar-nav-item {
+  text-decoration: none !important;
+}
+.sidebar-nav-item:hover {
+  text-decoration: underline !important;
+  text-decoration-color: var(--cr-gold-500) !important;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
 ::selection { background: var(--cr-green-600); color: #FFFFFF; }
 
 /* Thinking dots animation for streaming indicator */

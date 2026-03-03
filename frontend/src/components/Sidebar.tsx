@@ -96,6 +96,7 @@ export default function Sidebar({
           return (
             <button
               key={item.path}
+              className="sidebar-nav-item"
               onClick={() => { navigate(item.path); onNavigate?.(); }}
               style={{
                 display: 'flex',
