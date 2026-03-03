@@ -100,7 +100,6 @@ interface ModelsData {
 interface ServiceRow {
   name: string;
   status: 'healthy' | 'down' | 'up' | 'loading';
-  port: string;
   notes: string;
 }
 
@@ -267,12 +266,12 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
     const apiNotes = [versionStr, workersStr].filter(Boolean).join(', ') || (loading ? 'Checking...' : '');
 
     return [
-      { name: 'Swarm API', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', port: ':8080', notes: apiNotes },
-      { name: 'PostgreSQL 16', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', port: ':5432', notes: apiUp ? 'Accepting connections' : '' },
-      { name: 'Redis 7', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', port: ':6379', notes: apiUp ? 'Cache active' : '' },
-      { name: 'Prometheus', status: 'up', port: ':9090', notes: 'Scraping metrics' },
-      { name: 'Grafana', status: 'up', port: ':3000', notes: 'Dashboards ready' },
-      { name: 'Jaeger', status: 'up', port: ':16686', notes: 'Tracing active' },
+      { name: 'Swarm API', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiNotes },
+      { name: 'PostgreSQL 16', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Accepting connections' : '' },
+      { name: 'Redis 7', status: loading ? 'loading' : apiUp ? 'healthy' : 'down', notes: apiUp ? 'Cache active' : '' },
+      { name: 'Prometheus', status: 'up', notes: 'Scraping metrics' },
+      { name: 'Grafana', status: 'up', notes: 'Dashboards ready' },
+      { name: 'Jaeger', status: 'up', notes: 'Tracing active' },
     ];
   })();
 
@@ -397,7 +396,6 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
             <tr style={{ background: 'var(--cr-surface)' }}>
               <th style={thStyle}>Service</th>
               <th style={thStyle}>Status</th>
-              <th style={thStyle}>Port</th>
               <th style={thStyle}>Notes</th>
             </tr>
           </thead>
@@ -416,7 +414,6 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
                     <span style={{ color: 'var(--cr-danger)', fontWeight: 600 }}>{'\u{1F534}'} DOWN</span>
                   )}
                 </td>
-                <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '12px', color: 'var(--cr-text-secondary)' }}>{svc.port}</td>
                 <td style={{ ...tdStyle, color: 'var(--cr-text-secondary)' }}>{svc.notes}</td>
               </tr>
             ))}
