@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     mistral_api_key: str = Field(default="", env="MISTRAL_API_KEY")
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     courtlistener_api_key: str = Field(default="", env="COURTLISTENER_API_KEY")
+    ollama_base_url: str = Field(default="", env="OLLAMA_BASE_URL")
     
     # CORS Configuration
     cors_origins: str = Field(

@@ -12,6 +12,37 @@ from backend.utils.token_estimator import calculate_cost, estimate_tokens
 logger = logging.getLogger(__name__)
 
 
+def _save_training_row(
+    pipeline_name: str,
+    pipeline_run_id: str,
+    agent: Agent,
+    task_description: str,
+    raw_output: str,
+    model_used: str,
+) -> None:
+    """Save a training data row from a completed agent task (sync, fire-and-forget)."""
+    try:
+        from backend.database import engine
+        from backend.models import TrainingData
+        from sqlmodel import Session
+
+        with Session(engine) as session:
+            row = TrainingData(
+                pipeline_run_id=pipeline_run_id,
+                pipeline_name=pipeline_name,
+                agent_name=agent.role,
+                agent_role=agent.goal or "",
+                model_used=model_used,
+                system_prompt=(agent.backstory or "")[:4000],
+                user_input=task_description[:4000],
+                assistant_output=raw_output[:8000],
+            )
+            session.add(row)
+            session.commit()
+    except Exception as e:
+        logger.warning("Failed to save training data: %s", e)
+
+
 class CrewPipeline(BasePipeline):
     """
     Wrapper for CrewAI crews to integrate with the pipeline interface.
@@ -176,24 +207,46 @@ class CrewPipeline(BasePipeline):
         def task_callback(task_output):
             """Called by CrewAI after each task completes."""
             nonlocal completed_count
-            
+
             # Determine which agent just completed
             agent_name = None
+            current_agent = None
             if hasattr(task_output, 'agent') and task_output.agent:
                 agent_name = str(task_output.agent)
+                # Find matching Agent object
+                for a in self.agents:
+                    if a.role == agent_name:
+                        current_agent = a
+                        break
             elif completed_count < len(self.agents):
-                agent_name = self.agents[completed_count].role
-            
+                current_agent = self.agents[completed_count]
+                agent_name = current_agent.role
+
+            raw_output = getattr(task_output, 'raw', '') or str(task_output)
+
             if agent_name:
                 duration = (time.perf_counter() - agent_start_times.get(agent_name, start_time)) * 1000
-                raw_output = getattr(task_output, 'raw', '') or str(task_output)
-                
+
                 _send_event_sync("agent_complete", {
                     "agent": agent_name,
                     "duration_ms": round(duration, 1),
                     "output": raw_output[:500],  # Truncate for WS
                 })
-            
+
+            # Save training data for this agent's output
+            if current_agent:
+                task_desc = ""
+                if completed_count < len(self.tasks):
+                    task_desc = self.tasks[completed_count].description
+                _save_training_row(
+                    pipeline_name=self.name,
+                    pipeline_run_id=user_hash,
+                    agent=current_agent,
+                    task_description=task_desc,
+                    raw_output=raw_output,
+                    model_used=self._get_agent_model(current_agent),
+                )
+
             completed_count += 1
             
             # Signal next agent starting

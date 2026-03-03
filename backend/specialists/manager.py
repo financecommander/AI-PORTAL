@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from backend.errors.exceptions import SpecialistError
 
 _SPECIALISTS_FILE = Path(__file__).parent.parent / "config" / "specialists.json"
-_VALID_PROVIDERS = {"openai", "anthropic", "google", "grok", "groq", "deepseek", "mistral", "llama"}
+_VALID_PROVIDERS = {"openai", "anthropic", "google", "grok", "groq", "deepseek", "mistral", "llama", "ollama"}
 
 
 def _load() -> list[dict]:

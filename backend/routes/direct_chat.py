@@ -294,6 +294,11 @@ PROVIDERS_CATALOG = [
             },
         ]
     },
+    {
+        "id": "ollama",
+        "name": "Ollama (Local)",
+        "models": [],  # Populated dynamically from Ollama API
+    },
 ]
 
 # Build a lookup set for validation: model_id -> provider_id
@@ -311,6 +316,7 @@ _PROVIDER_KEY_ATTRS: dict[str, str] = {
     "deepseek": "deepseek_api_key",
     "mistral": "mistral_api_key",
     "groq": "groq_api_key",
+    "ollama": "ollama_base_url",
 }
 
 
@@ -321,8 +327,64 @@ async def list_models(user: dict = Depends(get_current_user)):
     for prov in PROVIDERS_CATALOG:
         key_attr = _PROVIDER_KEY_ATTRS.get(prov["id"])
         if key_attr and getattr(settings, key_attr, ""):
-            available.append(prov)
+            if prov["id"] == "ollama":
+                # Dynamically populate Ollama models
+                prov_copy = {**prov, "models": await _get_ollama_models()}
+                if prov_copy["models"]:
+                    available.append(prov_copy)
+            else:
+                available.append(prov)
     return {"providers": available}
+
+
+async def _get_ollama_models() -> list[dict]:
+    """Fetch models from Ollama and format as catalog entries."""
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        raw_models = await provider.list_models()
+        return [
+            {
+                "id": m["name"],
+                "name": m["name"],
+                "tier": "local",
+                "context": "varies",
+                "description": f"Local model via Ollama (free inference)",
+                "input_price": 0.0,
+                "output_price": 0.0,
+            }
+            for m in raw_models
+        ]
+    except Exception:
+        return []
+
+
+@router.get("/ollama/health")
+async def ollama_health(user: dict = Depends(get_current_user)):
+    """Check if Ollama is reachable."""
+    if not settings.ollama_base_url:
+        return {"healthy": False, "reason": "OLLAMA_BASE_URL not configured"}
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        healthy = await provider.is_healthy()
+        return {"healthy": healthy, "url": settings.ollama_base_url}
+    except Exception as e:
+        return {"healthy": False, "reason": str(e)}
+
+
+@router.get("/ollama/models")
+async def ollama_models(user: dict = Depends(get_current_user)):
+    """List all models available on the Ollama server."""
+    if not settings.ollama_base_url:
+        return {"models": [], "reason": "OLLAMA_BASE_URL not configured"}
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        models = await provider.list_models()
+        return {"models": models}
+    except Exception as e:
+        return {"models": [], "reason": str(e)}
 
 
 # ── Streaming Chat ───────────────────────────────────────────────
@@ -349,28 +411,36 @@ async def stream_direct_chat(
 ):
     """Stream a direct LLM response — no specialist, user picks provider + model."""
 
-    # Validate model exists in catalog
-    if request.model not in _VALID_MODELS:
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"Unknown model '{request.model}'. Use GET /chat/direct/models for available models."},
-        )
+    # Ollama models are dynamic — skip static catalog validation
+    if request.provider == "ollama":
+        if not settings.ollama_base_url:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Ollama is not configured. Set OLLAMA_BASE_URL."},
+            )
+    else:
+        # Validate model exists in catalog
+        if request.model not in _VALID_MODELS:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Unknown model '{request.model}'. Use GET /chat/direct/models for available models."},
+            )
 
-    # Validate provider/model pairing
-    expected_provider = _VALID_MODELS[request.model]
-    if request.provider != expected_provider:
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"Model '{request.model}' belongs to provider '{expected_provider}', not '{request.provider}'."},
-        )
+        # Validate provider/model pairing
+        expected_provider = _VALID_MODELS[request.model]
+        if request.provider != expected_provider:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Model '{request.model}' belongs to provider '{expected_provider}', not '{request.provider}'."},
+            )
 
-    # Check API key is configured
-    key_attr = _PROVIDER_KEY_ATTRS.get(request.provider)
-    if key_attr and not getattr(settings, key_attr, ""):
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"API key for {request.provider} is not configured. Contact your administrator."},
-        )
+        # Check API key is configured
+        key_attr = _PROVIDER_KEY_ATTRS.get(request.provider)
+        if key_attr and not getattr(settings, key_attr, ""):
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"API key for {request.provider} is not configured. Contact your administrator."},
+            )
 
     provider = get_provider(request.provider)
     messages = (

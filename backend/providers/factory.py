@@ -36,6 +36,9 @@ def get_provider(provider_name: str) -> BaseProvider:
             return AnthropicProvider(api_key=settings.anthropic_api_key)
         case "google" | "gemini":
             return GoogleProvider(api_key=settings.google_api_key)
+        case "ollama":
+            from backend.providers.ollama_provider import OllamaProvider
+            return OllamaProvider()
         case "local" | "ternary" | "local-ternary":
             from backend.providers.local_ternary_provider import LocalTernaryProvider
             # Prefer Triton checkpoint dir, fall back to generic path
@@ -45,4 +48,4 @@ def get_provider(provider_name: str) -> BaseProvider:
             )
             return LocalTernaryProvider(model_path=model_path)
         case _:
-            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, groq, deepseek, mistral, local")
+            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, groq, deepseek, mistral, ollama, local")

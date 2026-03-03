@@ -1,10 +1,13 @@
 """Base pipeline interface for multi-agent pipelines."""
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Callable, Any
 
 from backend.providers.base import BaseProvider
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -111,8 +114,39 @@ class BasePipeline(ABC):
             if chunk.is_final:
                 final_chunk = chunk
 
-        return full_content, {
+        token_dict = {
             "input": final_chunk.input_tokens if final_chunk else 0,
             "output": final_chunk.output_tokens if final_chunk else 0,
             "cost": final_chunk.cost_usd if final_chunk else 0,
         }
+
+        # Save training data for this agent's output
+        try:
+            from backend.database import engine
+            from backend.models import TrainingData
+            from sqlmodel import Session
+
+            user_input = ""
+            for m in reversed(messages):
+                if m.get("role") == "user":
+                    user_input = m.get("content", "")[:4000]
+                    break
+
+            with Session(engine) as session:
+                row = TrainingData(
+                    pipeline_name=self.name,
+                    agent_name=agent_name,
+                    model_used=model,
+                    system_prompt=(system_prompt or "")[:4000],
+                    user_input=user_input,
+                    assistant_output=full_content[:8000],
+                    input_tokens=token_dict["input"],
+                    output_tokens=token_dict["output"],
+                    cost_usd=token_dict["cost"],
+                )
+                session.add(row)
+                session.commit()
+        except Exception as e:
+            logger.warning("Failed to save training data for %s: %s", agent_name, e)
+
+        return full_content, token_dict
