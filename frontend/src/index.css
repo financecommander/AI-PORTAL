@@ -118,27 +118,27 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .tech-grid-bg {
   position: relative;
   background:
-    /* Subtle dot grid */
-    radial-gradient(circle, rgba(15, 77, 44, 0.06) 1px, transparent 1px),
-    /* Faint horizontal lines */
+    /* Dot grid pattern */
+    radial-gradient(circle, rgba(15, 77, 44, 0.12) 1px, transparent 1px),
+    /* Horizontal grid lines */
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 39px,
-      rgba(15, 77, 44, 0.03) 39px,
-      rgba(15, 77, 44, 0.03) 40px
+      transparent 29px,
+      rgba(15, 77, 44, 0.06) 29px,
+      rgba(15, 77, 44, 0.06) 30px
     ),
-    /* Faint vertical lines */
+    /* Vertical grid lines */
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 39px,
-      rgba(15, 77, 44, 0.03) 39px,
-      rgba(15, 77, 44, 0.03) 40px
+      transparent 29px,
+      rgba(15, 77, 44, 0.06) 29px,
+      rgba(15, 77, 44, 0.06) 30px
     ),
-    /* Base gradient */
-    linear-gradient(160deg, #F7F9F8 0%, #EEF2F0 40%, #EDF7F0 100%);
-  background-size: 20px 20px, 40px 40px, 40px 40px, 100% 100%;
+    /* Base gradient with visible green wash */
+    linear-gradient(160deg, #F4F8F5 0%, #E8F0EB 40%, #E0EDDF 100%);
+  background-size: 30px 30px, 30px 30px, 30px 30px, 100% 100%;
 }
 
 .tech-grid-bg::before {
@@ -149,8 +149,9 @@ button:active:not(:disabled) { transform: translateY(1px); }
   right: 0;
   bottom: 0;
   background:
-    radial-gradient(ellipse at 85% 15%, rgba(15, 77, 44, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 15% 85%, rgba(242, 164, 31, 0.03) 0%, transparent 40%);
+    radial-gradient(ellipse at 80% 10%, rgba(15, 77, 44, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(242, 164, 31, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(15, 77, 44, 0.03) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
