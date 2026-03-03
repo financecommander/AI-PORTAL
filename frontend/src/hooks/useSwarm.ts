@@ -218,8 +218,24 @@ export function useSwarm(): UseSwarmReturn {
   // ── Load presets ──────────────────────────────────────────────────
   const loadPresets = useCallback(async () => {
     try {
-      const p = await swarmApi.getPresets();
-      setPresets(p);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const raw: any = await swarmApi.getPresets();
+      // API returns {presets: {name: {castes: [...], descriptions: {...}}}}
+      // Unwrap to {name: string[]}
+      const source = raw.presets ?? raw;
+      const flat: Record<string, string[]> = {};
+      for (const [key, val] of Object.entries(source)) {
+        if (Array.isArray(val)) {
+          flat[key] = val;
+        } else if (val && typeof val === 'object' && 'castes' in (val as object)) {
+          flat[key] = (val as { castes: string[] }).castes;
+        }
+      }
+      if (Object.keys(flat).length > 0) {
+        setPresets(flat);
+        return;
+      }
+      throw new Error('Empty presets after parsing');
     } catch (err) {
       console.warn('Failed to load presets from API, using defaults:', err);
       setPresets({
