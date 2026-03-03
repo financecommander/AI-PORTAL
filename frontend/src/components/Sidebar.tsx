@@ -51,7 +51,12 @@ export default function Sidebar({
     >
       {/* Brand */}
       <div style={{ padding: '20px 20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <a
+          href="https://calculusresearch.io"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
+        >
           <div
             style={{
               width: 32,
@@ -85,7 +90,7 @@ export default function Sidebar({
               Financial Innovations
             </div>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Navigation */}
