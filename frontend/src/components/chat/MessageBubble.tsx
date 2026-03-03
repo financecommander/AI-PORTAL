@@ -168,7 +168,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
           minWidth: 60,
           padding: '12px 16px',
           borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-          background: isUser ? 'var(--cr-green-900)' : 'var(--cr-white)',
+          background: isUser ? 'var(--cr-green-900)' : 'var(--cr-panel)',
           border: isUser ? 'none' : '1px solid var(--cr-border)',
           color: isUser ? '#FFFFFF' : 'var(--cr-text)',
           fontSize: 14,

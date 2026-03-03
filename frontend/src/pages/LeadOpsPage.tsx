@@ -54,7 +54,7 @@ export default function LeadOpsPage() {
         style={{
           padding: '20px 24px 0',
           borderBottom: '1px solid var(--cr-border)',
-          background: 'var(--cr-charcoal)',
+          background: 'var(--cr-panel)',
         }}
       >
         <h1
@@ -108,11 +108,11 @@ export default function LeadOpsPage() {
         {error && (
           <div
             style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
+              background: 'var(--cr-danger-bg)',
+              border: '1px solid var(--cr-danger-border)',
               borderRadius: 'var(--cr-radius)',
               padding: '10px 14px',
-              color: '#ef4444',
+              color: 'var(--cr-danger)',
               fontSize: 13,
             }}
           >

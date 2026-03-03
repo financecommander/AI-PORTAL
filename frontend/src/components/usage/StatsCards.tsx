@@ -24,7 +24,7 @@ export default function StatsCards({ logs }: StatsCardsProps) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       {cards.map((card) => (
-        <div key={card.label} style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20 }}>
+        <div key={card.label} style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20 }}>
           <div style={{ fontSize: 11, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontWeight: 600 }}>
             {card.label}
           </div>

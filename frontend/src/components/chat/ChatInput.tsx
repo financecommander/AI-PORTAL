@@ -65,7 +65,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
   const canSend = (value.trim().length > 0 || pendingFiles.length > 0) && !isStreaming && !disabled;
 
   return (
-    <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--cr-border)', background: 'var(--cr-white)' }}
+    <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--cr-border)', background: 'var(--cr-panel)' }}
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
       onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files); }}>
@@ -77,7 +77,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
       )}
 
       {fileError && (
-        <div style={{ marginBottom: 8, padding: '6px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 'var(--cr-radius-sm)', color: 'var(--cr-danger)', fontSize: 12 }}>{fileError}</div>
+        <div style={{ marginBottom: 8, padding: '6px 12px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 'var(--cr-radius-sm)', color: 'var(--cr-danger)', fontSize: 12 }}>{fileError}</div>
       )}
 
       {pendingFiles.length > 0 && (

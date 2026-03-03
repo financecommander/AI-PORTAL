@@ -41,7 +41,7 @@ export default function ChatPage() {
   return (
     <div className="flex tech-grid-bg" style={{ height: '100vh' }}>
       {/* Desktop specialist sidebar */}
-      <div className="hidden md:block overflow-y-auto" style={{ width: 260, borderRight: '1px solid var(--cr-border)', background: 'var(--cr-white)', padding: 16, flexShrink: 0 }}>
+      <div className="hidden md:block overflow-y-auto" style={{ width: 260, borderRight: '1px solid var(--cr-border)', background: 'var(--cr-panel)', padding: 16, flexShrink: 0 }}>
         <h2 style={{ fontSize: 11, fontWeight: 600, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, padding: '0 4px' }}>
           Specialists
         </h2>
@@ -67,7 +67,7 @@ export default function ChatPage() {
       {/* Chat area */}
       <div className="flex-1 flex flex-col" style={{ minWidth: 0, overflow: 'hidden' }}>
         {/* Mobile specialist selector */}
-        <div className="md:hidden" style={{ borderBottom: '1px solid var(--cr-border)', background: 'var(--cr-white)' }}>
+        <div className="md:hidden" style={{ borderBottom: '1px solid var(--cr-border)', background: 'var(--cr-panel)' }}>
           <button onClick={() => setShowSpecialistPanel(!showSpecialistPanel)} className="w-full flex items-center justify-between px-4 py-3" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cr-text)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Bot style={{ width: 16, height: 16, color: 'var(--cr-green-600)' }} />
@@ -103,7 +103,7 @@ export default function ChatPage() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 500, marginTop: 8 }}>
                     {DEFAULT_PROMPTS.map((prompt) => (
                       <button key={prompt} onClick={() => sendMessage(prompt)}
-                        style={{ background: 'var(--cr-white)', border: '1px solid var(--cr-border)', borderRadius: 20, color: 'var(--cr-text-secondary)', fontSize: 12, padding: '8px 16px', cursor: 'pointer', transition: 'all 150ms' }}
+                        style={{ background: 'var(--cr-panel)', border: '1px solid var(--cr-border)', borderRadius: 20, color: 'var(--cr-text-secondary)', fontSize: 12, padding: '8px 16px', cursor: 'pointer', transition: 'all 150ms' }}
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; }}>
                         {prompt}
@@ -126,7 +126,7 @@ export default function ChatPage() {
                 </button>
               </div>
             )}
-            {error && <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>{error}</div>}
+            {error && <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>{error}</div>}
             <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={false} specialistName={selected.name} />
           </>
         ) : (

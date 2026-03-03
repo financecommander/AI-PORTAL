@@ -269,7 +269,7 @@ export default function UsagePage() {
       {!loading && error && (
         <div style={{ color: 'var(--cr-danger)', marginBottom: 16, fontSize: 14 }}>
           {error}
-          <button onClick={fetchData} style={{ marginLeft: 12, padding: '6px 14px', background: 'var(--cr-white)', border: '1px solid var(--cr-border)', color: 'var(--cr-text-secondary)', borderRadius: 'var(--cr-radius-sm)', cursor: 'pointer', fontSize: 13 }}>
+          <button onClick={fetchData} style={{ marginLeft: 12, padding: '6px 14px', background: 'var(--cr-panel)', border: '1px solid var(--cr-border)', color: 'var(--cr-text-secondary)', borderRadius: 'var(--cr-radius-sm)', cursor: 'pointer', fontSize: 13 }}>
             Retry
           </button>
         </div>

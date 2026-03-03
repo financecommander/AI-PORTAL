@@ -160,7 +160,7 @@ export default function LLMChatPage() {
           </h1>
 
           {catalogError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
               <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
               {catalogError}
             </div>
@@ -182,7 +182,7 @@ export default function LLMChatPage() {
                 key={prompt}
                 onClick={() => sendMessage(prompt)}
                 style={{
-                  background: 'var(--cr-white)',
+                  background: 'var(--cr-panel)',
                   border: '1px solid var(--cr-border)',
                   borderRadius: 20,
                   color: 'var(--cr-text-secondary)',
@@ -204,7 +204,7 @@ export default function LLMChatPage() {
           </div>
 
           {error && (
-            <div style={{ padding: '8px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
+            <div style={{ padding: '8px 14px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
               {error}
             </div>
           )}
@@ -215,7 +215,7 @@ export default function LLMChatPage() {
 
   return (
     <div className="flex flex-col tech-grid-bg" style={{ height: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-white)', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-panel)', position: 'relative', zIndex: 1 }}>
         <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />
         <button
@@ -223,7 +223,7 @@ export default function LLMChatPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
             borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)',
-            background: 'var(--cr-white)', color: 'var(--cr-text-secondary)', fontSize: 13, cursor: 'pointer',
+            background: 'var(--cr-panel)', color: 'var(--cr-text-secondary)', fontSize: 13, cursor: 'pointer',
           }}
         >
           <Plus style={{ width: 14, height: 14 }} />
@@ -251,7 +251,7 @@ export default function LLMChatPage() {
       )}
 
       {error && (
-        <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>
+        <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>
           {error}
         </div>
       )}

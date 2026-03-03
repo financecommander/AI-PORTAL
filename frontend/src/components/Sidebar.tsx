@@ -8,8 +8,11 @@ import {
   BarChart3,
   LogOut,
   Settings,
+  Monitor,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 import ConversationList from './ConversationList';
 
 interface SidebarProps {
@@ -34,6 +37,7 @@ export default function Sidebar({
   onNavigate,
 }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -44,7 +48,7 @@ export default function Sidebar({
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--cr-white)',
+        background: 'var(--cr-panel)',
         borderRight: '1px solid var(--cr-border)',
         flexShrink: 0,
       }}
@@ -175,6 +179,17 @@ export default function Sidebar({
           </div>
         )}
         <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Terminal Mode' : 'Light Mode'}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '8px', borderRadius: 'var(--cr-radius-xs)', border: 'none',
+              background: 'transparent', color: 'var(--cr-text-muted)', cursor: 'pointer', fontSize: 12,
+            }}
+          >
+            {theme === 'light' ? <Monitor size={14} /> : <Sun size={14} />}
+          </button>
           <button
             onClick={() => navigate('/settings')}
             style={{

@@ -14,7 +14,7 @@ export default function SpecialistHeader({ specialist, messageCount }: Specialis
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: 'var(--cr-white)',
+        background: 'var(--cr-panel)',
         borderBottom: '1px solid var(--cr-border)',
         flexShrink: 0,
       }}

@@ -2,48 +2,83 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Calculus Research — Light Institutional Theme */
+  /* ---- Brand constants (same in both themes) ---- */
   --cr-green-900: #0F4D2C;
   --cr-green-700: #1A6B3C;
   --cr-green-600: #3E9B5F;
+  --cr-green-500: #2D8B4E;
   --cr-green-400: #5FBD7A;
-  --cr-green-50: #EDF7F0;
-  --cr-gold-500: #F2A41F;
-  --cr-gold-400: #F5B94E;
+  --cr-green-50:  #EDF7F0;
+  --cr-gold-500:  #F2A41F;
+  --cr-gold-400:  #F5B94E;
+  --cr-danger:    #D64545;
 
-  /* Light surfaces */
-  --cr-surface: #F7F9F8;
-  --cr-surface-2: #EEF2F0;
-  --cr-white: #FFFFFF;
-  --cr-charcoal: #1C1F22;
+  /* ---- Semantic surface tokens (Light Institutional) ---- */
+  --cr-bg:      #F7F9F8;
+  --cr-panel:   #FFFFFF;
+  --cr-panel2:  #EEF2F0;
+  --cr-border:  #DDE6E1;
+  --cr-text:    #1C1F22;
+  --cr-muted:   #6B7A72;
+  --cr-subtle:  #A9B7AE;
 
-  /* Borders & muted */
-  --cr-border: #DDE6E1;
-  --cr-border-dark: #C4D1CA;
-  --cr-mist: #A9B7AE;
-  --cr-danger: #D64545;
+  /* Error state tokens */
+  --cr-danger-bg:     #FEF2F2;
+  --cr-danger-border: #FECACA;
 
-  /* Text — dark on light */
-  --cr-text: #1C1F22;
+  /* ---- Legacy aliases (map old names → new semantics) ---- */
+  --cr-surface:       var(--cr-bg);
+  --cr-surface-2:     var(--cr-panel2);
+  --cr-white:         var(--cr-panel);
+  --cr-charcoal:      var(--cr-text);
+  --cr-charcoal-deep: var(--cr-panel2);
+  --cr-charcoal-dark: var(--cr-panel);
+  --cr-border-dark:   #C4D1CA;
+  --cr-mist:          var(--cr-subtle);
   --cr-text-secondary: #4A5650;
-  --cr-text-muted: #7A8A80;
-  --cr-text-dim: #A9B7AE;
+  --cr-text-muted:    var(--cr-muted);
+  --cr-text-dim:      var(--cr-subtle);
 
-  /* Layout */
+  /* ---- Layout ---- */
   --sidebar-width: 260px;
-  --cr-radius: 14px;
+  --cr-radius:    14px;
   --cr-radius-sm: 8px;
   --cr-radius-xs: 6px;
-
-  /* Legacy aliases */
 }
+
+/* ---- Terminal Mode ---- */
+html.terminal {
+  --cr-bg:      #0B0F14;
+  --cr-panel:   #11161D;
+  --cr-panel2:  #151C24;
+  --cr-border:  #1F2A36;
+  --cr-text:    #E6EDF3;
+  --cr-muted:   #8B98A5;
+  --cr-subtle:  #6D7782;
+
+  --cr-green-50:      rgba(15, 77, 44, 0.15);
+  --cr-danger-bg:     rgba(214, 69, 69, 0.1);
+  --cr-danger-border: rgba(214, 69, 69, 0.3);
+
+  --cr-border-dark:    #2A3744;
+  --cr-text-secondary: #9DAAB5;
+}
+
+/* ---- Utility classes ---- */
+.bg-app   { background: var(--cr-bg); }
+.bg-panel { background: var(--cr-panel); }
+.bg-panel2 { background: var(--cr-panel2); }
+.bd       { border-color: var(--cr-border); }
+.tx       { color: var(--cr-text); }
+.muted    { color: var(--cr-muted); }
+.subtle   { color: var(--cr-subtle); }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--cr-surface);
+  background-color: var(--cr-bg);
   color: var(--cr-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -62,7 +97,7 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--cr-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--cr-mist); }
+::-webkit-scrollbar-thumb:hover { background: var(--cr-subtle); }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(6px); }
@@ -117,7 +152,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 /* Subtle brand background for portal pages */
 .tech-grid-bg {
   position: relative;
-  background: linear-gradient(160deg, #F7F9F8 0%, #F0F5F2 40%, #EBF1ED 100%);
+  background: var(--cr-bg);
 }
 
 .tech-grid-bg::before {
@@ -134,8 +169,13 @@ button:active:not(:disabled) { transform: translateY(1px); }
   z-index: 0;
 }
 
+html.terminal .tech-grid-bg::before {
+  background:
+    radial-gradient(ellipse at 75% 10%, rgba(15, 77, 44, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(242, 164, 31, 0.06) 0%, transparent 45%);
+}
+
 .tech-grid-bg > * {
   position: relative;
   z-index: 1;
 }
-

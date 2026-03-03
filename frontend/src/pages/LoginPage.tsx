@@ -36,7 +36,7 @@ export default function LoginPage() {
         style={{
           width: '100%',
           maxWidth: 400,
-          background: 'var(--cr-white)',
+          background: 'var(--cr-panel)',
           borderRadius: 'var(--cr-radius)',
           border: '1px solid var(--cr-border)',
           padding: '48px 40px',
@@ -83,8 +83,8 @@ export default function LoginPage() {
               alignItems: 'center',
               gap: 8,
               padding: '10px 14px',
-              background: '#FEF2F2',
-              border: '1px solid #FECACA',
+              background: 'var(--cr-danger-bg)',
+              border: '1px solid var(--cr-danger-border)',
               borderRadius: 'var(--cr-radius-sm)',
               marginBottom: 16,
               color: 'var(--cr-danger)',
@@ -112,7 +112,7 @@ export default function LoginPage() {
               padding: '12px 14px',
               borderRadius: 'var(--cr-radius-sm)',
               border: '1px solid var(--cr-border)',
-              background: 'var(--cr-white)',
+              background: 'var(--cr-panel)',
               color: 'var(--cr-text)',
               fontSize: 14,
               outline: 'none',
@@ -160,7 +160,7 @@ export default function LoginPage() {
             onClick={() => loginWithOAuth('google')}
             style={{
               width: '100%', padding: '11px', borderRadius: 'var(--cr-radius-sm)',
-              border: '1px solid var(--cr-border)', background: 'var(--cr-white)',
+              border: '1px solid var(--cr-border)', background: 'var(--cr-panel)',
               color: 'var(--cr-text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               transition: 'border-color 150ms',
@@ -175,7 +175,7 @@ export default function LoginPage() {
             onClick={() => loginWithOAuth('apple')}
             style={{
               width: '100%', padding: '11px', borderRadius: 'var(--cr-radius-sm)',
-              border: '1px solid var(--cr-border)', background: 'var(--cr-white)',
+              border: '1px solid var(--cr-border)', background: 'var(--cr-panel)',
               color: 'var(--cr-text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               transition: 'border-color 150ms',
@@ -190,7 +190,7 @@ export default function LoginPage() {
             onClick={() => loginWithOAuth('x')}
             style={{
               width: '100%', padding: '11px', borderRadius: 'var(--cr-radius-sm)',
-              border: '1px solid var(--cr-border)', background: 'var(--cr-white)',
+              border: '1px solid var(--cr-border)', background: 'var(--cr-panel)',
               color: 'var(--cr-text)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               transition: 'border-color 150ms',

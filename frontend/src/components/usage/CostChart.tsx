@@ -2,7 +2,7 @@ interface CostChartProps { data: { date: string; cost: number; count: number }[]
 
 export default function CostChart({ data }: CostChartProps) {
   if (data.length === 0) return (
-    <div style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20, color: 'var(--cr-text-muted)', fontSize: 14 }}>
+    <div style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20, color: 'var(--cr-text-muted)', fontSize: 14 }}>
       No usage data yet
     </div>
   );
@@ -12,7 +12,7 @@ export default function CostChart({ data }: CostChartProps) {
   const totalCount = data.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <div style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20 }}>
+    <div style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20 }}>
       <div style={{ marginBottom: 12, fontSize: 11, fontWeight: 600, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
         Daily Cost — Last 7 Days
       </div>
