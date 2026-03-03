@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse
 from backend.auth.jwt_handler import decode_access_token
 
 EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc"}
-RATE_LIMIT = 60
+RATE_LIMIT = 300
 WINDOW_SECONDS = 3600
 # Stricter limit for login to prevent brute-force attacks
 LOGIN_RATE_LIMIT = 10

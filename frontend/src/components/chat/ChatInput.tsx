@@ -99,7 +99,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, background: 'var(--cr-surface)', border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : 'var(--cr-border)'}`, borderRadius: 'var(--cr-radius)', padding: '8px 8px 8px 6px', opacity: disabled ? 0.5 : 1, transition: 'border-color 200ms' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, background: 'var(--cr-surface)', border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : 'var(--cr-border)'}`, borderRadius: 28, padding: '8px 8px 8px 6px', opacity: disabled ? 0.5 : 1, transition: 'border-color 200ms' }}>
         <button onClick={() => fileInputRef.current?.click()} disabled={disabled || isStreaming} style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', background: 'transparent', border: 'none', cursor: disabled || isStreaming ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pendingFiles.length > 0 ? 'var(--cr-green-600)' : 'var(--cr-text-muted)' }} title="Attach file">
           <Paperclip size={18} />
         </button>
