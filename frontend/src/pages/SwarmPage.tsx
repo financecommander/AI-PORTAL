@@ -6,10 +6,10 @@ import type { CollaborationMode, CreateSessionRequest, SwarmSession } from '../t
 // ── Helpers ─────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  active: '#2D8B4E',
+  active: '#1A6B3C',
   paused: '#D4A017',
   completed: '#2E75B6',
-  failed: '#C0392B',
+  failed: '#D64545',
 };
 
 const MODE_LABELS: Record<string, string> = {
@@ -108,7 +108,7 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'rgba(0,0,0,0.35)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -120,19 +120,20 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
         onClick={e => e.stopPropagation()}
         onSubmit={handleSubmit}
         style={{
-          background: 'var(--navy)',
-          border: '1px solid #2A3A5C',
-          borderRadius: '12px',
+          background: 'var(--cr-white)',
+          border: '1px solid var(--cr-border)',
+          borderRadius: 'var(--cr-radius)',
           padding: '28px',
           width: '480px',
           maxWidth: '90vw',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         }}
       >
-        <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>
+        <h2 style={{ color: 'var(--cr-text)', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>
           New Swarm Session
         </h2>
 
-        <label style={{ color: '#8899AA', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+        <label style={{ color: 'var(--cr-text-muted)', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
           Project Name
         </label>
         <input
@@ -142,17 +143,17 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
           style={{
             width: '100%',
             padding: '10px 12px',
-            borderRadius: '8px',
-            border: '1px solid #2A3A5C',
-            background: 'var(--navy-dark)',
-            color: '#fff',
+            borderRadius: 'var(--cr-radius-sm)',
+            border: '1px solid var(--cr-border)',
+            background: 'var(--cr-surface)',
+            color: 'var(--cr-text)',
             fontSize: '14px',
             marginBottom: '14px',
             boxSizing: 'border-box',
           }}
         />
 
-        <label style={{ color: '#8899AA', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+        <label style={{ color: 'var(--cr-text-muted)', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
           Description / First Prompt
         </label>
         <textarea
@@ -163,10 +164,10 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
           style={{
             width: '100%',
             padding: '10px 12px',
-            borderRadius: '8px',
-            border: '1px solid #2A3A5C',
-            background: 'var(--navy-dark)',
-            color: '#fff',
+            borderRadius: 'var(--cr-radius-sm)',
+            border: '1px solid var(--cr-border)',
+            background: 'var(--cr-surface)',
+            color: 'var(--cr-text)',
             fontSize: '14px',
             marginBottom: '14px',
             resize: 'vertical',
@@ -176,7 +177,7 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
 
         <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ color: '#8899AA', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            <label style={{ color: 'var(--cr-text-muted)', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
               Mode
             </label>
             <select
@@ -185,10 +186,10 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '8px',
-                border: '1px solid #2A3A5C',
-                background: 'var(--navy-dark)',
-                color: '#fff',
+                borderRadius: 'var(--cr-radius-sm)',
+                border: '1px solid var(--cr-border)',
+                background: 'var(--cr-surface)',
+                color: 'var(--cr-text)',
                 fontSize: '14px',
               }}
             >
@@ -200,7 +201,7 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
           </div>
 
           <div style={{ flex: 1 }}>
-            <label style={{ color: '#8899AA', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+            <label style={{ color: 'var(--cr-text-muted)', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
               Team Preset
             </label>
             <select
@@ -209,10 +210,10 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                borderRadius: '8px',
-                border: '1px solid #2A3A5C',
-                background: 'var(--navy-dark)',
-                color: '#fff',
+                borderRadius: 'var(--cr-radius-sm)',
+                border: '1px solid var(--cr-border)',
+                background: 'var(--cr-surface)',
+                color: 'var(--cr-text)',
                 fontSize: '14px',
               }}
             >
@@ -225,7 +226,7 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
 
         {presets[teamPreset] && (
           <div style={{ marginBottom: '16px' }}>
-            <span style={{ color: '#667788', fontSize: '12px' }}>Castes: </span>
+            <span style={{ color: 'var(--cr-text-muted)', fontSize: '12px' }}>Castes: </span>
             {presets[teamPreset].map(c => <CasteBadge key={c} caste={c} />)}
           </div>
         )}
@@ -236,10 +237,10 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
             onClick={onClose}
             style={{
               padding: '10px 20px',
-              borderRadius: '8px',
-              border: '1px solid #2A3A5C',
+              borderRadius: 'var(--cr-radius-sm)',
+              border: '1px solid var(--cr-border)',
               background: 'transparent',
-              color: '#8899AA',
+              color: 'var(--cr-text-secondary)',
               fontSize: '14px',
               cursor: 'pointer',
             }}
@@ -251,9 +252,9 @@ function CreateSessionModal({ presets, onClose, onCreate }: CreateModalProps) {
             disabled={!projectName.trim() || !description.trim() || submitting}
             style={{
               padding: '10px 20px',
-              borderRadius: '8px',
+              borderRadius: 'var(--cr-radius-sm)',
               border: 'none',
-              background: submitting ? '#1a5c3a' : '#2D8B4E',
+              background: submitting ? 'var(--cr-green-600)' : 'var(--cr-green-700)',
               color: '#fff',
               fontSize: '14px',
               fontWeight: 600,
@@ -284,16 +285,16 @@ function SessionCard({
     <div
       onClick={() => onSelect(session.session_id)}
       style={{
-        background: isSelected ? 'var(--navy-light)' : 'var(--navy-dark)',
-        border: `1px solid ${isSelected ? 'var(--blue)' : '#2A3A5C'}`,
-        borderRadius: '10px',
+        background: isSelected ? 'var(--cr-surface-2)' : 'var(--cr-white)',
+        border: `1px solid ${isSelected ? 'var(--cr-green-600)' : 'var(--cr-border)'}`,
+        borderRadius: 'var(--cr-radius-sm)',
         padding: '16px',
         cursor: 'pointer',
         transition: 'all 150ms',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <h3 style={{ color: '#fff', fontSize: '15px', fontWeight: 600, margin: 0, flex: 1 }}>
+        <h3 style={{ color: 'var(--cr-text)', fontSize: '15px', fontWeight: 600, margin: 0, flex: 1 }}>
           {session.project_name}
         </h3>
         <span
@@ -312,7 +313,7 @@ function SessionCard({
         </span>
       </div>
 
-      <p style={{ color: '#667788', fontSize: '13px', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+      <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: '0 0 10px 0', lineHeight: 1.4 }}>
         {session.description.length > 100 ? session.description.slice(0, 100) + '...' : session.description}
       </p>
 
@@ -320,12 +321,12 @@ function SessionCard({
         {session.participating_castes.map(c => <CasteBadge key={c} caste={c} />)}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#667788', fontSize: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--cr-text-dim)', fontSize: '12px' }}>
         <span>{MODE_LABELS[session.mode] || session.mode}</span>
         <span>Round {session.current_round} | {session.message_count} msgs</span>
         <span>{formatCost(session.total_cost)}</span>
       </div>
-      <div style={{ color: '#556677', fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
+      <div style={{ color: 'var(--cr-mist)', fontSize: '11px', marginTop: '4px', textAlign: 'right' }}>
         {timeAgo(session.created_at)}
       </div>
     </div>
@@ -383,13 +384,13 @@ export default function SwarmPage() {
             onClick={deselectSession}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'none', border: '1px solid #2A3A5C', borderRadius: '6px',
-              padding: '6px 12px', color: '#8899AA', fontSize: '13px', cursor: 'pointer',
+              background: 'none', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius-xs)',
+              padding: '6px 12px', color: 'var(--cr-text-secondary)', fontSize: '13px', cursor: 'pointer',
             }}
           >
             <ArrowLeft style={{ width: 14, height: 14 }} /> Back
           </button>
-          <h1 style={{ color: 'white', fontSize: '20px', fontWeight: 700, margin: 0, flex: 1 }}>
+          <h1 style={{ color: 'var(--cr-text)', fontSize: '20px', fontWeight: 700, margin: 0, flex: 1 }}>
             {selectedSession.project_name}
           </h1>
           <span
@@ -408,15 +409,15 @@ export default function SwarmPage() {
         <div
           style={{
             display: 'flex', gap: '20px', flexWrap: 'wrap',
-            padding: '12px 16px', borderRadius: '8px',
-            background: 'var(--navy-dark)', border: '1px solid #2A3A5C',
-            marginBottom: '16px', fontSize: '13px', color: '#8899AA',
+            padding: '12px 16px', borderRadius: 'var(--cr-radius-sm)',
+            background: 'var(--cr-surface-2)', border: '1px solid var(--cr-border)',
+            marginBottom: '16px', fontSize: '13px', color: 'var(--cr-text-secondary)',
           }}
         >
-          <span>Mode: <strong style={{ color: '#fff' }}>{MODE_LABELS[selectedSession.mode]}</strong></span>
-          <span>Round: <strong style={{ color: '#fff' }}>{selectedSession.current_round}/{selectedSession.max_rounds}</strong></span>
-          <span>Cost: <strong style={{ color: '#fff' }}>{formatCost(selectedSession.total_cost)}</strong></span>
-          <span>Messages: <strong style={{ color: '#fff' }}>{selectedSession.message_count}</strong></span>
+          <span>Mode: <strong style={{ color: 'var(--cr-text)' }}>{MODE_LABELS[selectedSession.mode]}</strong></span>
+          <span>Round: <strong style={{ color: 'var(--cr-text)' }}>{selectedSession.current_round}/{selectedSession.max_rounds}</strong></span>
+          <span>Cost: <strong style={{ color: 'var(--cr-text)' }}>{formatCost(selectedSession.total_cost)}</strong></span>
+          <span>Messages: <strong style={{ color: 'var(--cr-text)' }}>{selectedSession.message_count}</strong></span>
           <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
             {selectedSession.participating_castes.map(c => <CasteBadge key={c} caste={c} />)}
           </div>
@@ -430,7 +431,7 @@ export default function SwarmPage() {
                 onClick={pauseSession}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 16px', borderRadius: '8px', border: '1px solid #D4A017',
+                  padding: '8px 16px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid #D4A017',
                   background: 'transparent', color: '#D4A017', fontSize: '13px', cursor: 'pointer',
                 }}
               >
@@ -442,8 +443,8 @@ export default function SwarmPage() {
                 onClick={resumeSession}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 16px', borderRadius: '8px', border: '1px solid #2D8B4E',
-                  background: 'transparent', color: '#2D8B4E', fontSize: '13px', cursor: 'pointer',
+                  padding: '8px 16px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-green-700)',
+                  background: 'transparent', color: 'var(--cr-green-700)', fontSize: '13px', cursor: 'pointer',
                 }}
               >
                 <Play style={{ width: 14, height: 14 }} /> Resume
@@ -453,7 +454,7 @@ export default function SwarmPage() {
               onClick={completeSession}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '8px 16px', borderRadius: '8px', border: '1px solid #2E75B6',
+                padding: '8px 16px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid #2E75B6',
                 background: 'transparent', color: '#2E75B6', fontSize: '13px', cursor: 'pointer',
               }}
             >
@@ -465,12 +466,12 @@ export default function SwarmPage() {
         {/* Messages Timeline */}
         <div
           style={{
-            background: 'var(--navy-dark)', border: '1px solid #2A3A5C', borderRadius: '10px',
+            background: 'var(--cr-white)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius-sm)',
             padding: '16px', maxHeight: '500px', overflowY: 'auto', marginBottom: '16px',
           }}
         >
           {(!selectedSession.messages || selectedSession.messages.length === 0) && (
-            <p style={{ color: '#667788', textAlign: 'center', padding: '40px 0' }}>
+            <p style={{ color: 'var(--cr-text-muted)', textAlign: 'center', padding: '40px 0' }}>
               No messages yet. Send a prompt to start the session.
             </p>
           )}
@@ -480,26 +481,26 @@ export default function SwarmPage() {
               style={{
                 marginBottom: '14px',
                 padding: '12px 14px',
-                borderRadius: '8px',
-                background: msg.role === 'human' ? '#1a2744' : '#111D35',
-                borderLeft: `3px solid ${msg.role === 'human' ? '#2E75B6' : (CASTE_COLORS[msg.caste || ''] || '#4B5563')}`,
+                borderRadius: 'var(--cr-radius-sm)',
+                background: msg.role === 'human' ? 'var(--cr-green-50)' : 'var(--cr-surface)',
+                borderLeft: `3px solid ${msg.role === 'human' ? 'var(--cr-green-700)' : (CASTE_COLORS[msg.caste || ''] || 'var(--cr-border)')}`,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {msg.caste && <CasteBadge caste={msg.caste} />}
-                  <span style={{ color: '#8899AA', fontSize: '12px', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--cr-text-secondary)', fontSize: '12px', fontWeight: 600 }}>
                     {msg.role === 'human' ? 'You' : msg.caste ? '' : 'System'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', color: '#556677', fontSize: '11px' }}>
+                <div style={{ display: 'flex', gap: '12px', color: 'var(--cr-text-dim)', fontSize: '11px' }}>
                   {msg.model_used && <span>{msg.model_used}</span>}
                   {msg.latency_ms > 0 && <span>{(msg.latency_ms / 1000).toFixed(1)}s</span>}
                   <span>{formatCost(msg.cost)}</span>
                   <span>R{msg.round_number}</span>
                 </div>
               </div>
-              <div style={{ color: '#D1D5DB', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              <div style={{ color: 'var(--cr-text)', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                 {msg.content}
               </div>
             </div>
@@ -507,8 +508,8 @@ export default function SwarmPage() {
           <div ref={messagesEndRef} />
 
           {sending && (
-            <div style={{ textAlign: 'center', padding: '16px', color: '#8899AA', fontSize: '13px' }}>
-              <span style={{ animation: 'blink 1s infinite' }}>Castes are responding...</span>
+            <div style={{ textAlign: 'center', padding: '16px', color: 'var(--cr-text-muted)', fontSize: '13px' }}>
+              <span className="animate-blink">Castes are responding...</span>
             </div>
           )}
         </div>
@@ -522,9 +523,9 @@ export default function SwarmPage() {
               placeholder="Send a message to the swarm..."
               disabled={sending}
               style={{
-                flex: 1, padding: '12px 16px', borderRadius: '10px',
-                border: '1px solid #2A3A5C', background: 'var(--navy-dark)',
-                color: '#fff', fontSize: '14px',
+                flex: 1, padding: '12px 16px', borderRadius: 'var(--cr-radius-sm)',
+                border: '1px solid var(--cr-border)', background: 'var(--cr-surface)',
+                color: 'var(--cr-text)', fontSize: '14px',
               }}
             />
             <button
@@ -532,8 +533,8 @@ export default function SwarmPage() {
               disabled={!messageInput.trim() || sending}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '12px 20px', borderRadius: '10px', border: 'none',
-                background: sending ? '#1a5c3a' : '#2D8B4E', color: '#fff',
+                padding: '12px 20px', borderRadius: 'var(--cr-radius-sm)', border: 'none',
+                background: sending ? 'var(--cr-green-600)' : 'var(--cr-green-700)', color: '#fff',
                 fontSize: '14px', fontWeight: 600,
                 cursor: sending ? 'wait' : 'pointer',
                 opacity: !messageInput.trim() ? 0.5 : 1,
@@ -553,15 +554,15 @@ export default function SwarmPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ color: 'white', fontSize: '22px', fontWeight: 700, margin: 0 }}>
+          <h1 style={{ color: 'var(--cr-text)', fontSize: '22px', fontWeight: 700, margin: 0 }}>
             Swarm Sessions
           </h1>
-          <p style={{ color: '#667788', fontSize: '13px', margin: '4px 0 0 0' }}>
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: '4px 0 0 0' }}>
             Multi-model live collaboration
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: connected ? '#2D8B4E' : '#C0392B', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: connected ? 'var(--cr-green-700)' : 'var(--cr-danger)', fontSize: '13px' }}>
             {connected ? <Wifi style={{ width: 16, height: 16 }} /> : <WifiOff style={{ width: 16, height: 16 }} />}
             {connected ? 'Connected' : 'Offline'}
           </div>
@@ -569,8 +570,8 @@ export default function SwarmPage() {
             onClick={refreshSessions}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 12px', borderRadius: '8px', border: '1px solid #2A3A5C',
-              background: 'transparent', color: '#8899AA', fontSize: '13px', cursor: 'pointer',
+              padding: '8px 12px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)',
+              background: 'transparent', color: 'var(--cr-text-secondary)', fontSize: '13px', cursor: 'pointer',
             }}
           >
             <RefreshCw style={{ width: 14, height: 14 }} />
@@ -579,8 +580,8 @@ export default function SwarmPage() {
             onClick={() => setShowCreate(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '10px 18px', borderRadius: '8px', border: 'none',
-              background: '#2D8B4E', color: '#fff', fontSize: '14px',
+              padding: '10px 18px', borderRadius: 'var(--cr-radius-sm)', border: 'none',
+              background: 'var(--cr-green-700)', color: '#fff', fontSize: '14px',
               fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -592,19 +593,19 @@ export default function SwarmPage() {
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
         {[
-          { label: 'Active Sessions', value: String(activeSessions), color: '#2D8B4E' },
+          { label: 'Active Sessions', value: String(activeSessions), color: 'var(--cr-green-700)' },
           { label: 'Total Sessions', value: String(sessions.length), color: '#2E75B6' },
-          { label: 'Total Cost', value: formatCost(totalCost), color: '#D4A017' },
-          { label: 'Swarm Health', value: health?.status === 'ok' ? 'Healthy' : 'Unknown', color: connected ? '#2D8B4E' : '#C0392B' },
+          { label: 'Total Cost', value: formatCost(totalCost), color: 'var(--cr-gold-500)' },
+          { label: 'Swarm Health', value: health?.status === 'ok' ? 'Healthy' : 'Unknown', color: connected ? 'var(--cr-green-700)' : 'var(--cr-danger)' },
         ].map(card => (
           <div
             key={card.label}
             style={{
-              background: 'var(--navy-dark)', border: '1px solid #2A3A5C', borderRadius: '10px',
+              background: 'var(--cr-white)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius-sm)',
               padding: '16px', textAlign: 'center',
             }}
           >
-            <p style={{ color: '#667788', fontSize: '12px', margin: '0 0 6px 0' }}>{card.label}</p>
+            <p style={{ color: 'var(--cr-text-muted)', fontSize: '12px', margin: '0 0 6px 0' }}>{card.label}</p>
             <p style={{ color: card.color, fontSize: '20px', fontWeight: 700, margin: 0 }}>{card.value}</p>
           </div>
         ))}
@@ -617,10 +618,11 @@ export default function SwarmPage() {
             key={f}
             onClick={() => setStatusFilter(f)}
             style={{
-              padding: '6px 14px', borderRadius: '9999px', border: '1px solid #2A3A5C',
-              background: statusFilter === f ? 'var(--navy-light)' : 'transparent',
-              color: statusFilter === f ? '#fff' : '#8899AA',
+              padding: '6px 14px', borderRadius: '9999px', border: '1px solid var(--cr-border)',
+              background: statusFilter === f ? 'var(--cr-surface-2)' : 'transparent',
+              color: statusFilter === f ? 'var(--cr-text)' : 'var(--cr-text-muted)',
               fontSize: '13px', cursor: 'pointer', textTransform: 'capitalize',
+              fontWeight: statusFilter === f ? 600 : 400,
             }}
           >
             {f}
@@ -631,8 +633,8 @@ export default function SwarmPage() {
       {/* Error */}
       {error && (
         <div style={{
-          padding: '12px 16px', borderRadius: '8px', marginBottom: '16px',
-          background: 'rgba(192, 57, 43, 0.15)', border: '1px solid #C0392B', color: '#E74C3C', fontSize: '13px',
+          padding: '12px 16px', borderRadius: 'var(--cr-radius-sm)', marginBottom: '16px',
+          background: 'rgba(214, 69, 69, 0.08)', border: '1px solid var(--cr-danger)', color: 'var(--cr-danger)', fontSize: '13px',
         }}>
           {error}
         </div>
@@ -640,18 +642,18 @@ export default function SwarmPage() {
 
       {/* Sessions Grid */}
       {loading && sessions.length === 0 ? (
-        <p style={{ color: '#667788', textAlign: 'center', padding: '40px 0' }}>Loading sessions...</p>
+        <p style={{ color: 'var(--cr-text-muted)', textAlign: 'center', padding: '40px 0' }}>Loading sessions...</p>
       ) : filteredSessions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <p style={{ color: '#667788', fontSize: '15px', marginBottom: '12px' }}>
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '15px', marginBottom: '12px' }}>
             {sessions.length === 0 ? 'No sessions yet.' : 'No sessions match this filter.'}
           </p>
           {sessions.length === 0 && (
             <button
               onClick={() => setShowCreate(true)}
               style={{
-                padding: '10px 20px', borderRadius: '8px', border: 'none',
-                background: '#2D8B4E', color: '#fff', fontSize: '14px',
+                padding: '10px 20px', borderRadius: 'var(--cr-radius-sm)', border: 'none',
+                background: 'var(--cr-green-700)', color: '#fff', fontSize: '14px',
                 fontWeight: 600, cursor: 'pointer',
               }}
             >
