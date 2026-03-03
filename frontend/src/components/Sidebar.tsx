@@ -23,7 +23,7 @@ const NAV_ITEMS = [
   { label: 'Console', icon: MessageSquare, path: '/' },
   { label: 'Analyst Desks', icon: Bot, path: '/specialists' },
   { label: 'Engines', icon: Layers, path: '/pipelines' },
-  { label: 'Swarm Sessions', icon: Boxes, path: '/swarm' },
+  { label: 'Swarm Mainframe', icon: Boxes, path: '/swarm' },
   { label: 'Metrics', icon: BarChart3, path: '/usage' },
 ];
 
