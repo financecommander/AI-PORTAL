@@ -114,3 +114,49 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .markdown-content strong { font-weight: 600; }
 .markdown-content em { font-style: italic; }
 
+/* Tech grid background for data-center pages */
+.tech-grid-bg {
+  position: relative;
+  background:
+    /* Subtle dot grid */
+    radial-gradient(circle, rgba(15, 77, 44, 0.06) 1px, transparent 1px),
+    /* Faint horizontal lines */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(15, 77, 44, 0.03) 39px,
+      rgba(15, 77, 44, 0.03) 40px
+    ),
+    /* Faint vertical lines */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      rgba(15, 77, 44, 0.03) 39px,
+      rgba(15, 77, 44, 0.03) 40px
+    ),
+    /* Base gradient */
+    linear-gradient(160deg, #F7F9F8 0%, #EEF2F0 40%, #EDF7F0 100%);
+  background-size: 20px 20px, 40px 40px, 40px 40px, 100% 100%;
+}
+
+.tech-grid-bg::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 85% 15%, rgba(15, 77, 44, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 85%, rgba(242, 164, 31, 0.03) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tech-grid-bg > * {
+  position: relative;
+  z-index: 1;
+}
+

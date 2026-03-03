@@ -40,6 +40,7 @@ export default function LeadOpsPage() {
 
   return (
     <div
+      className="tech-grid-bg"
       style={{
         flex: 1,
         display: 'flex',

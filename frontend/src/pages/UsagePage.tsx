@@ -252,7 +252,7 @@ export default function UsagePage() {
   }));
 
   return (
-    <div style={{ padding: '28px 32px' }}>
+    <div className="tech-grid-bg" style={{ padding: '28px 32px', minHeight: '100vh' }}>
       <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--cr-text)', marginBottom: 24 }}>
         Intelligence Metrics
       </h1>
