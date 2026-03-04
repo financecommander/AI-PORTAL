@@ -56,7 +56,9 @@ export default function Layout() {
         />
       </div>
       {/* Main content */}
-      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0"><Outlet /></main>
+      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0">
+        <div key={location.pathname} className="page-transition"><Outlet /></div>
+      </main>
     </div>
   );
 }
