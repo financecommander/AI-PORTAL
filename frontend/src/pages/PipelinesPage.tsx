@@ -63,12 +63,6 @@ export default function PipelinesPage() {
     }
   }, [agents, status]);
 
-  const handleRun = async (query: string) => {
-    if (!selectedPipeline) return;
-    setActiveQuery(query);
-    await runPipeline(selectedPipeline.name, selectedPipeline.agents.map(a => a.name), query);
-  };
-
   const handleSelectAndRun = (p: PipelineInfo) => {
     setSelectedPipeline(p);
     const sample = SAMPLE_QUERIES[p.name] || `Analyze using ${p.display_name}`;
