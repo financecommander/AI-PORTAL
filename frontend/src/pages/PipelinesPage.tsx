@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '../api/client';
 import PipelineCard from '../components/pipeline/PipelineCard';
-import AgentTraceVisualizer from '../components/pipeline/AgentTraceVisualizer';
+import { AgentTraceVisualizer } from '../components/pipeline/AgentTraceVisualizer';
 import QueryInput from '../components/pipeline/QueryInput';
 import { usePipeline } from '../hooks/usePipeline';
 

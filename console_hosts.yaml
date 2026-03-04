@@ -1,0 +1,37 @@
+# Console Intelligence — SSH Host Configuration
+# ──────────────────────────────────────────────
+# Each entry defines a host that Console Intelligence can connect to.
+# SSH key-based auth is expected (no passwords).
+#
+# Fields:
+#   alias       (required) — short name used in natural language commands
+#   hostname    (required) — IP or FQDN
+#   username    (optional) — defaults to "root"
+#   port        (optional) — defaults to 22
+#   description (optional) — shown in the UI and given to the LLM
+#   tags        (optional) — used for grouping in the UI
+#   key_file    (optional) — path to SSH private key
+
+- alias: mainframe
+  hostname: 34.75.120.202
+  username: crypticassassin
+  port: 22
+  description: Primary GPU workstation (GCP)
+  tags: [gpu, gcp, primary]
+  key_file: ~/.ssh/id_ed25519
+
+# Add more hosts below as needed:
+#
+# - alias: swarm-gpu
+#   hostname: 10.0.0.10
+#   username: deploy
+#   port: 22
+#   description: Swarm GPU node for Ollama
+#   tags: [gpu, ollama, swarm]
+#
+# - alias: triton
+#   hostname: 10.0.0.20
+#   username: deploy
+#   port: 22
+#   description: Triton inference server
+#   tags: [inference, triton]

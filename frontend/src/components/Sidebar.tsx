@@ -7,6 +7,7 @@ import {
   BarChart3,
   LogOut,
   Settings,
+  Terminal,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ConversationList from './ConversationList';
@@ -20,6 +21,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { label: 'Console', icon: MessageSquare, path: '/' },
+  { label: 'Intelligence', icon: Terminal, path: '/console' },
   { label: 'Analyst Desks', icon: Bot, path: '/specialists' },
   { label: 'Engines', icon: Layers, path: '/pipelines' },
   { label: 'Metrics', icon: BarChart3, path: '/usage' },

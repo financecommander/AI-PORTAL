@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import LLMChatPage from './pages/LLMChatPage';
 import ChatPage from './pages/ChatPage';
+import ConsolePage from './pages/ConsolePage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
 import SettingsPage from './pages/SettingsPage';
@@ -26,6 +27,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<LLMChatPage />} />
               <Route path="specialists" element={<ChatPage />} />
+              <Route path="console" element={<ConsolePage />} />
               <Route path="pipelines" element={<PipelinesPage />} />
               <Route path="usage" element={<UsagePage />} />
               <Route path="settings" element={<SettingsPage />} />

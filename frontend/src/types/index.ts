@@ -122,3 +122,39 @@ export interface ConversationDetail extends ConversationSummary {
   messages: ChatMessage[];
 }
 
+// ── Console Intelligence ─────────────────────────────────────────
+
+export interface ConsoleHost {
+  alias: string;
+  hostname: string;
+  username: string;
+  port: number;
+  description: string;
+  tags: string[];
+}
+
+export interface CommandPlan {
+  host: string | null;
+  command: string | null;
+  explanation: string | null;
+  risk: string;
+  error: string | null;
+}
+
+export interface ConsoleEvent {
+  type: 'plan' | 'executing' | 'stdout' | 'stderr' | 'status' | 'error';
+  data: Record<string, string | null>;
+}
+
+export interface ConsoleEntry {
+  id: string;
+  input: string;
+  plan?: CommandPlan;
+  output: string;
+  stderr: string;
+  status?: string;
+  error?: string;
+  isRunning: boolean;
+  timestamp: Date;
+}
+

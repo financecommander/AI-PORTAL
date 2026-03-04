@@ -1,4 +1,4 @@
-import type { Attachment } from '../types';
+import type { Attachment, ConsoleHost, ConsoleEvent } from '../types';
 
 const BASE_URL = '';  // Uses Vite proxy in dev
 
@@ -305,6 +305,119 @@ class ApiClient {
     ws.onerror = () => onClose?.();
     ws.onclose = () => onClose?.();
     return ws;
+  }
+
+  // ── Console Intelligence ──────────────────────────────────────
+
+  async getConsoleHosts(): Promise<{ hosts: ConsoleHost[]; count: number }> {
+    return this.request('/console/hosts');
+  }
+
+  async testConsoleHost(alias: string): Promise<{ alias: string; hostname: string; status: string; error?: string }> {
+    return this.post('/console/hosts/test', { alias });
+  }
+
+  async reloadConsoleHosts(): Promise<{ reloaded: boolean; count: number }> {
+    return this.post('/console/hosts/reload', {});
+  }
+
+  async streamConsoleCommand(
+    message: string,
+    onEvent: (event: ConsoleEvent) => void,
+    provider: string = 'anthropic',
+    model?: string,
+  ): Promise<void> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
+    const body: Record<string, unknown> = { message, provider };
+    if (model) body.model = model;
+
+    const response = await fetch(`${BASE_URL}/console/execute`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Console request failed' }));
+      throw new Error(err.error || err.detail || 'Console request failed');
+    }
+    if (!response.body) throw new Error('No response body');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ') && currentEvent) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            onEvent({ type: currentEvent as ConsoleEvent['type'], data });
+          } catch { /* skip malformed */ }
+          currentEvent = '';
+        }
+      }
+    }
+  }
+
+  async streamRawCommand(
+    host: string,
+    command: string,
+    onEvent: (event: ConsoleEvent) => void,
+    timeout: number = 30,
+  ): Promise<void> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+
+    const response = await fetch(`${BASE_URL}/console/raw`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ host, command, timeout }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Raw command failed' }));
+      throw new Error(err.error || err.detail || 'Raw command failed');
+    }
+    if (!response.body) throw new Error('No response body');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ') && currentEvent) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            onEvent({ type: currentEvent as ConsoleEvent['type'], data });
+          } catch { /* skip malformed */ }
+          currentEvent = '';
+        }
+      }
+    }
   }
 }
 
