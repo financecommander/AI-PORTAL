@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     mistral_api_key: str = Field(default="", env="MISTRAL_API_KEY")
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     courtlistener_api_key: str = Field(default="", env="COURTLISTENER_API_KEY")
+    ollama_base_url: str = Field(default="", env="OLLAMA_BASE_URL")
     
+    # Local Llama (distilled model on swarm-gpu)
+    local_llama_base_url: str = Field(default="", env="LOCAL_LLAMA_BASE_URL")
+    local_llama_model: str = Field(default="llama-3.1-8b-distilled", env="LOCAL_LLAMA_MODEL")
+
     # CORS Configuration
     cors_origins: str = Field(
         default="http://localhost:3000,http://localhost:8501",

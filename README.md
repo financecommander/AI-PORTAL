@@ -1,26 +1,43 @@
-# CALCULUS LABS AI PORTAL v2.1
+# CALCULUS LABS AI PORTAL v3.0
 
-Private multi-LLM intelligence platform for legal, financial, and deep reasoning workflows.
+Private multi-LLM intelligence platform for legal, financial, and deep reasoning workflows. Features 8 LLM providers, multi-agent pipelines, knowledge distillation, Swarm GPU integration, and a permit intelligence system.
 
-Built for Calculus Holdings — February 2026.
+Built for Calculus Holdings — 2026.
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│               React 19 Frontend                   │
-│  Auth │ Chat (SSE) │ Pipelines (WS) │ Usage      │
-├──────────────────────────────────────────────────┤
-│                 nginx reverse proxy               │
-├──────────────────────────────────────────────────┤
-│               FastAPI Backend                     │
-│  JWT Auth │ Specialists │ Pipelines │ Usage       │
-├──────┬───────┬────────┬──────┬───────────────────┤
-│GPT-4o│ Grok  │ Gemini │Claude│  CrewAI Pipelines │
-├──────┴───────┴────────┴──────┴───────────────────┤
-│               PostgreSQL 16                       │
-└──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                  React 19 Frontend                       │
+│  Console │ Specialists │ Pipelines │ Swarm │ LeadOps    │
+├─────────────────────────────────────────────────────────┤
+│                  nginx reverse proxy                     │
+├─────────────────────────────────────────────────────────┤
+│                  FastAPI Backend                         │
+│  JWT Auth │ Chat │ Pipelines │ Distillation │ Training  │
+├───────┬────────┬────────┬───────┬──────┬────────────────┤
+│GPT-4o │ Claude │ Gemini │ Grok  │Llama │ DeepSeek/etc  │
+├───────┴────────┴────────┴───────┴──────┴────────────────┤
+│         PostgreSQL 16  │  Ollama GPU (NVIDIA L4)         │
+└─────────────────────────────────────────────────────────┘
 ```
+
+## LLM Providers
+
+| Provider | Models | Notes |
+|----------|--------|-------|
+| OpenAI | GPT-4o, GPT-4o Mini | Primary reasoning |
+| Anthropic | Claude Opus 4.6, Sonnet 4.5 | Deep analysis, code review |
+| Google | Gemini 2.5 Flash | High-volume, cost-efficient |
+| xAI | Grok 3 Mini | Lateral reasoning |
+| DeepSeek | R1, V3.2 | Open-weight reasoning |
+| Mistral | Large 3, Medium 3 | European AI |
+| Groq | Llama 4 Maverick, Scout | Fast inference |
+| Ollama | Llama 3.1 8B, DeepSeek R1 14B, Qwen 2.5 Coder | Local GPU, $0/token |
+
+## Intelligence Console
+
+Multi-model direct chat interface. Select any provider and model, with full conversation history persistence, auto-titling, and URL-shareable conversations. Supports SSE streaming across all providers.
 
 ## Intelligence Pipelines
 
@@ -39,7 +56,7 @@ Built for Calculus Holdings — February 2026.
 
 ### Calculus Intelligence
 
-6-agent heterogeneous deep reasoning pipeline. Designed to outperform single-model systems on complex, novel, and multi-domain problems by routing through three different model families and cross-validating their outputs.
+6-agent heterogeneous deep reasoning pipeline. Routes through three different model families and cross-validates their outputs.
 
 | # | Agent | Model | Role |
 |---|-------|-------|------|
@@ -49,8 +66,6 @@ Built for Calculus Holdings — February 2026.
 | 4 | Deep Context Analyst | Gemini 2.5 Flash | Synthesizes agreement/disagreement across paths |
 | 5 | Adversarial Validator | GPT-4o | Stress-tests claims, assigns confidence scores |
 | 6 | Master Synthesizer | GPT-4o | Final answer with confidence and reasoning trace |
-
-The core advantage: when GPT-4o and Grok independently reach the same conclusion, confidence is high. When they diverge, the validator digs in. A single model family cannot do this.
 
 ### Forge Intelligence
 
@@ -65,17 +80,44 @@ Code generation and software engineering pipeline. Stub — coming in a future r
 | Code Reviewer | Anthropic | Claude Opus 4.6 | Code review, architecture guidance |
 | Legal Quick Consult | xAI | Grok | Legal research, regulatory questions |
 
-## Real-Time Pipeline Streaming
+## Swarm Mainframe Integration
 
-Pipelines stream progress via WebSocket. The frontend shows per-agent status as each agent starts and completes, with token counts and cost tracking populated on completion.
+Dashboard for the Calculus Swarm — a 17-agent caste system running on dedicated GPU infrastructure. Features:
 
-The backend executes pipelines asynchronously (POST returns immediately with a pipeline ID), and the frontend connects via WebSocket to receive `agent_start`, `agent_complete`, and `complete` events in real time.
+- VM health monitoring (uptime, environment, version)
+- Caste system visualization (9 Zerg-inspired castes)
+- Skill registry browser (72 skill categories)
+- Multi-mode session launcher (round_table, review_chain, specialist, debate)
+- Matrix rain animated background
+- Password-protected access
+
+## LeadOps / Permit Intelligence
+
+Natural language permit search system for commercial real estate lead generation. Includes analytics dashboards, filter-based search, and export functionality.
+
+## Knowledge Distillation
+
+Captures all conversation turns (specialist, direct chat, pipeline) into a training dataset for fine-tuning local models. Features:
+
+- Automatic conversation turn logging (fire-and-forget async)
+- Export to Alpaca JSONL format for Llama fine-tuning
+- Readiness checks (recommended 5000+ turns)
+- Per-provider and per-source breakdowns
+
+## Training Data Management
+
+Browse, score, and export training data collected from pipeline runs. Quality feedback system with 0.0–1.0 scoring and labels (good/bad/needs_edit). Export in ChatML or Alpaca format.
+
+## Real-Time Streaming
+
+- **Pipelines**: WebSocket streaming with per-agent `agent_start`, `agent_complete`, and `complete` events
+- **Chat**: SSE streaming across all providers with token counting
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
-# Add API keys: OPENAI_API_KEY, XAI_API_KEY, GOOGLE_API_KEY, ANTHROPIC_API_KEY
+# Add API keys (see Environment Variables below)
 docker compose -f docker-compose.v2.yml up --build
 ```
 
@@ -90,7 +132,7 @@ DB_USER=portal
 DB_PASSWORD=<your-db-password>
 JWT_SECRET=<your-jwt-secret>
 JWT_SECRET_KEY=<your-jwt-secret-key>
-CORS_ORIGINS=http://localhost:3000,http://localhost:8000,http://34.26.83.138
+CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 OPENAI_API_KEY=<your-openai-api-key>
 ANTHROPIC_API_KEY=<your-anthropic-api-key>
 GOOGLE_API_KEY=<your-google-api-key>
@@ -99,6 +141,7 @@ GROQ_API_KEY=<your-groq-api-key>
 DEEPSEEK_API_KEY=<your-deepseek-api-key>
 MISTRAL_API_KEY=<your-mistral-api-key>
 COURTLISTENER_API_KEY=<your-courtlistener-api-key>
+OLLAMA_HOST=http://<ollama-gpu-ip>:11434
 ```
 
 ## Tech Stack
@@ -107,8 +150,9 @@ COURTLISTENER_API_KEY=<your-courtlistener-api-key>
 |-------|------------|
 | Frontend | React 19, TypeScript, Vite 7, Tailwind CSS |
 | Backend | FastAPI, Python 3.12, Pydantic v2 |
-| Database | PostgreSQL 16 |
-| LLM Providers | OpenAI GPT-4o, xAI Grok 3 Mini, Google Gemini 2.5 Flash, Anthropic Claude |
+| Database | PostgreSQL 16 (SQLModel ORM) |
+| LLM Providers | OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Groq, Ollama |
+| Local Inference | Ollama on NVIDIA L4 24GB GPU |
 | Pipeline Orchestration | CrewAI + LiteLLM (token tracking) |
 | Real-Time | WebSocket (pipeline progress), SSE (chat streaming) |
 | Infrastructure | Docker Compose, nginx, GCP Compute Engine |
@@ -122,22 +166,39 @@ backend/
   │   ├── base_pipeline.py          # Abstract pipeline interface
   │   ├── crew_pipeline.py          # CrewAI wrapper with per-agent callbacks
   │   ├── lex_intelligence.py       # 6-agent legal pipeline
-  │   ├── calculus_intelligence.py   # 6-agent reasoning pipeline
-  │   ├── forge_intelligence.py     # Stub for future code gen pipeline
+  │   ├── calculus_intelligence.py  # 6-agent reasoning pipeline
   │   └── registry.py              # Pipeline registry
   ├── routes/
-  │   ├── pipelines.py             # Async execution + WebSocket streaming
-  │   └── chat.py                  # SSE chat streaming
-  ├── providers/                   # LLM provider abstraction
-  ├── websockets/                  # WebSocket connection manager
-  ├── auth/                        # JWT authentication
-  └── config/                      # Settings, pricing, specialist defs
+  │   ├── chat.py                   # Specialist SSE chat streaming
+  │   ├── direct_chat.py            # Multi-model direct chat + model catalog
+  │   ├── conversations.py          # Conversation history CRUD
+  │   ├── pipelines.py              # Async execution + WebSocket streaming
+  │   ├── distillation.py           # Training data export (Alpaca JSONL)
+  │   └── training.py               # Training data management + scoring
+  ├── providers/
+  │   ├── factory.py                # Multi-provider factory (8 providers)
+  │   ├── ollama_provider.py        # Local GPU inference via Ollama
+  │   └── deepseek_provider.py      # DeepSeek API provider
+  ├── models/                       # SQLModel table definitions
+  ├── utils/distillation_logger.py  # Fire-and-forget conversation logging
+  ├── websockets/                   # WebSocket connection manager
+  ├── auth/                         # JWT authentication
+  └── config/                       # Settings, pricing, specialist defs
 frontend/
   ├── src/
-  │   ├── hooks/usePipeline.ts     # WebSocket-first pipeline hook
-  │   ├── components/pipeline/     # Progress cards, agent status
-  │   ├── pages/PipelinesPage.tsx  # Pipeline selection and execution
-  │   └── api/client.ts            # API client with JWT + WebSocket
+  │   ├── pages/
+  │   │   ├── LLMChatPage.tsx       # Intelligence Console (multi-model)
+  │   │   ├── ChatPage.tsx          # Specialist chat (Analyst Desks)
+  │   │   ├── PipelinesPage.tsx     # Pipeline selection and execution
+  │   │   ├── SwarmPage.tsx         # Swarm Mainframe dashboard
+  │   │   ├── LeadOpsPage.tsx       # Permit intelligence
+  │   │   ├── UsagePage.tsx         # Usage analytics + distillation stats
+  │   │   └── SettingsPage.tsx      # Provider & specialist configuration
+  │   ├── hooks/
+  │   │   ├── usePipeline.ts        # WebSocket-first pipeline hook
+  │   │   └── useDirectChat.ts      # Multi-provider chat hook
+  │   ├── components/               # Chat, pipeline, usage, leadops UI
+  │   └── api/client.ts             # API client with JWT + WebSocket
 ```
 
 ## API Endpoints
@@ -146,31 +207,38 @@ frontend/
 |--------|------|-------------|
 | POST | /auth/login | Authenticate with email |
 | GET | /specialists/ | List all specialists |
-| POST | /chat/stream | Stream chat response (SSE) |
+| POST | /chat/stream | Stream specialist chat (SSE) |
+| GET | /chat/direct/models | Multi-provider model catalog |
+| POST | /chat/direct/stream | Stream direct chat (SSE) |
+| GET | /conversations/ | List saved conversations |
+| GET | /conversations/{uuid}/messages | Load conversation |
 | GET | /api/v2/pipelines/list | List available pipelines |
-| POST | /api/v2/pipelines/run | Start pipeline (returns immediately) |
+| POST | /api/v2/pipelines/run | Start pipeline (async) |
 | WS | /api/v2/pipelines/ws/{id} | Real-time pipeline progress |
+| GET | /distillation/stats | Distillation turn statistics |
+| POST | /distillation/export | Export training data (Alpaca JSONL) |
+| GET | /training/ | Browse training data |
 | GET | /usage/ | Usage logs |
 | GET | /health | Health check |
 
+## GCP Infrastructure
+
+Production runs on 4 VMs in `us-east1-b`:
+
+| VM | Role | Key Ports |
+|----|------|-----------|
+| fc-ai-portal | AI Portal (frontend + backend + PostgreSQL) | 3000, 8000 |
+| swarm-mainframe | Swarm API (17-agent orchestrator) | 8080 |
+| swarm-gpu | Ollama GPU inference (NVIDIA L4 24GB) | 11434 |
+| calculus-web | Calculus Research website + chatbot | 80 |
+
 ## Token Tracking
 
-All pipeline LLMs use `crewai.LLM` which routes through LiteLLM for automatic token counting. Per-agent token usage and costs are tracked via `CrewOutput.token_usage` and proportionally allocated across agents. Multi-model cost efficiency is a design priority — Gemini handles high-volume tasks at ~94% cost reduction vs GPT-4o equivalent.
+All pipeline LLMs route through LiteLLM for automatic token counting. Per-agent token usage and costs are tracked via `CrewOutput.token_usage` and proportionally allocated across agents. Multi-model cost efficiency is a design priority — Gemini handles high-volume tasks at ~94% cost reduction vs GPT-4o equivalent.
 
 ## Security
 
-Domain-restricted JWT authentication, token-bucket rate limiting (60 req/hour), no persistent storage of chat content. All token usage and costs logged to PostgreSQL.
-
-## Deployment
-
-Production instance runs on GCP Compute Engine (us-east1-b) with Docker Compose. Backend and frontend are separate containers behind nginx.
-
-```bash
-# On VM
-cd ~/AI-PORTAL && git pull origin main
-docker compose -f docker-compose.v2.yml build --no-cache backend
-docker compose -f docker-compose.v2.yml up -d
-```
+Domain-restricted JWT authentication, token-bucket rate limiting (60 req/hour), no persistent storage of raw chat content beyond conversation history. All token usage and costs logged to PostgreSQL.
 
 ## License
 

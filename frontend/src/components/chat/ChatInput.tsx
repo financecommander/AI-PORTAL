@@ -65,7 +65,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
   const canSend = (value.trim().length > 0 || pendingFiles.length > 0) && !isStreaming && !disabled;
 
   return (
-    <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--cr-border)', background: 'var(--cr-white)' }}
+    <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--cr-border)', background: 'var(--cr-panel)' }}
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
       onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files); }}>
@@ -77,7 +77,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
       )}
 
       {fileError && (
-        <div style={{ marginBottom: 8, padding: '6px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 'var(--cr-radius-sm)', color: 'var(--cr-danger)', fontSize: 12 }}>{fileError}</div>
+        <div style={{ marginBottom: 8, padding: '6px 12px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 'var(--cr-radius-sm)', color: 'var(--cr-danger)', fontSize: 12 }}>{fileError}</div>
       )}
 
       {pendingFiles.length > 0 && (
@@ -99,7 +99,7 @@ export default function ChatInput({ onSend, onStop, isStreaming, disabled, speci
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, background: 'var(--cr-surface)', border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : 'var(--cr-border)'}`, borderRadius: 'var(--cr-radius)', padding: '8px 8px 8px 6px', opacity: disabled ? 0.5 : 1, transition: 'border-color 200ms' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, background: 'var(--cr-surface)', border: `1px solid ${focused || isDragOver ? 'var(--cr-green-600)' : 'var(--cr-border)'}`, borderRadius: 28, padding: '8px 8px 8px 6px', opacity: disabled ? 0.5 : 1, transition: 'border-color 200ms' }}>
         <button onClick={() => fileInputRef.current?.click()} disabled={disabled || isStreaming} style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', background: 'transparent', border: 'none', cursor: disabled || isStreaming ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pendingFiles.length > 0 ? 'var(--cr-green-600)' : 'var(--cr-text-muted)' }} title="Attach file">
           <Paperclip size={18} />
         </button>

@@ -1,4 +1,4 @@
-"""Database models for backend v2.2."""
+"""Database models for backend v2.3 — adds training data collection."""
 
 from datetime import datetime, timezone
 from typing import Optional
@@ -99,3 +99,53 @@ class Message(SQLModel, table=True):
     cost_usd: float = Field(default=0.0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+# ── v2.3: Training data collection for swarm fine-tuning ─────
+
+
+class TrainingData(SQLModel, table=True):
+    """Training data captured from pipeline agent runs for fine-tuning."""
+
+    __tablename__ = "training_data"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    pipeline_run_id: Optional[str] = Field(default=None, index=True)
+    pipeline_name: str = Field(index=True)
+    agent_name: str = Field(index=True)
+    agent_role: str = Field(default="")
+    model_used: str = Field(default="")
+    system_prompt: str = Field(default="")
+    user_input: str = Field(default="")
+    assistant_output: str = Field(default="")
+    input_tokens: int = Field(default=0)
+    output_tokens: int = Field(default=0)
+    cost_usd: float = Field(default=0.0)
+    quality_score: Optional[float] = Field(default=None)  # 0.0-1.0, set by feedback
+    quality_label: Optional[str] = Field(default=None)  # good, bad, needs_edit
+    feedback_text: Optional[str] = Field(default=None)
+    exported: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ── v2.4: Conversation turns for knowledge distillation ──────
+
+
+class ConversationTurn(SQLModel, table=True):
+    """Logged conversation turn for knowledge distillation training data."""
+
+    __tablename__ = "conversation_turns"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_hash: str = Field(index=True)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    source: str = Field(index=True)  # "specialist", "direct", "pipeline"
+    provider: str
+    model: str
+    specialist_id: Optional[str] = None
+    system_prompt: Optional[str] = None
+    user_prompt: str
+    assistant_response: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float = 0.0
+    exported: bool = Field(default=False, index=True)

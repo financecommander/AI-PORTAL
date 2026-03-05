@@ -17,7 +17,7 @@ from typing import Optional, Callable, Any
 import requests
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
+
 from backend.config.settings import settings
 from backend.tools.skiptrace.tool import run_skiptrace_scraper
 
@@ -132,7 +132,7 @@ class SkipTracePipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Public Records Researcher"})
 
-        public_records_report, a1_tokens = await self._run_public_records_researcher(query)
+        public_records_report, a1_tokens = await self._run_public_records_researcher(query, on_progress=on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -160,7 +160,7 @@ class SkipTracePipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Digital Footprint Analyst"})
 
-        digital_report, a2_tokens = await self._run_digital_footprint_analyst(query)
+        digital_report, a2_tokens = await self._run_digital_footprint_analyst(query, on_progress=on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -190,6 +190,7 @@ class SkipTracePipeline(BasePipeline):
 
         identity_report, a3_tokens = await self._run_identity_verifier(
             query, public_records_report, digital_report,
+            on_progress=on_progress,
         )
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
@@ -220,6 +221,7 @@ class SkipTracePipeline(BasePipeline):
 
         final_report, a4_tokens = await self._run_skip_trace_reporter(
             query, public_records_report, digital_report, identity_report,
+            on_progress=on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -279,7 +281,7 @@ class SkipTracePipeline(BasePipeline):
             name_part = name_part[:m.start()].strip().rstrip(',')
         return name_part.strip(), state, city
 
-    async def _run_public_records_researcher(self, query: str) -> tuple[str, dict]:
+    async def _run_public_records_researcher(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 1: Public records — court, property, UCC, voter rolls.
 
         Two live data sources before LLM reasoning:
@@ -325,21 +327,18 @@ class SkipTracePipeline(BasePipeline):
             f"── LIVE COURT RECORDS (CourtListener API) ──\n{court_data}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Public Records Researcher",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_digital_footprint_analyst(self, query: str) -> tuple[str, dict]:
+    async def _run_digital_footprint_analyst(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 2: Digital presence — social media, business filings, web."""
         provider = get_provider("google")
 
@@ -359,22 +358,20 @@ class SkipTracePipeline(BasePipeline):
             "Describe the search methodology you would use for each source."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Digital Footprint Analyst",
+            provider=provider,
             messages=[{"role": "user", "content": query}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_identity_verifier(
         self, query: str, public_records: str, digital_footprint: str,
+        on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 3: Cross-reference data, resolve conflicts, verify identity."""
         provider = get_provider("google")
@@ -399,23 +396,21 @@ class SkipTracePipeline(BasePipeline):
             f"Digital Footprint Findings:\n{digital_footprint[:3000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Identity Verifier",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gemini-2.5-flash",
             temperature=0.2,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_skip_trace_reporter(
         self, query: str, public_records: str,
         digital_footprint: str, identity_verification: str,
+        on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Final skip trace dossier with confidence scores."""
         provider = get_provider("openai")
@@ -455,16 +450,13 @@ class SkipTracePipeline(BasePipeline):
             f"Identity Verification:\n{identity_verification[:2500]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Skip Trace Reporter",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gpt-4o",
             temperature=0.3,
             max_tokens=4096,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }

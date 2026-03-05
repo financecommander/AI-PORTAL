@@ -18,7 +18,6 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +83,7 @@ class DueDiligencePipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Entity Investigator"})
 
-        entity_report, a1_tokens = await self._run_entity_investigator(query)
+        entity_report, a1_tokens = await self._run_entity_investigator(query, on_progress=on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -112,7 +111,7 @@ class DueDiligencePipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Litigation Scanner"})
 
-        litigation_report, a2_tokens = await self._run_litigation_scanner(query)
+        litigation_report, a2_tokens = await self._run_litigation_scanner(query, on_progress=on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -140,7 +139,7 @@ class DueDiligencePipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Financial Verifier"})
 
-        financial_report, a3_tokens = await self._run_financial_verifier(query)
+        financial_report, a3_tokens = await self._run_financial_verifier(query, on_progress=on_progress)
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
         agent_breakdown.append({
@@ -170,6 +169,7 @@ class DueDiligencePipeline(BasePipeline):
 
         final_report, a4_tokens = await self._run_diligence_reporter(
             query, entity_report, litigation_report, financial_report,
+            on_progress=on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -206,7 +206,7 @@ class DueDiligencePipeline(BasePipeline):
 
     # ── Agent Implementations ───────────────────────────────────────
 
-    async def _run_entity_investigator(self, query: str) -> tuple[str, dict]:
+    async def _run_entity_investigator(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 1: Corporate structure, ownership, and sanctions."""
         provider = get_provider("google")
 
@@ -223,21 +223,14 @@ class DueDiligencePipeline(BasePipeline):
             "If information is limited, note what additional searches are recommended."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Entity Investigator", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash",
-            temperature=0.2,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.2, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_litigation_scanner(self, query: str) -> tuple[str, dict]:
+    async def _run_litigation_scanner(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 2: Court records, liens, and judgments."""
         provider = get_provider("google")
 
@@ -255,21 +248,14 @@ class DueDiligencePipeline(BasePipeline):
             "Note what court databases should be searched for full verification."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Litigation Scanner", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash",
-            temperature=0.2,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.2, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_financial_verifier(self, query: str) -> tuple[str, dict]:
+    async def _run_financial_verifier(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 3: Financial statement and tax analysis."""
         provider = get_provider("google")
 
@@ -286,23 +272,16 @@ class DueDiligencePipeline(BasePipeline):
             "If financial data is not provided, outline what documents are needed."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Financial Verifier", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash",
-            temperature=0.2,
-            max_tokens=3000,
-            system_prompt=system_prompt,
+            model="gemini-2.5-flash", temperature=0.2, max_tokens=3000,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_diligence_reporter(
         self, query: str, entity_report: str,
-        litigation_report: str, financial_report: str,
+        litigation_report: str, financial_report: str, on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Consolidated due diligence report."""
         provider = get_provider("openai")
@@ -335,16 +314,9 @@ class DueDiligencePipeline(BasePipeline):
             f"Financial Verification:\n{financial_report[:2500]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Diligence Reporter", provider=provider,
             messages=[{"role": "user", "content": user_content}],
-            model="gpt-4o",
-            temperature=0.3,
-            max_tokens=4096,
-            system_prompt=system_prompt,
+            model="gpt-4o", temperature=0.3, max_tokens=4096,
+            system_prompt=system_prompt, on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }

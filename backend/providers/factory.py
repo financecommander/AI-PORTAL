@@ -36,6 +36,20 @@ def get_provider(provider_name: str) -> BaseProvider:
             return AnthropicProvider(api_key=settings.anthropic_api_key)
         case "google" | "gemini":
             return GoogleProvider(api_key=settings.google_api_key)
+        case "ollama":
+            from backend.providers.ollama_provider import OllamaProvider
+            return OllamaProvider()
+        case "local-llama" | "distilled":
+            if not settings.local_llama_base_url:
+                raise ValueError(
+                    "LOCAL_LLAMA_BASE_URL not configured. "
+                    "Set it to the vLLM/Ollama endpoint on swarm-gpu (e.g. http://<ip>:8080/v1)"
+                )
+            return OpenAIProvider(
+                api_key="not-needed",
+                base_url=settings.local_llama_base_url,
+                name="local-llama",
+            )
         case "local" | "ternary" | "local-ternary":
             from backend.providers.local_ternary_provider import LocalTernaryProvider
             # Prefer Triton checkpoint dir, fall back to generic path
@@ -45,4 +59,4 @@ def get_provider(provider_name: str) -> BaseProvider:
             )
             return LocalTernaryProvider(model_path=model_path)
         case _:
-            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, groq, deepseek, mistral, local")
+            raise ValueError(f"Unknown provider: '{provider_name}'. Available: openai, anthropic, google, grok, groq, deepseek, mistral, ollama, local-llama, local")

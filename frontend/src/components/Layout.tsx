@@ -12,7 +12,7 @@ export default function Layout() {
   const [searchParams] = useSearchParams();
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cr-surface)' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cr-bg)' }}>
       <div style={{ color: 'var(--cr-text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   );
@@ -33,9 +33,9 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--cr-surface)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--cr-bg)' }}>
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center px-4 py-3" style={{ background: 'var(--cr-white)', borderBottom: '1px solid var(--cr-border)' }}>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center px-4 py-3" style={{ background: 'var(--cr-panel)', borderBottom: '1px solid var(--cr-border)' }}>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ color: 'var(--cr-text)' }} className="p-1">
           {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -56,7 +56,9 @@ export default function Layout() {
         />
       </div>
       {/* Main content */}
-      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0"><Outlet /></main>
+      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0">
+        <div key={location.pathname} className="page-transition"><Outlet /></div>
+      </main>
     </div>
   );
 }

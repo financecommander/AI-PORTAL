@@ -9,6 +9,8 @@ import ConsolePage from './pages/ConsolePage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
 import SettingsPage from './pages/SettingsPage';
+import SwarmPage from './pages/SwarmPage';
+import LeadOpsPage from './pages/LeadOpsPage';
 
 function LoginGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -30,7 +32,9 @@ export default function App() {
               <Route path="console" element={<ConsolePage />} />
               <Route path="pipelines" element={<PipelinesPage />} />
               <Route path="usage" element={<UsagePage />} />
+              <Route path="swarm" element={<SwarmPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="leadops" element={<LeadOpsPage />} />
             </Route>
           </Routes>
         </AuthProvider>

@@ -4,12 +4,13 @@ import {
   MessageSquare,
   Bot,
   Layers,
+  Boxes,
   BarChart3,
   LogOut,
   Settings,
-  Terminal,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 import ConversationList from './ConversationList';
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { label: 'Intelligence', icon: Terminal, path: '/console' },
   { label: 'Analyst Desks', icon: Bot, path: '/specialists' },
   { label: 'Engines', icon: Layers, path: '/pipelines' },
+  { label: 'Swarm Mainframe', icon: Boxes, path: '/swarm' },
   { label: 'Metrics', icon: BarChart3, path: '/usage' },
 ];
 
@@ -34,6 +36,7 @@ export default function Sidebar({
   onNavigate,
 }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -44,14 +47,19 @@ export default function Sidebar({
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--cr-white)',
+        background: 'var(--cr-panel)',
         borderRight: '1px solid var(--cr-border)',
         flexShrink: 0,
       }}
     >
       {/* Brand */}
       <div style={{ padding: '20px 20px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <a
+          href="http://34.26.53.11"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
+        >
           <div
             style={{
               width: 32,
@@ -85,7 +93,7 @@ export default function Sidebar({
               Financial Innovations
             </div>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Navigation */}
@@ -96,6 +104,7 @@ export default function Sidebar({
           return (
             <button
               key={item.path}
+              className="sidebar-nav-item"
               onClick={() => { navigate(item.path); onNavigate?.(); }}
               style={{
                 display: 'flex',
@@ -169,6 +178,17 @@ export default function Sidebar({
           </div>
         )}
         <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Terminal Mode' : 'Light Mode'}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '8px', borderRadius: 'var(--cr-radius-xs)', border: 'none',
+              background: 'transparent', color: 'var(--cr-text-muted)', cursor: 'pointer', fontSize: 12,
+            }}
+          >
+            {theme === 'light' ? <Monitor size={14} /> : <Sun size={14} />}
+          </button>
           <button
             onClick={() => navigate('/settings')}
             style={{

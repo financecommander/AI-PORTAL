@@ -33,7 +33,7 @@ export default function UsageTable({ logs }: UsageTableProps) {
   const rows = logs.slice(0, 50);
 
   if (rows.length === 0) return (
-    <div style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 40, textAlign: 'center', color: 'var(--cr-text-muted)', fontSize: 14 }}>
+    <div style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 40, textAlign: 'center', color: 'var(--cr-text-muted)', fontSize: 14 }}>
       No usage logs yet — start chatting to see your usage here
     </div>
   );
@@ -47,7 +47,7 @@ export default function UsageTable({ logs }: UsageTableProps) {
   const td: React.CSSProperties = { padding: '8px 12px', borderBottom: '1px solid var(--cr-border)' };
 
   return (
-    <div style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', overflowX: 'auto' }}>
+    <div style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr>
@@ -62,7 +62,7 @@ export default function UsageTable({ logs }: UsageTableProps) {
         </thead>
         <tbody>
           {rows.map((log, i) => (
-            <tr key={log.id} style={{ background: i % 2 === 0 ? 'var(--cr-white)' : 'var(--cr-surface)' }}>
+            <tr key={log.id} style={{ background: i % 2 === 0 ? 'var(--cr-panel)' : 'var(--cr-surface)' }}>
               <td style={{ ...td, color: 'var(--cr-text-muted)', whiteSpace: 'nowrap' }}>{relativeTime(log.timestamp)}</td>
               <td style={{ ...td, color: 'var(--cr-text)' }}>{log.specialist_id ?? '—'}</td>
               <td style={{ ...td, color: 'var(--cr-text)' }}>{log.provider}</td>

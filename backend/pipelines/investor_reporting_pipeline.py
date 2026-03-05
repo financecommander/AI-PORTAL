@@ -18,7 +18,7 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class InvestorReportingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Performance Analyst"})
 
-        perf_report, a1_tokens = await self._run_performance_analyst(query)
+        perf_report, a1_tokens = await self._run_performance_analyst(query, on_progress=on_progress)
 
         a1_ms = (time.perf_counter() - a1_start) * 1000
         agent_breakdown.append({
@@ -112,7 +112,7 @@ class InvestorReportingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Portfolio Narrator"})
 
-        narrative_report, a2_tokens = await self._run_portfolio_narrator(query, perf_report)
+        narrative_report, a2_tokens = await self._run_portfolio_narrator(query, perf_report, on_progress=on_progress)
 
         a2_ms = (time.perf_counter() - a2_start) * 1000
         agent_breakdown.append({
@@ -140,7 +140,7 @@ class InvestorReportingPipeline(BasePipeline):
         if on_progress:
             await on_progress("agent_start", {"agent": "Market Commentator"})
 
-        market_report, a3_tokens = await self._run_market_commentator(query)
+        market_report, a3_tokens = await self._run_market_commentator(query, on_progress=on_progress)
 
         a3_ms = (time.perf_counter() - a3_start) * 1000
         agent_breakdown.append({
@@ -170,6 +170,7 @@ class InvestorReportingPipeline(BasePipeline):
 
         final_report, a4_tokens = await self._run_report_assembler(
             query, perf_report, narrative_report, market_report,
+            on_progress=on_progress,
         )
 
         a4_ms = (time.perf_counter() - a4_start) * 1000
@@ -206,7 +207,7 @@ class InvestorReportingPipeline(BasePipeline):
 
     # ── Agent Implementations ───────────────────────────────────────
 
-    async def _run_performance_analyst(self, query: str) -> tuple[str, dict]:
+    async def _run_performance_analyst(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 1: Fund returns and performance attribution."""
         provider = get_provider("google")
 
@@ -225,21 +226,18 @@ class InvestorReportingPipeline(BasePipeline):
             "use reasonable assumptions and label them clearly."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Performance Analyst",
+            provider=provider,
             messages=[{"role": "user", "content": query}],
             model="gemini-2.5-flash",
             temperature=0.3,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_portfolio_narrator(self, query: str, perf_report: str) -> tuple[str, dict]:
+    async def _run_portfolio_narrator(self, query: str, perf_report: str, on_progress=None) -> tuple[str, dict]:
         """Agent 2: Asset-level narratives."""
         provider = get_provider("google")
 
@@ -261,21 +259,18 @@ class InvestorReportingPipeline(BasePipeline):
             f"Performance Analysis:\n{perf_report[:2000]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Portfolio Narrator",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gemini-2.5-flash",
             temperature=0.4,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
 
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
-
-    async def _run_market_commentator(self, query: str) -> tuple[str, dict]:
+    async def _run_market_commentator(self, query: str, on_progress=None) -> tuple[str, dict]:
         """Agent 3: Market outlook and commentary."""
         provider = get_provider("google")
 
@@ -291,23 +286,21 @@ class InvestorReportingPipeline(BasePipeline):
             "Write in a measured, institutional tone. Be balanced between opportunities and risks."
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Market Commentator",
+            provider=provider,
             messages=[{"role": "user", "content": query}],
             model="gemini-2.5-flash",
             temperature=0.4,
             max_tokens=3000,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }
 
     async def _run_report_assembler(
         self, query: str, perf_report: str,
         narrative_report: str, market_report: str,
+        on_progress=None,
     ) -> tuple[str, dict]:
         """Agent 4: Final LP letter with disclosures."""
         provider = get_provider("openai")
@@ -344,16 +337,13 @@ class InvestorReportingPipeline(BasePipeline):
             f"Market Commentary:\n{market_report[:2500]}"
         )
 
-        response = await provider.send_message(
+        return await self._stream_agent_response(
+            agent_name="Report Assembler",
+            provider=provider,
             messages=[{"role": "user", "content": user_content}],
             model="gpt-4o",
             temperature=0.4,
             max_tokens=4096,
             system_prompt=system_prompt,
+            on_progress=on_progress,
         )
-
-        return response.content, {
-            "input": response.input_tokens,
-            "output": response.output_tokens,
-            "cost": response.cost_usd,
-        }

@@ -115,7 +115,8 @@ export default function AgentProgressCard({
           {statusText()}
         </div>
 
-        {status === 'complete' && output && (
+        {/* Show expand button when complete with output, or live preview when running */}
+        {(status === 'complete' || status === 'running') && output && (
           <button
             onClick={() => setExpanded(v => !v)}
             style={{
@@ -133,7 +134,30 @@ export default function AgentProgressCard({
         )}
       </div>
 
-      {expanded && output && (
+      {/* Live streaming preview (auto-expand when running with output) */}
+      {status === 'running' && output && (
+        <div
+          style={{
+            background: 'var(--cr-charcoal-dark)',
+            borderRadius: '0 0 8px 8px',
+            padding: '12px 16px',
+            maxHeight: '180px',
+            overflowY: 'auto',
+            marginTop: '-4px',
+          }}
+        >
+          <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+            {output}
+            <span className="animate-blink" style={{ color: 'var(--cr-green-600)', fontSize: 14, marginLeft: 2 }}>▌</span>
+          </p>
+          <div style={{ fontSize: 11, color: 'var(--cr-text-dim)', marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>
+            ~{Math.ceil(output.length / 4).toLocaleString()} tokens
+          </div>
+        </div>
+      )}
+
+      {/* Expanded output (for completed agents) */}
+      {expanded && status === 'complete' && output && (
         <div
           style={{
             background: 'var(--cr-charcoal-dark)',

@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from websockets.events import EventType, WSEvent
-from websockets.manager import ConnectionManager
+from ws_events.events import EventType, WSEvent
+from ws_events.manager import ConnectionManager
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +193,6 @@ class TestConnectionManager:
         await mgr.send_event("pipe-none", event)
 
     def test_ws_manager_singleton(self):
-        from websockets.manager import ws_manager
+        from ws_events.manager import ws_manager
         assert isinstance(ws_manager, ConnectionManager)
         assert ws_manager.active_connections == 0

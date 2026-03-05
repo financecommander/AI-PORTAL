@@ -1,5 +1,6 @@
 """Direct LLM chat — provider/model selection without specialists."""
 
+import asyncio
 import json
 import logging
 from fastapi import APIRouter, Depends
@@ -11,6 +12,7 @@ from backend.config.settings import settings
 from backend.database import get_session
 from backend.models import UsageLog
 from backend.providers.factory import get_provider
+from backend.utils.distillation_logger import log_conversation_turn
 from sqlmodel import Session
 
 logger = logging.getLogger(__name__)
@@ -281,7 +283,7 @@ PROVIDERS_CATALOG = [
                 "name": "Llama 4 Maverick",
                 "tier": "top",
                 "context": "128K",
-                "description": "Meta's flagship MoE model via Groq — 562 tok/s, multimodal",
+                "description": "Meta's flagship MoE model via Groq -- 562 tok/s, multimodal",
                 "input_price": 0.20, "output_price": 0.60
             },
             {
@@ -289,10 +291,22 @@ PROVIDERS_CATALOG = [
                 "name": "Llama 4 Scout",
                 "tier": "mid",
                 "context": "128K",
-                "description": "Fast general-purpose MoE via Groq — 594 tok/s, reasoning & code",
+                "description": "Fast general-purpose MoE via Groq -- 594 tok/s, reasoning & code",
                 "input_price": 0.11, "output_price": 0.34
             },
         ]
+    },
+    {
+        "id": "ollama",
+        "name": "Ollama (Local)",
+        "models": [],  # Populated dynamically from Ollama API
+    },
+    {
+        "id": "local-llama",
+        "name": "Local Llama (Distilled)",
+        "models": [
+            {"id": "llama-3.1-8b-distilled", "name": "Llama 3.1 8B (Fine-tuned)", "tier": "free", "input_price": 0, "output_price": 0},
+        ],
     },
 ]
 
@@ -311,6 +325,8 @@ _PROVIDER_KEY_ATTRS: dict[str, str] = {
     "deepseek": "deepseek_api_key",
     "mistral": "mistral_api_key",
     "groq": "groq_api_key",
+    "ollama": "ollama_base_url",
+    "local-llama": "local_llama_base_url",
 }
 
 
@@ -321,8 +337,64 @@ async def list_models(user: dict = Depends(get_current_user)):
     for prov in PROVIDERS_CATALOG:
         key_attr = _PROVIDER_KEY_ATTRS.get(prov["id"])
         if key_attr and getattr(settings, key_attr, ""):
-            available.append(prov)
+            if prov["id"] == "ollama":
+                # Dynamically populate Ollama models
+                prov_copy = {**prov, "models": await _get_ollama_models()}
+                if prov_copy["models"]:
+                    available.append(prov_copy)
+            else:
+                available.append(prov)
     return {"providers": available}
+
+
+async def _get_ollama_models() -> list[dict]:
+    """Fetch models from Ollama and format as catalog entries."""
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        raw_models = await provider.list_models()
+        return [
+            {
+                "id": m["name"],
+                "name": m["name"],
+                "tier": "local",
+                "context": "varies",
+                "description": f"Local model via Ollama (free inference)",
+                "input_price": 0.0,
+                "output_price": 0.0,
+            }
+            for m in raw_models
+        ]
+    except Exception:
+        return []
+
+
+@router.get("/ollama/health")
+async def ollama_health(user: dict = Depends(get_current_user)):
+    """Check if Ollama is reachable."""
+    if not settings.ollama_base_url:
+        return {"healthy": False, "reason": "OLLAMA_BASE_URL not configured"}
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        healthy = await provider.is_healthy()
+        return {"healthy": healthy, "url": settings.ollama_base_url}
+    except Exception as e:
+        return {"healthy": False, "reason": str(e)}
+
+
+@router.get("/ollama/models")
+async def ollama_models(user: dict = Depends(get_current_user)):
+    """List all models available on the Ollama server."""
+    if not settings.ollama_base_url:
+        return {"models": [], "reason": "OLLAMA_BASE_URL not configured"}
+    try:
+        from backend.providers.ollama_provider import OllamaProvider
+        provider = OllamaProvider()
+        models = await provider.list_models()
+        return {"models": models}
+    except Exception as e:
+        return {"models": [], "reason": str(e)}
 
 
 # ── Streaming Chat ───────────────────────────────────────────────
@@ -349,28 +421,36 @@ async def stream_direct_chat(
 ):
     """Stream a direct LLM response — no specialist, user picks provider + model."""
 
-    # Validate model exists in catalog
-    if request.model not in _VALID_MODELS:
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"Unknown model '{request.model}'. Use GET /chat/direct/models for available models."},
-        )
+    # Ollama models are dynamic — skip static catalog validation
+    if request.provider == "ollama":
+        if not settings.ollama_base_url:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Ollama is not configured. Set OLLAMA_BASE_URL."},
+            )
+    else:
+        # Validate model exists in catalog
+        if request.model not in _VALID_MODELS:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Unknown model '{request.model}'. Use GET /chat/direct/models for available models."},
+            )
 
-    # Validate provider/model pairing
-    expected_provider = _VALID_MODELS[request.model]
-    if request.provider != expected_provider:
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"Model '{request.model}' belongs to provider '{expected_provider}', not '{request.provider}'."},
-        )
+        # Validate provider/model pairing
+        expected_provider = _VALID_MODELS[request.model]
+        if request.provider != expected_provider:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Model '{request.model}' belongs to provider '{expected_provider}', not '{request.provider}'."},
+            )
 
-    # Check API key is configured
-    key_attr = _PROVIDER_KEY_ATTRS.get(request.provider)
-    if key_attr and not getattr(settings, key_attr, ""):
-        return JSONResponse(
-            status_code=400,
-            content={"error": f"API key for {request.provider} is not configured. Contact your administrator."},
-        )
+        # Check API key is configured
+        key_attr = _PROVIDER_KEY_ATTRS.get(request.provider)
+        if key_attr and not getattr(settings, key_attr, ""):
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"API key for {request.provider} is not configured. Contact your administrator."},
+            )
 
     provider = get_provider(request.provider)
     messages = (
@@ -378,8 +458,18 @@ async def stream_direct_chat(
         + [{"role": "user", "content": request.message}]
     )
 
+    # Auto-summarize if history exceeds ~70% of model context window
+    was_summarized = False
+    try:
+        from backend.utils.summarizer import summarize_history
+        messages, was_summarized = await summarize_history(messages, request.model)
+    except Exception as e:
+        logger.warning("Summarization check failed (continuing with full history): %s", e)
+
     async def event_generator():
         final_chunk = None
+        first_chunk = True
+        response_text = ""
         try:
             async for chunk in provider.stream_message(
                 messages=messages,
@@ -390,6 +480,8 @@ async def stream_direct_chat(
             ):
                 if chunk.is_final:
                     final_chunk = chunk
+                if chunk.content:
+                    response_text += chunk.content
                 data = {
                     "content": chunk.content,
                     "is_final": chunk.is_final,
@@ -397,6 +489,10 @@ async def stream_direct_chat(
                     "output_tokens": chunk.output_tokens,
                     "cost_usd": chunk.cost_usd,
                 }
+                # Signal to frontend that history was summarized
+                if first_chunk and was_summarized:
+                    data["summarized"] = True
+                first_chunk = False
                 yield f"data: {json.dumps(data)}\n\n"
         except Exception as e:
             logger.error("Direct chat stream error: %s", e, exc_info=True)
@@ -419,5 +515,20 @@ async def stream_direct_chat(
             )
             session.add(log)
             session.commit()
+
+            # Log conversation turn for distillation
+            asyncio.create_task(log_conversation_turn(
+                user_hash=user.get("sub", "unknown"),
+                source="direct",
+                provider=request.provider,
+                model=request.model,
+                specialist_id="direct",
+                system_prompt="You are a helpful AI assistant.",
+                user_prompt=request.message,
+                assistant_response=response_text,
+                input_tokens=final_chunk.input_tokens,
+                output_tokens=final_chunk.output_tokens,
+                cost_usd=final_chunk.cost_usd,
+            ))
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

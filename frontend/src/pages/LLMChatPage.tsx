@@ -8,6 +8,7 @@ import MessageBubble from '../components/chat/MessageBubble';
 import ChatInput from '../components/chat/ChatInput';
 import ModelSelector from '../components/chat/ModelSelector';
 
+
 const SUGGESTION_PROMPTS = [
   'Explain CRE cap rate compression and its impact on deal underwriting',
   'What are the key financial covenants in a CMBS loan?',
@@ -142,77 +143,79 @@ export default function LLMChatPage() {
 
   if (!hasMessages) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto', background: 'var(--cr-surface)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
-            <Sparkles style={{ width: 24, height: 24, color: 'var(--cr-green-600)' }} />
-            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--cr-text)', letterSpacing: '-0.02em', fontFamily: "'Space Grotesk', sans-serif" }}>
-              Calculus Research
-            </span>
+      <div className="page-bg bg-ai-grid" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 24, overflow: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, width: '100%' }}>
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
+              <Sparkles style={{ width: 24, height: 24, color: 'var(--cr-green-600)' }} />
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--cr-text)', letterSpacing: '-0.02em', fontFamily: "'Space Grotesk', sans-serif" }}>
+                Calculus Research
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--cr-text-muted)' }}>Intelligence Console</div>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--cr-text-muted)' }}>Intelligence Console</div>
+
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--cr-text)', textAlign: 'center', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
+            What do you need to analyze?
+          </h1>
+
+          {catalogError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
+              <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
+              {catalogError}
+            </div>
+          )}
+
+          <div style={{ width: '100%', maxWidth: 700 }}>
+            <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={!selectedModel} specialistName={selectedModelName || undefined} />
+          </div>
+
+          {providers.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="grid" />
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
+            {SUGGESTION_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => sendMessage(prompt)}
+                style={{
+                  background: 'var(--cr-panel)',
+                  border: '1px solid var(--cr-border)',
+                  borderRadius: 20,
+                  color: 'var(--cr-text-secondary)',
+                  fontSize: 12,
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  transition: 'all 150ms',
+                  maxWidth: 340,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; e.currentTarget.style.color = 'var(--cr-text)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; e.currentTarget.style.color = 'var(--cr-text-secondary)'; }}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+
+          {error && (
+            <div style={{ padding: '8px 14px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
+              {error}
+            </div>
+          )}
         </div>
-
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--cr-text)', textAlign: 'center', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
-          What do you need to analyze?
-        </h1>
-
-        {catalogError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
-            <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
-            {catalogError}
-          </div>
-        )}
-
-        <div style={{ width: '100%', maxWidth: 700 }}>
-          <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} disabled={!selectedModel} specialistName={selectedModelName || undefined} />
-        </div>
-
-        {providers.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="grid" />
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
-          {SUGGESTION_PROMPTS.map((prompt) => (
-            <button
-              key={prompt}
-              onClick={() => sendMessage(prompt)}
-              style={{
-                background: 'var(--cr-white)',
-                border: '1px solid var(--cr-border)',
-                borderRadius: 20,
-                color: 'var(--cr-text-secondary)',
-                fontSize: 12,
-                padding: '8px 16px',
-                cursor: 'pointer',
-                transition: 'all 150ms',
-                maxWidth: 340,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; e.currentTarget.style.color = 'var(--cr-text)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; e.currentTarget.style.color = 'var(--cr-text-secondary)'; }}
-            >
-              {prompt}
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <div style={{ padding: '8px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
-            {error}
-          </div>
-        )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col" style={{ height: '100vh', background: 'var(--cr-surface)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-white)' }}>
+    <div className="flex flex-col page-bg bg-ai-grid" style={{ height: '100vh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--cr-border)', flexShrink: 0, background: 'var(--cr-panel)', position: 'relative', zIndex: 1 }}>
         <ModelSelector providers={providers} selectedProvider={selectedProvider} selectedModel={selectedModel} onSelect={handleModelSelect} mode="compact" />
         <div style={{ flex: 1 }} />
         <button
@@ -220,7 +223,7 @@ export default function LLMChatPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
             borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)',
-            background: 'var(--cr-white)', color: 'var(--cr-text-secondary)', fontSize: 13, cursor: 'pointer',
+            background: 'var(--cr-panel)', color: 'var(--cr-text-secondary)', fontSize: 13, cursor: 'pointer',
           }}
         >
           <Plus style={{ width: 14, height: 14 }} />
@@ -228,7 +231,7 @@ export default function LLMChatPage() {
         </button>
       </div>
 
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto" style={{ padding: 16 }}>
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto" style={{ padding: 16, position: 'relative', zIndex: 1 }}>
         {messages.map((msg, idx) => (
           <MessageBubble
             key={msg._id || `msg-${idx}`}
@@ -248,7 +251,7 @@ export default function LLMChatPage() {
       )}
 
       {error && (
-        <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>
+        <div style={{ margin: '0 16px 8px', padding: '8px 12px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13 }}>
           {error}
         </div>
       )}

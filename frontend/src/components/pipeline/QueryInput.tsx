@@ -13,9 +13,10 @@ interface QueryInputProps {
   readOnly?: boolean;
   value?: string;
   estimatedCost?: number;
+  placeholder?: string;
 }
 
-export default function QueryInput({ onSubmit, isRunning, readOnly, value, estimatedCost }: QueryInputProps) {
+export default function QueryInput({ onSubmit, isRunning, readOnly, value, estimatedCost, placeholder }: QueryInputProps) {
   const [query, setQuery] = useState(value ?? '');
 
   const handleSubmit = () => {
@@ -44,7 +45,7 @@ export default function QueryInput({ onSubmit, isRunning, readOnly, value, estim
           onChange={readOnly ? undefined : e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           readOnly={readOnly}
-          placeholder="Enter your query for the pipeline..."
+          placeholder={placeholder ?? "Enter your query for the pipeline..."}
           rows={3}
           style={{
             width: '100%',

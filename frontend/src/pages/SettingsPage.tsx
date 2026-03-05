@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 import type { Specialist, Pipeline } from '../types';
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20, marginBottom: 16 }}>
+    <div style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', padding: 20, marginBottom: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
         {title}
       </div>
@@ -24,6 +25,7 @@ function Pill({ label, color = 'var(--cr-surface-2)' }: { label: string; color?:
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
 
@@ -33,7 +35,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 800 }}>
+    <div className="page-bg bg-datacenter" style={{ padding: '28px 32px', maxWidth: 800, minHeight: '100vh' }}>
       <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--cr-text)', marginBottom: 24 }}>
         Settings
       </h1>
@@ -72,15 +74,17 @@ export default function SettingsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--cr-text-muted)' }}>Version</span>
-            <span style={{ color: 'var(--cr-text)', fontWeight: 500 }}>v2.2</span>
+            <span style={{ color: 'var(--cr-text)', fontWeight: 500 }}>v3.0</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--cr-text-muted)' }}>Backend</span>
             <span style={{ color: 'var(--cr-text)', fontWeight: 500 }}>FastAPI + PostgreSQL</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: 'var(--cr-text-muted)' }}>Theme</span>
-            <span style={{ color: 'var(--cr-text)', fontWeight: 500 }}>Light Institutional</span>
+            <button onClick={toggleTheme} style={{ background: 'none', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius-xs)', padding: '4px 12px', cursor: 'pointer', color: 'var(--cr-text)', fontWeight: 500, fontSize: 13 }}>
+              {theme === 'light' ? 'Light Institutional' : 'Terminal Mode'}
+            </button>
           </div>
         </div>
       </Card>

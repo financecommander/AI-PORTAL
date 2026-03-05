@@ -107,6 +107,16 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "llama-4-scout-17b-16e-instruct": (0.0, 0.0),
     "llama-4-maverick-17b-128e-instruct": (0.0, 0.0),
     "llama-4-scout": (0.0, 0.0),
+
+    # Ollama (local/self-hosted — always free)
+    "deepseek-r1:14b": (0.0, 0.0),
+    "qwen2.5-coder:7b": (0.0, 0.0),
+    "deepseek-r1:7b": (0.0, 0.0),
+    "qwen2.5:14b": (0.0, 0.0),
+    "qwen2.5:7b": (0.0, 0.0),
+    "llama3.1:8b": (0.0, 0.0),
+    "mistral:7b": (0.0, 0.0),
+    "phi3:14b": (0.0, 0.0),
 }
 
 

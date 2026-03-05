@@ -56,7 +56,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 style={{
                   fontSize: 11,
                   color: 'var(--cr-danger, #DC2626)',
-                  background: '#FEF2F2',
+                  background: 'var(--cr-danger-bg)',
                   borderRadius: 8,
                   padding: 12,
                   textAlign: 'left',

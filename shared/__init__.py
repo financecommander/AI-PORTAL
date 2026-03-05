@@ -97,7 +97,7 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "mistral-medium-3": (0.40, 2.00),
     "mistral-small-latest": (0.06, 0.18),
 
-    # Groq (Llama) — hosted on Groq LPU
+    # Groq (Llama) -- hosted on Groq LPU
     "meta-llama/llama-4-maverick-17b-128e-instruct": (0.20, 0.60),
     "llama-4-maverick": (0.20, 0.60),
     "meta-llama/llama-4-scout-17b-16e-instruct": (0.11, 0.34),
@@ -107,6 +107,9 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "llama-4-scout-17b-16e-instruct": (0.0, 0.0),
     "llama-4-maverick-17b-128e-instruct": (0.0, 0.0),
     "llama-4-scout": (0.0, 0.0),
+
+    # Local / Distilled
+    "llama-3.1-8b-distilled": (0.0, 0.0),
 }
 
 

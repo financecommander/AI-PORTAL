@@ -13,6 +13,8 @@ from backend.routes import usage as usage_routes
 from backend.routes import direct_chat as direct_chat_routes
 from backend.routes import conversations as conversation_routes
 from backend.routes import console as console_routes
+from backend.routes import training as training_routes
+from backend.routes import distillation as distillation_routes
 from backend.config.settings import settings
 from backend.errors.exceptions import PortalError
 from backend.middleware.rate_limiter import RateLimiterMiddleware
@@ -55,6 +57,8 @@ app.include_router(pipelines.router, prefix="/api/v2", tags=["pipelines"])
 app.include_router(direct_chat_routes.router, prefix="/chat/direct", tags=["direct-chat"])
 app.include_router(conversation_routes.router, prefix="/conversations", tags=["conversations"])
 app.include_router(console_routes.router, prefix="/console", tags=["console"])
+app.include_router(training_routes.router, prefix="/api/v2/training", tags=["training"])
+app.include_router(distillation_routes.router, prefix="/distillation", tags=["distillation"])
 
 
 @app.get("/")

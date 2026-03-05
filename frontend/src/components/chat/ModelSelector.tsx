@@ -44,7 +44,7 @@ function GridSelector({ providers, selectedProvider, selectedModel, onSelect }: 
         const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
         const isExpanded = expanded[prov.id] ?? false;
         return (
-          <div key={prov.id} style={{ background: 'var(--cr-white)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', overflow: 'hidden' }}>
+          <div key={prov.id} style={{ background: 'var(--cr-panel)', borderRadius: 'var(--cr-radius)', border: '1px solid var(--cr-border)', overflow: 'hidden' }}>
             <button
               onClick={() => setExpanded((prev) => ({ ...prev, [prov.id]: !prev[prov.id] }))}
               style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -113,13 +113,13 @@ function CompactSelector({ providers, selectedProvider, selectedModel, onSelect 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
       <button onClick={() => setIsOpen(!isOpen)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)', background: 'var(--cr-white)', cursor: 'pointer' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)', background: 'var(--cr-panel)', cursor: 'pointer' }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedAccent }} />
         <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--cr-text)' }}>{selectedModelName}</span>
         <ChevronDown style={{ width: 14, height: 14, color: 'var(--cr-text-muted)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 150ms' }} />
       </button>
       {isOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 340, maxHeight: 420, overflowY: 'auto', background: 'var(--cr-white)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius)', padding: 8, zIndex: 50, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 340, maxHeight: 420, overflowY: 'auto', background: 'var(--cr-panel)', border: '1px solid var(--cr-border)', borderRadius: 'var(--cr-radius)', padding: 8, zIndex: 50, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}>
           {providers.map((prov) => {
             const accent = PROVIDER_COLORS[prov.id] || 'var(--cr-green-600)';
             return (

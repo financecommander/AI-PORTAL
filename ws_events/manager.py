@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from fastapi import WebSocket
 
-from websockets.events import WSEvent
+from ws_events.events import WSEvent
 
 
 class ConnectionManager:

@@ -1,4 +1,4 @@
-import type { Attachment, ConsoleHost, ConsoleEvent } from '../types';
+import type { Attachment, ConsoleHost, ConsoleEvent, PermitRecord, PermitSearchParams, PermitStats } from '../types';
 
 const BASE_URL = '';  // Uses Vite proxy in dev
 
@@ -279,6 +279,20 @@ class ApiClient {
     },
   ): Promise<{ id: number; conversation_title: string }> {
     return this.post(`/conversations/${conversationUuid}/messages`, msg);
+  }
+
+  // ── LeadOps / Permits ────────────────────────────────────────
+
+  async searchPermits(params: PermitSearchParams): Promise<{ results: PermitRecord[]; total: number }> {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+    }
+    return this.request(`/leadops/permits/search?${qs.toString()}`);
+  }
+
+  async getPermitStats(): Promise<PermitStats> {
+    return this.request('/leadops/permits/stats');
   }
 
   connectPipelineWS(
