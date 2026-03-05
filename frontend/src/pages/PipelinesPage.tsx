@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Brain, Zap } from 'lucide-react';
 import { api } from '../api/client';
-import PipelineCard from '../components/pipeline/PipelineCard';
 import AgentTraceVisualizer from '../components/pipeline/AgentTraceVisualizer';
 import QueryInput from '../components/pipeline/QueryInput';
 import ModelBadge from '../components/pipeline/ModelBadge';

@@ -8,6 +8,9 @@ import {
   BarChart3,
   LogOut,
   Settings,
+  Terminal,
+  Monitor,
+  Sun,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
