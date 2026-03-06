@@ -296,6 +296,52 @@ See the [Orchestra README](https://github.com/financecommander/Orchestra#archite
 
 > **Engineering principle:** Use the smallest reliable model and workflow capable of completing the task safely.
 
+## Competitive Projection: System-Level Intelligence
+
+The Shapeshifter architecture competes with frontier LLM systems on **system-level capability**, not single-model capability.
+
+**AI-PORTAL role:** Control Plane / Interface — System Interface and Telemetry Hub
+
+AI-PORTAL provides the observability layer that makes system-level competition possible. Telemetry dashboards, model registry, and Blueprint Editor give operators visibility into the orchestration that frontier LLMs cannot offer as monolithic black boxes.
+
+### System Benchmark Matrix
+
+| Category | Frontier LLM | Shapeshifter Projection |
+|---|---|---|
+| Coding | very strong | equal or better |
+| Large repo analysis | weak | stronger |
+| Structured reasoning | strong | equal |
+| Operational automation | weak | stronger |
+| Research synthesis | strong | equal |
+| Cost efficiency | weak | stronger |
+| Scalability | limited | far stronger |
+
+### Advantage Mechanisms
+
+| Mechanism | Frontier LLM | Shapeshifter |
+|---|---|---|
+| Reasoning | sequential | parallel workers |
+| Task decomposition | single-pass | explicit planner |
+| Validation | self-consistency | layered (static → tests → review → human) |
+| Compute | massive GPUs | compressed + ternary + edge workers |
+
+### Simulation Projection
+
+| Metric | Frontier | Shapeshifter |
+|---|---|---|
+| Reasoning depth | 95 | 85 |
+| Parallel execution | 30 | 95 |
+| Validation reliability | 60 | 90 |
+| Cost efficiency | 40 | 90 |
+| Scalability | 35 | 95 |
+
+Frontier models win on deep reasoning. Shapeshifter wins on system-level capability.
+
+> **Shapeshifter is not a model competitor. It is an orchestration architecture that multiplies model capability.**
+
+See the [Orchestra README](https://github.com/financecommander/Orchestra#competitive-projection-system-level-intelligence) for the full competitive projection, benchmark categories, demonstration strategy, and long-term advantage analysis.
+
+
 
 ---
 
