@@ -26,6 +26,9 @@ litellm>=1.40.0
 # Pipeline orchestration
 crewai>=0.80.0
 
+# Orchestra DSL (Blueprint Editor)
+orchestra-dsl>=0.1.0
+
 # WebSockets
 websockets>=12.0
 

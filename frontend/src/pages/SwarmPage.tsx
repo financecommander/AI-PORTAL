@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, Plus, Send, Pause, Play, CheckCircle, Wifi, WifiOff, RefreshCw, Lock } from 'lucide-react';
+import { ArrowLeft, Plus, Send, Pause, Play, CheckCircle, Wifi, WifiOff, RefreshCw, Lock, Layers } from 'lucide-react';
 import { useSwarm } from '../hooks/useSwarm';
 import type { CollaborationMode, CreateSessionRequest, SwarmSession } from '../types/swarm';
+import BlueprintEditor from '../components/blueprint/BlueprintEditor';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -847,7 +848,7 @@ function SessionCard({ session, onSelect }: { session: SwarmSession; onSelect: (
 
 // ── Session Console (password-protected) ────────────────────────────
 
-function SessionConsole({ onLock }: { onLock: () => void }) {
+function SessionConsole({ onLock, onOpenBlueprint }: { onLock: () => void; onOpenBlueprint: () => void }) {
   const {
     sessions, selectedSession, presets, health, loading, sending, error, connected,
     refreshSessions, selectSession, deselectSession, createSession,
@@ -985,6 +986,9 @@ function SessionConsole({ onLock }: { onLock: () => void }) {
           <button onClick={refreshSessions} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid var(--cr-border)', background: 'transparent', color: 'var(--cr-text-secondary)', fontSize: '13px', cursor: 'pointer' }}>
             <RefreshCw style={{ width: 14, height: 14 }} />
           </button>
+          <button onClick={onOpenBlueprint} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: 'var(--cr-radius-sm)', border: '1px solid #7C3AED', background: 'transparent', color: '#7C3AED', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+            <Layers style={{ width: 16, height: 16 }} /> Blueprint
+          </button>
           <button onClick={() => setShowCreate(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: 'var(--cr-radius-sm)', border: 'none', background: 'var(--cr-green-700)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
             <Plus style={{ width: 16, height: 16 }} /> New Session
           </button>
@@ -1047,10 +1051,20 @@ function SessionConsole({ onLock }: { onLock: () => void }) {
 
 export default function SwarmPage() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('swarm_unlocked') === '1');
+  const [view, setView] = useState<'console' | 'blueprint'>('console');
 
-  if (unlocked) {
-    return <SessionConsole onLock={() => { sessionStorage.removeItem('swarm_unlocked'); setUnlocked(false); }} />;
+  if (!unlocked) {
+    return <VMStatusDashboard onUnlock={() => setUnlocked(true)} />;
   }
 
-  return <VMStatusDashboard onUnlock={() => setUnlocked(true)} />;
+  if (view === 'blueprint') {
+    return <BlueprintEditor onBack={() => setView('console')} />;
+  }
+
+  return (
+    <SessionConsole
+      onLock={() => { sessionStorage.removeItem('swarm_unlocked'); setUnlocked(false); }}
+      onOpenBlueprint={() => setView('blueprint')}
+    />
+  );
 }
