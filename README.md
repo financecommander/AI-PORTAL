@@ -74,7 +74,7 @@ Code generation and software engineering pipeline. Stub — coming in a future r
 ## Specialist Chat Agents
 
 | Specialist | Provider | Model | Purpose |
-|-----------|----------|-------|---------|
+|-----------|----------|-------|----------|
 | Financial Analyst | Anthropic | Claude Sonnet 4.5 | Market analysis, financial modeling |
 | Research Assistant | OpenAI | GPT-4o | Research synthesis, data analysis |
 | Code Reviewer | Anthropic | Claude Opus 4.6 | Code review, architecture guidance |
@@ -226,10 +226,10 @@ frontend/
 Production runs on 4 VMs in `us-east1-b`:
 
 | VM | Role | Key Ports |
-|----|------|-----------|
+|----|------|----------|
 | fc-ai-portal | AI Portal (frontend + backend + PostgreSQL) | 3000, 8000 |
 | swarm-mainframe | Swarm API (17-agent orchestrator) | 8080 |
-| swarm-gpu | Ollama GPU inference (NVIDIA L4 24GB) | 11434 |
+| swarm-gpu | Triton Inference Server + Ollama GPU inference (NVIDIA L4 24GB), live model routing (Phase 36) | 8000, 11434 |
 | calculus-web | Calculus Research website + chatbot | 80 |
 
 ## Token Tracking
@@ -272,7 +272,7 @@ Responsibilities within the Shapeshifter architecture:
 | --------- | ---------------- | ------------------- | ------------------------------- |
 | Adaptive  | Routing & Policy | `ProbFlow`          | uncertainty scoring and routing |
 | Control   | Workflow DSL     | `Orchestra`         | task graph definition           |
-| Control   | Swarm Runtime    | `super-duper-spork` | scheduling and orchestration    |
+| Control   | Swarm Runtime    | `super-duper-spork` | scheduling, orchestration, live model routing (Phase 36) |
 | Execution | Model Runtime    | `Triton`            | AI inference and compression    |
 | Execution | Worker Runtime   | `BUNNY`             | distributed execution           |
 | Interface | UI & Telemetry   | `AI-PORTAL`         | monitoring and user interaction |
