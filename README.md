@@ -348,3 +348,61 @@ See the [Orchestra README](https://github.com/financecommander/Orchestra#competi
 ## License
 
 Proprietary — Calculus Holdings LLC. All rights reserved.
+
+---
+
+## BUNNY Worker Telemetry Contract
+
+> Sourced from the approved **BUNNY Rust Agent Architecture & Sandbox Design** blueprint.
+
+`AI-PORTAL` is the telemetry sink and model registry for all `BUNNY` workers. Every inference a worker performs emits a structured telemetry event that AI-PORTAL stores, aggregates, and exposes on dashboards.
+
+### Per-Inference Telemetry Event (BUNNY → AI-PORTAL)
+
+```json
+{
+  "worker_id": "bunny-worker-abc123",
+  "task_id": "uuid-...",
+  "model": "threat_classifier",
+  "inference_latency_ms": 1.2,
+  "confidence": 0.94,
+  "label": "malicious",
+  "hardware": "x86_64-linux / A100",
+  "sandbox_tier": "firecracker",
+  "memory_peak_mb": 48,
+  "status": "Success",
+  "timestamp": "2026-03-07T12:00:00Z"
+}
+```
+
+### `ExecutionVerdict` Fields AI-PORTAL Tracks
+
+| Field | Dashboard Use |
+|---|---|
+| `confidence` | Model accuracy trending, routing quality |
+| `hardware_cost.gpu_ms` | Per-model GPU cost breakdown |
+| `hardware_cost.memory_peak_mb` | Memory regression detection |
+| `duration_ms` | Latency SLA monitoring |
+| `status` | Worker health, error rate alerting |
+| `sandbox_tier` | Wasm vs MicroVM ratio per task type |
+
+### Worker Fleet View
+
+AI-PORTAL aggregates the capability manifests broadcast by all connected workers:
+
+```json
+{
+  "worker_id": "bunny-worker-abc123",
+  "hardware": { "gpu": "A100", "vram_gb": 40 },
+  "sandbox_tiers": ["wasm", "firecracker"],
+  "triton_models": ["threat_classifier", "packet_filter"],
+  "status": "active",
+  "last_heartbeat": "2026-03-07T12:00:05Z"
+}
+```
+
+This feeds the **Worker Fleet** dashboard and informs `ProbFlow` routing weight updates.
+
+### Model Registry Integration
+
+When Triton publishes a new `.triton` artifact, AI-PORTAL registers it with `model_metadata.json`. BUNNY workers poll AI-PORTAL on startup to discover available models matching their hardware targets.
