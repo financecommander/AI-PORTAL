@@ -7,8 +7,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  ArrowLeft, Plus, Play, Save, CheckCircle, AlertTriangle,
-  Code, Layout, Trash2, Download, Upload, Zap, Settings,
+  ArrowLeft, Plus, Play, CheckCircle, AlertTriangle,
+  Code, Layout, Trash2, Download, Upload, Zap,
   ChevronRight, X, FileText, Cpu,
 } from 'lucide-react';
 import { useBlueprint } from '../../hooks/useBlueprint';
@@ -265,7 +265,7 @@ function GraphCanvas({
   selectedNodeId,
   onSelectNode,
   onMoveNode,
-  onDeleteNode,
+  onDeleteNode: _onDeleteNode,
 }: {
   graph: BlueprintGraph;
   selectedNodeId: string | null;
@@ -273,6 +273,7 @@ function GraphCanvas({
   onMoveNode: (id: string, x: number, y: number) => void;
   onDeleteNode: (id: string) => void;
 }) {
+  void _onDeleteNode;
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
 
@@ -377,8 +378,8 @@ function GraphCanvas({
             </div>
             {/* Node body — show key properties */}
             <div style={{ padding: '6px 10px', fontSize: '11px', color: 'var(--cr-text-muted)' }}>
-              {node.properties.agent && <div>agent: {String(node.properties.agent)}</div>}
-              {node.properties.prompt && (
+              {node.properties.agent ? <div>agent: {String(node.properties.agent)}</div> : null}
+              {node.properties.prompt ? (
                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>
                   prompt: {String(node.properties.prompt).slice(0, 40)}
                 </div>
@@ -589,10 +590,12 @@ function PropertiesPanel({
 export default function BlueprintEditor({ onBack }: { onBack: () => void }) {
   const {
     sessions, activeSession, models, loading, saving, error, validation, execution,
-    refreshSessions, selectSession, deselectSession, createSession,
-    updateOrcSource, updateGraph, deleteSession,
+    refreshSessions: _refreshSessions, selectSession, deselectSession, createSession,
+    updateOrcSource, updateGraph: _updateGraph, deleteSession,
     parseOrc, generateOrc, validate, execute, loadModels,
   } = useBlueprint();
+  void _refreshSessions;
+  void _updateGraph;
 
   const [showCreate, setShowCreate] = useState(false);
   const [view, setView] = useState<'split' | 'code' | 'graph'>('split');
