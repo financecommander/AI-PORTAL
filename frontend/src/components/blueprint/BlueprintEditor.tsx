@@ -383,7 +383,7 @@ function GraphCanvas({
                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>
                   prompt: {String(node.properties.prompt).slice(0, 40)}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         );
