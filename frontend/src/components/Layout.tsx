@@ -3,6 +3,7 @@ import { Outlet, Navigate, useNavigate, useSearchParams, useLocation } from 'rea
 import { useAuth } from '../contexts/AuthContext';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
+import MatrixRain from './pipeline/MatrixRain';
 
 export default function Layout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -55,8 +56,12 @@ export default function Layout() {
           onNavigate={() => setSidebarOpen(false)}
         />
       </div>
+      {/* Global Matrix rain background */}
+      <div className="hidden md:block" style={{ position: 'fixed', top: 0, left: 'var(--sidebar-width)', right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <MatrixRain opacity={0.08} />
+      </div>
       {/* Main content */}
-      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0">
+      <main className="min-h-screen md:ml-[var(--sidebar-width)] pt-14 md:pt-0" style={{ position: 'relative', zIndex: 1 }}>
         <div key={location.pathname} className="page-transition"><Outlet /></div>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import MatrixRain from '../components/pipeline/MatrixRain';
 
 export default function LoginPage() {
   const { login, loginWithOAuth } = useAuth();
@@ -30,8 +31,11 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      <MatrixRain opacity={0.08} />
       <div
         style={{
           width: '100%',

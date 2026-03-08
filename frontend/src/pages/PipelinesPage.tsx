@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import AgentTraceVisualizer from '../components/pipeline/AgentTraceVisualizer';
 import QueryInput from '../components/pipeline/QueryInput';
 import ModelBadge from '../components/pipeline/ModelBadge';
-import MatrixRain from '../components/pipeline/MatrixRain';
+
 import { usePipeline } from '../hooks/usePipeline';
 
 interface PipelineInfo {
@@ -168,8 +168,6 @@ export default function PipelinesPage() {
           {!isRunning ? (
             /* Browse / preview mode */
             <div style={{ flex: 1, position: 'relative', overflow: 'auto' }}>
-              <MatrixRain opacity={detailPipeline ? 0.14 : 0.06} />
-
               {detailPipeline ? (
                 /* Engine detail overlay */
                 <div style={{
