@@ -178,10 +178,10 @@ class MyPipeline(BasePipeline):
     async def execute(self, query, user_hash, on_progress=None):
         # Implementation
         pass
-    
+
     def get_agents(self):
         return [{"name": "Agent", "goal": "Goal", "model": "gpt-4o"}]
-    
+
     def estimate_cost(self, input_length):
         return 0.1
 
@@ -229,7 +229,7 @@ AI Portal is part of the Calculus Holdings ecosystem:
 
 | Repo | Role |
 |------|------|
-| **[super-duper-spork](https://github.com/financecommander/super-duper-spork)** | Central brain — 17 agent castes, 72 business task routes, OpenClaw tool execution, approval engine, Orchestra DSL workflows |
+| **[super-duper-spork](https://github.com/financecommander/super-duper-spork)** | Central brain — 20 agent castes (incl. HYDRA_CRYPTO + HYDRA_DEFI), 81 business task routes, OpenClaw tool execution, approval engine, Orchestra DSL workflows. Includes **Calculus Crypto Engine (CCE v2.4.0)** with 8 REST endpoints at `/api/v1/crypto/` for token design, compliance, campaigns, analytics, liquidity, treasury, and community automation |
 | **[Triton](https://github.com/financecommander/Triton)** | Ternary model compiler & inference engine — 9-model ladder on NVIDIA L4 GPU |
 | **[calculus-tools](https://github.com/financecommander/calculus-tools)** | Shared tools — 14 CrewAI tools, 18 service clients (SendGrid, GHL, Slack, Twilio, Stripe, etc.), API registry |
 | **[BUNNY](https://github.com/financecommander/BUNNY)** | AI Guardian Agent — security monitoring, edge worker runtime |
