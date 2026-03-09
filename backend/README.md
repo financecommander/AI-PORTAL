@@ -223,6 +223,18 @@ docker run -p 8000:8000 --env-file backend/.env ai-portal-backend
 4. Enable HTTPS
 5. Set `DEBUG=false`
 
+## Ecosystem Integration
+
+AI Portal is part of the Calculus Holdings ecosystem:
+
+| Repo | Role |
+|------|------|
+| **[super-duper-spork](https://github.com/financecommander/super-duper-spork)** | Central brain — 17 agent castes, 72 business task routes, OpenClaw tool execution, approval engine, Orchestra DSL workflows |
+| **[Triton](https://github.com/financecommander/Triton)** | Ternary model compiler & inference engine — 9-model ladder on NVIDIA L4 GPU |
+| **[calculus-tools](https://github.com/financecommander/calculus-tools)** | Shared tools — 14 CrewAI tools, 18 service clients (SendGrid, GHL, Slack, Twilio, Stripe, etc.), API registry |
+| **[BUNNY](https://github.com/financecommander/BUNNY)** | AI Guardian Agent — security monitoring, edge worker runtime |
+| **AI-PORTAL** | Operator console — pipeline execution, model lifecycle, evaluations, datasets |
+
 ## License
 
-[Add license information]
+Proprietary — Calculus Holdings LLC
