@@ -82,14 +82,15 @@ Code generation and software engineering pipeline. Stub — coming in a future r
 
 ## Swarm Mainframe Integration
 
-Dashboard for the Calculus Swarm — a 17-agent caste system running on dedicated GPU infrastructure. Features:
+Dashboard for the Calculus Swarm — a 20-agent caste system running on dedicated GPU infrastructure. Features:
 
 - VM health monitoring (uptime, environment, version)
-- Caste system visualization (9 Zerg-inspired castes)
-- Skill registry browser (72 skill categories)
+- Caste system visualization (10 Zerg-inspired castes)
+- Skill registry browser (81 skill categories)
 - Multi-mode session launcher (round_table, review_chain, specialist, debate)
 - Matrix rain animated background
 - Password-protected access
+- **Calculus Crypto Engine (CCE)** — 8 REST endpoints at `/api/v1/crypto/` for token generation, on-chain analytics, campaign management, compliance checking (Howey test), treasury operations, and liquidity deployment. Powered by HYDRA_CRYPTO and HYDRA_DEFI agent castes with 18 specialized algorithms
 
 ## LeadOps / Permit Intelligence
 
@@ -228,7 +229,7 @@ Production runs on 4 VMs in `us-east1-b`:
 | VM | Role | Key Ports |
 |----|------|----------|
 | fc-ai-portal | AI Portal (frontend + backend + PostgreSQL) | 3000, 8000 |
-| swarm-mainframe | Swarm API (17-agent orchestrator) | 8080 |
+| swarm-mainframe | Swarm API (20-agent orchestrator + CCE crypto engine) | 8080 |
 | swarm-gpu | Triton Inference Server + Ollama GPU inference (NVIDIA L4 24GB), live model routing (Phase 36) | 8000, 11434 |
 | calculus-web | Calculus Research website + chatbot | 80 |
 
@@ -272,7 +273,7 @@ Responsibilities within the Shapeshifter architecture:
 | --------- | ---------------- | ------------------- | ------------------------------- |
 | Adaptive  | Routing & Policy | `ProbFlow`          | uncertainty scoring and routing |
 | Control   | Workflow DSL     | `Orchestra`         | task graph definition           |
-| Control   | Swarm Runtime    | `super-duper-spork` | scheduling, orchestration, live model routing (Phase 36) |
+| Control   | Swarm Runtime    | `super-duper-spork` | scheduling, orchestration, live model routing, CCE crypto engine |
 | Execution | Model Runtime    | `Triton`            | AI inference and compression    |
 | Execution | Worker Runtime   | `BUNNY`             | distributed execution           |
 | Interface | UI & Telemetry   | `AI-PORTAL`         | monitoring and user interaction |
