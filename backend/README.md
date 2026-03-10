@@ -230,9 +230,9 @@ AI Portal is part of the Calculus Holdings ecosystem:
 | Repo | Role |
 |------|------|
 | **[super-duper-spork](https://github.com/financecommander/super-duper-spork)** | Central brain — 20 agent castes (incl. HYDRA_CRYPTO + HYDRA_DEFI), 81 business task routes, OpenClaw tool execution, approval engine, Orchestra DSL workflows. Includes **CCE v2.4.0** (crypto engine), **Phase 41** regime-aware routing (8 market regimes), speculative parallel execution (Medusa/EAGLE-style), and 3-layer quick-reply hierarchy with semantic FAISS cache |
-| **[Triton](https://github.com/financecommander/Triton)** | Ternary model compiler & inference engine — 9-model ladder on NVIDIA L4 GPU |
+| **[Triton](https://github.com/financecommander/Triton)** | Ternary model compiler & inference engine — 11-tier model ladder on NVIDIA L4 GPU, Triton JIT kernels (15.8× vs CUDA), 4,953 tok/s peak batched |
 | **[calculus-tools](https://github.com/financecommander/calculus-tools)** | Shared tools — 14 CrewAI tools, 23 service clients (SendGrid, GHL, Slack, Twilio, Stripe, vector DB, vault, etc.), API registry |
-| **[BUNNY](https://github.com/financecommander/BUNNY)** | AI Guardian Agent — security monitoring, edge worker runtime |
+| **[BUNNY](https://github.com/financecommander/BUNNY)** | Edge Worker Runtime & Security — 8 Rust crates (268 tests), hybrid PQ crypto (X25519 + ML-KEM-768), ternary inference, QUIC transport, HTTP gateway, encrypted swarm comms |
 | **AI-PORTAL** | Operator console — pipeline execution, model lifecycle, evaluations, datasets |
 
 ## License
