@@ -194,7 +194,7 @@ function PermitDetail({ permit: p }: { permit: PermitRecord }) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value?: string }) {
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ fontSize: 11, color: 'var(--cr-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
