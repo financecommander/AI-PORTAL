@@ -12,26 +12,34 @@
 #   tags        (optional) — used for grouping in the UI
 #   key_file    (optional) — path to SSH private key
 
-- alias: mainframe
-  hostname: 34.75.120.202
+- alias: swarm-mainframe
+  hostname: 10.142.0.4
   username: crypticassassin
   port: 22
-  description: Primary GPU workstation (GCP)
-  tags: [gpu, gcp, primary]
+  description: Swarm Mainframe — primary API server (FastAPI v17.0.0)
+  tags: [production, api, swarm]
   key_file: ~/.ssh/id_ed25519
 
-# Add more hosts below as needed:
-#
-# - alias: swarm-gpu
-#   hostname: 10.0.0.10
-#   username: deploy
-#   port: 22
-#   description: Swarm GPU node for Ollama
-#   tags: [gpu, ollama, swarm]
-#
-# - alias: triton
-#   hostname: 10.0.0.20
-#   username: deploy
-#   port: 22
-#   description: Triton inference server
-#   tags: [inference, triton]
+- alias: calculus-web
+  hostname: 10.142.0.3
+  username: crypticassassin
+  port: 22
+  description: Calculus Web — frontend web server
+  tags: [production, web]
+  key_file: ~/.ssh/id_ed25519
+
+- alias: fc-ai-portal
+  hostname: 127.0.0.1
+  username: crypticassassin
+  port: 22
+  description: AI Portal — this server (localhost)
+  tags: [production, portal, self]
+  key_file: ~/.ssh/id_ed25519
+
+- alias: swarm-gpu
+  hostname: 10.142.0.6
+  username: crypticassassin
+  port: 22
+  description: Swarm GPU — GPU inference and training node
+  tags: [production, gpu, inference]
+  key_file: ~/.ssh/id_ed25519
