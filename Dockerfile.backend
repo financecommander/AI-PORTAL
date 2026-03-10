@@ -12,8 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install PyTorch CPU for local ternary model inference
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
-# Clone Triton for ternary credit risk model
-RUN git clone --depth 1 https://github.com/financecommander/Triton.git /app/triton
+# Triton credit risk model — clone if accessible, skip if private
+RUN git clone --depth 1 https://github.com/financecommander/Triton.git /app/triton 2>/dev/null \
+    || mkdir -p /app/triton/checkpoints
 
 COPY pricing.py ./
 COPY backend/ ./backend/
