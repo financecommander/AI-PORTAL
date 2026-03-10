@@ -1,78 +1,65 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import type { PermitRecord, PermitSearchParams, PermitStats } from '../types';
 
-interface UsePermitsResult {
-  permits: PermitRecord[];
-  total: number;
-  stats: PermitStats | null;
-  loading: boolean;
-  statsLoading: boolean;
-  error: string | null;
-  page: number;
-  pageSize: number;
-  search: (params: PermitSearchParams) => Promise<void>;
-  setPage: (page: number) => void;
-  refreshStats: () => Promise<void>;
-}
-
-export function usePermits(initialPageSize = 25): UsePermitsResult {
+export function usePermits() {
   const [permits, setPermits] = useState<PermitRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<PermitStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(initialPageSize);
-  const [lastParams, setLastParams] = useState<PermitSearchParams>({});
+  const [params, setParams] = useState<PermitSearchParams>({
+    limit: 50,
+    offset: 0,
+    sort: 'created_at',
+    order: 'desc',
+  });
 
-  const search = useCallback(async (params: PermitSearchParams) => {
+  const search = useCallback(async (newParams?: Partial<PermitSearchParams>) => {
+    const merged = { ...params, ...newParams };
+    setParams(merged);
     setLoading(true);
     setError(null);
     try {
-      const result = await api.searchPermits({ ...params, page: 1, page_size: pageSize });
-      setPermits(result.results);
+      const result = await api.searchPermits(merged);
+      setPermits(result.data);
       setTotal(result.total);
-      setPage(1);
-      setLastParams(params);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Search failed');
     } finally {
       setLoading(false);
     }
-  }, [pageSize]);
+  }, [params]);
 
-  const changePage = useCallback(async (newPage: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await api.searchPermits({ ...lastParams, page: newPage, page_size: pageSize });
-      setPermits(result.results);
-      setTotal(result.total);
-      setPage(newPage);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
-    } finally {
-      setLoading(false);
-    }
-  }, [lastParams, pageSize]);
-
-  const refreshStats = useCallback(async () => {
+  const loadStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const s = await api.getPermitStats();
-      setStats(s);
+      const result = await api.getPermitStats();
+      setStats(result);
     } catch {
-      // Stats are non-critical; silently ignore
+      // Stats are non-critical
     } finally {
       setStatsLoading(false);
     }
   }, []);
 
+  const nextPage = useCallback(() => {
+    const newOffset = (params.offset ?? 0) + (params.limit ?? 50);
+    if (newOffset < total) {
+      search({ offset: newOffset });
+    }
+  }, [params, total, search]);
+
+  const prevPage = useCallback(() => {
+    const newOffset = Math.max(0, (params.offset ?? 0) - (params.limit ?? 50));
+    search({ offset: newOffset });
+  }, [params, search]);
+
   useEffect(() => {
-    void refreshStats();
-  }, [refreshStats]);
+    search();
+    loadStats();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     permits,
@@ -81,10 +68,12 @@ export function usePermits(initialPageSize = 25): UsePermitsResult {
     loading,
     statsLoading,
     error,
-    page,
-    pageSize,
+    params,
     search,
-    setPage: changePage,
-    refreshStats,
+    loadStats,
+    nextPage,
+    prevPage,
+    currentPage: Math.floor((params.offset ?? 0) / (params.limit ?? 50)) + 1,
+    totalPages: Math.ceil(total / (params.limit ?? 50)),
   };
 }

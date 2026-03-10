@@ -57,9 +57,10 @@ class CrewPipeline(BasePipeline):
         description: str,
         agents: list[Agent],
         tasks: list[Task],
-        verbose: bool = False
+        verbose: bool = False,
+        category: str = "general",
     ):
-        super().__init__(name, description)
+        super().__init__(name, description, category=category)
         self.agents = agents
         self.tasks = tasks
         self.verbose = verbose

@@ -17,6 +17,7 @@ from backend.routes import training as training_routes
 from backend.routes import distillation as distillation_routes
 from backend.routes import blueprint as blueprint_routes
 from backend.routes import tools as tools_routes
+from backend.routes import permits as permit_routes
 from backend.config.settings import settings
 from backend.errors.exceptions import PortalError
 from backend.middleware.rate_limiter import RateLimiterMiddleware
@@ -63,6 +64,7 @@ app.include_router(training_routes.router, prefix="/api/v2/training", tags=["tra
 app.include_router(distillation_routes.router, prefix="/distillation", tags=["distillation"])
 app.include_router(blueprint_routes.router, prefix="/api/v2/blueprint", tags=["blueprint"])
 app.include_router(tools_routes.router, prefix="/api/v2", tags=["tools"])
+app.include_router(permit_routes.router, prefix="/api/v2/permits", tags=["permits"])
 
 
 @app.get("/")

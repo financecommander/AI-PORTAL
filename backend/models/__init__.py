@@ -13,7 +13,7 @@ class UsageLog(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_hash: str = Field(index=True)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     provider: str
     model: str
     input_tokens: int
@@ -124,7 +124,7 @@ class TrainingData(SQLModel, table=True):
     quality_label: Optional[str] = Field(default=None)  # good, bad, needs_edit
     feedback_text: Optional[str] = Field(default=None)
     exported: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
 
 
 # ── v2.4: Conversation turns for knowledge distillation ──────
@@ -149,3 +149,65 @@ class ConversationTurn(SQLModel, table=True):
     output_tokens: int = 0
     cost_usd: float = 0.0
     exported: bool = Field(default=False, index=True)
+
+
+# ── v2.4: Permit data (Shovels clone) ───────────────────────
+
+
+class PermitIngestionRun(SQLModel, table=True):
+    """Tracks a batch permit ingestion pipeline run."""
+
+    __tablename__ = "permit_ingestion_runs"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    run_id: str = Field(index=True, unique=True)
+    source_city: str = Field(index=True)
+    source_api: str = Field(default="")
+    records_fetched: int = Field(default=0)
+    records_standardized: int = Field(default=0)
+    records_enriched: int = Field(default=0)
+    records_qualified: int = Field(default=0)
+    status: str = Field(default="running")
+    pipeline_run_id: Optional[str] = Field(default=None)
+    error: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = Field(default=None)
+
+
+class Permit(SQLModel, table=True):
+    """Standardized building permit data from multiple jurisdictions."""
+
+    __tablename__ = "permits"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    ingestion_run_id: Optional[str] = Field(default=None, index=True)
+    permit_number: str = Field(index=True)
+    permit_type: str = Field(default="", index=True)
+    status: str = Field(default="", index=True)
+    work_description: str = Field(default="")
+    address: str = Field(default="")
+    city: str = Field(default="", index=True)
+    state: str = Field(default="", index=True)
+    zip_code: str = Field(default="")
+    latitude: Optional[float] = Field(default=None)
+    longitude: Optional[float] = Field(default=None)
+    applicant_name: str = Field(default="", index=True)
+    contractor_name: str = Field(default="")
+    owner_name: str = Field(default="")
+    estimated_cost: Optional[float] = Field(default=None)
+    fee_paid: Optional[float] = Field(default=None)
+    application_date: Optional[datetime] = Field(default=None)
+    issue_date: Optional[datetime] = Field(default=None, index=True)
+    expiration_date: Optional[datetime] = Field(default=None)
+    completion_date: Optional[datetime] = Field(default=None)
+    ai_tags: str = Field(default="[]")
+    ai_property_type: str = Field(default="")
+    ai_project_category: str = Field(default="")
+    ai_summary: str = Field(default="")
+    lead_score: Optional[float] = Field(default=None, index=True)
+    lead_tier: str = Field(default="", index=True)
+    lead_rationale: str = Field(default="")
+    source_jurisdiction: str = Field(default="")
+    raw_data: str = Field(default="{}")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

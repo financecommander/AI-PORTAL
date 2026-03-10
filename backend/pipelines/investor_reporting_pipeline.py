@@ -48,6 +48,7 @@ class InvestorReportingPipeline(BasePipeline):
                 "Automated investor reporting with fund performance analysis, "
                 "asset-level narratives, market commentary, and LP letter generation"
             ),
+            category="capital_markets",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:

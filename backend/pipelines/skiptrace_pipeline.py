@@ -96,6 +96,7 @@ class SkipTracePipeline(BasePipeline):
                 "Multi-agent skip tracing pipeline for locating contact information, "
                 "verifying identities, and compiling background intelligence"
             ),
+            category="origination",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:

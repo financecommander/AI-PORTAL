@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 from backend.auth.authenticator import get_current_user
 from backend.auth.jwt_handler import decode_access_token
@@ -24,8 +24,8 @@ router = APIRouter()
 
 class PipelineExecuteRequest(BaseModel):
     """Request model for pipeline execution."""
-    pipeline_name: str
-    query: str
+    pipeline_name: str = Field(..., min_length=1, max_length=100)
+    query: str = Field(..., min_length=1, max_length=10000)
 
 
 class PipelineExecuteResponse(BaseModel):

@@ -1,4 +1,4 @@
-"""Training data API — browse, feedback, and export for fine-tuning."""
+"""Training data API — browse, feedback, export, and synthetic generation."""
 
 import json
 import logging
@@ -11,6 +11,7 @@ from sqlmodel import Session, select, func, col
 from backend.auth.authenticator import get_current_user
 from backend.database import engine
 from backend.models import TrainingData
+from backend.providers.fallback import get_provider_with_fallback
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -213,3 +214,131 @@ async def training_stats(user: dict = Depends(get_current_user)):
             "exported": exported_count,
             "unexported": total - exported_count,
         }
+
+
+# ── Synthetic Training Data Generation ────────────────────────
+
+
+class GenerateRequest(BaseModel):
+    pipeline_name: str = Field(..., min_length=1, max_length=100)
+    count: int = Field(default=10, ge=1, le=100)
+    base_on_existing: bool = Field(default=True)
+
+
+@router.post("/generate")
+async def generate_synthetic_data(
+    req: GenerateRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Generate synthetic training data using Ollama (free, local inference).
+
+    If ``base_on_existing`` is True, fetches high-quality existing rows for
+    the requested pipeline and asks Ollama to generate variations. Otherwise,
+    generates from scratch using the pipeline's domain knowledge.
+    """
+    provider, model = await get_provider_with_fallback(
+        primary_model="deepseek-r1:14b",
+        fallback_model="gemini-2.5-flash",
+    )
+
+    seed_rows: list[dict] = []
+    if req.base_on_existing:
+        with Session(engine) as session:
+            stmt = (
+                select(TrainingData)
+                .where(TrainingData.pipeline_name == req.pipeline_name)
+                .where(
+                    (TrainingData.quality_label == "good")
+                    | (TrainingData.quality_label.is_(None))  # type: ignore
+                )
+                .order_by(col(TrainingData.created_at).desc())
+                .limit(10)
+            )
+            rows = session.exec(stmt).all()
+            seed_rows = [
+                {
+                    "system_prompt": r.system_prompt[:2000],
+                    "user_input": r.user_input[:2000],
+                    "assistant_output": r.assistant_output[:3000],
+                    "agent_name": r.agent_name,
+                }
+                for r in rows
+            ]
+
+    generated = 0
+    errors = 0
+
+    for i in range(req.count):
+        try:
+            if seed_rows:
+                # Pick a seed row (round-robin)
+                seed = seed_rows[i % len(seed_rows)]
+                prompt = (
+                    "Generate a DIFFERENT but structurally similar training example "
+                    "for the same task. The output must be realistic and high-quality.\n\n"
+                    f"Original system prompt:\n{seed['system_prompt']}\n\n"
+                    f"Original user input:\n{seed['user_input']}\n\n"
+                    f"Original assistant output (first 500 chars):\n{seed['assistant_output'][:500]}\n\n"
+                    "Now generate a new, different example. Return ONLY valid JSON with:\n"
+                    '{"user_input": "...", "assistant_output": "..."}\n\n'
+                    "The system_prompt stays the same. Make the user_input a different scenario "
+                    "and the assistant_output a high-quality response to that scenario."
+                )
+                agent_name = seed["agent_name"]
+                system_prompt_text = seed["system_prompt"]
+            else:
+                prompt = (
+                    f"Generate a realistic training example for the '{req.pipeline_name}' pipeline. "
+                    "Return ONLY valid JSON with:\n"
+                    '{"system_prompt": "...", "user_input": "...", "assistant_output": "..."}\n\n'
+                    "Make it realistic, domain-specific, and high-quality."
+                )
+                agent_name = "synthetic"
+                system_prompt_text = ""
+
+            response = await provider.send_message(
+                messages=[{"role": "user", "content": prompt}],
+                model=model,
+                temperature=0.8,  # Higher temp for diversity
+                max_tokens=2000,
+                system_prompt="You are a training data generator. Return only valid JSON.",
+            )
+
+            # Parse JSON from response
+            text = response.content.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[-1]
+            if text.endswith("```"):
+                text = text.rsplit("```", 1)[0]
+            text = text.strip()
+
+            data = json.loads(text)
+
+            # Save synthetic row
+            with Session(engine) as session:
+                row = TrainingData(
+                    pipeline_name=req.pipeline_name,
+                    agent_name=agent_name,
+                    model_used=model if "/" in model else f"ollama/{model}",
+                    system_prompt=data.get("system_prompt", system_prompt_text)[:4000],
+                    user_input=data.get("user_input", "")[:4000],
+                    assistant_output=data.get("assistant_output", "")[:8000],
+                    input_tokens=response.input_tokens,
+                    output_tokens=response.output_tokens,
+                    cost_usd=0.0,
+                    quality_label="synthetic",
+                )
+                session.add(row)
+                session.commit()
+                generated += 1
+
+        except Exception as e:
+            logger.warning("Synthetic generation %d/%d failed: %s", i + 1, req.count, e)
+            errors += 1
+
+    return {
+        "generated": generated,
+        "errors": errors,
+        "pipeline": req.pipeline_name,
+        "model_used": model,
+    }

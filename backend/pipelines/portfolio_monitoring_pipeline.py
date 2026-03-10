@@ -47,6 +47,7 @@ class PortfolioMonitoringPipeline(BasePipeline):
                 "Loan portfolio surveillance with covenant compliance testing, "
                 "early warning detection, watchlist management, and dashboard reporting"
             ),
+            category="portfolio_surveillance",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:

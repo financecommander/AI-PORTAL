@@ -215,6 +215,7 @@ class LeadRankingPipeline(BasePipeline):
                 "scoring (LTV, Loan Amount, Project Type, Location, History) with "
                 "AI-powered risk analysis on top-tier leads"
             ),
+            category="origination",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:

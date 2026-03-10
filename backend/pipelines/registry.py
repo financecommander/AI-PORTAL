@@ -16,6 +16,8 @@ from backend.pipelines.due_diligence_pipeline import DueDiligencePipeline
 from backend.pipelines.portfolio_monitoring_pipeline import PortfolioMonitoringPipeline
 from backend.pipelines.investor_reporting_pipeline import InvestorReportingPipeline
 from backend.pipelines.skiptrace_pipeline import SkipTracePipeline
+from backend.pipelines.shovels_pipeline import ShovelsPipeline
+from backend.pipelines.demand_letter_pipeline import DemandLetterPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,8 @@ _REGISTRY: dict[str, callable] = {
     "portfolio_monitoring": lambda: PortfolioMonitoringPipeline(),
     "investor_reporting": lambda: InvestorReportingPipeline(),
     "skiptrace": lambda: SkipTracePipeline(),
+    "shovels": lambda: ShovelsPipeline(),
+    "demand_letter": lambda: DemandLetterPipeline(),
 }
 
 _INSTANCES: dict[str, BasePipeline] = {}
@@ -123,6 +127,7 @@ def list_pipelines() -> list[dict]:
                 "description": pipeline.description,
                 "agents": pipeline.get_agents(),
                 "type": "multi_agent" if len(pipeline.get_agents()) > 1 else "single",
+                "category": getattr(pipeline, 'category', 'general'),
             })
         except Exception as e:
             logger.error(f"Failed to load pipeline '{name}': {e}")

@@ -261,4 +261,5 @@ def create_calculus_intelligence() -> CrewPipeline:
         agents=[decomposer, analytical_reasoner, creative_reasoner, context_analyst, validator, synthesizer],
         tasks=[task1, task2, task3, task4, task5, task6],
         verbose=True,
+        category="intelligence_core",
     )

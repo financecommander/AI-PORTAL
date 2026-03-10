@@ -18,7 +18,7 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
-from backend.providers.base import ProviderResponse
+from backend.providers.fallback import get_provider_with_fallback
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +48,12 @@ class UnderwritingPipeline(BasePipeline):
                 "Full CRE deal underwriting with property valuation, cash flow "
                 "modeling, loan structure optimization, and IC memo generation"
             ),
+            category="credit_underwriting",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:
         return [
-            {"name": "Property Analyzer", "goal": "Analyze property value, market comps, and cap rate", "model": "gemini-2.5-flash"},
+            {"name": "Property Analyzer", "goal": "Analyze property value, market comps, and cap rate", "model": "ollama/deepseek-r1:14b"},
             {"name": "Cash Flow Modeler", "goal": "Build NOI waterfall, DSCR, and debt yield projections", "model": "gemini-2.5-flash"},
             {"name": "Structure Optimizer", "goal": "Recommend optimal loan structure (LTV, rate, term, covenants)", "model": "gemini-2.5-flash"},
             {"name": "Memo Generator", "goal": "Generate investment committee underwriting memo", "model": "gpt-4o"},
@@ -94,7 +95,7 @@ class UnderwritingPipeline(BasePipeline):
             "total_tokens": a1_tokens.get("input", 0) + a1_tokens.get("output", 0),
             "cost": a1_tokens.get("cost", 0.0),
             "calls": 1,
-            "model": "gemini-2.5-flash",
+            "model": "ollama/deepseek-r1:14b",
         })
         total_input_tokens += a1_tokens.get("input", 0)
         total_output_tokens += a1_tokens.get("output", 0)
@@ -212,8 +213,15 @@ class UnderwritingPipeline(BasePipeline):
     # ── Agent Implementations ───────────────────────────────────────
 
     async def _run_property_analyzer(self, query: str, on_progress=None) -> tuple[str, dict]:
-        """Agent 1: Analyze property, market comps, and valuation."""
-        provider = get_provider("google")
+        """Agent 1: Analyze property, market comps, and valuation.
+
+        Uses Ollama (deepseek-r1:14b) for cost-free first-pass analysis,
+        with automatic fallback to Gemini if Ollama is unreachable.
+        """
+        provider, model = await get_provider_with_fallback(
+            primary_model="deepseek-r1:14b",
+            fallback_model="gemini-2.5-flash",
+        )
 
         system_prompt = (
             "You are a senior CRE appraiser and market analyst. Given a deal description, provide:\n\n"
@@ -229,7 +237,7 @@ class UnderwritingPipeline(BasePipeline):
         return await self._stream_agent_response(
             agent_name="Property Analyzer", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash", temperature=0.3, max_tokens=3000,
+            model=model, temperature=0.3, max_tokens=3000,
             system_prompt=system_prompt, on_progress=on_progress,
         )
 

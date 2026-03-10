@@ -18,6 +18,7 @@ from typing import Optional, Callable, Any
 
 from backend.pipelines.base_pipeline import BasePipeline, PipelineResult
 from backend.providers.factory import get_provider
+from backend.providers.fallback import get_provider_with_fallback
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +48,12 @@ class DueDiligencePipeline(BasePipeline):
                 "Comprehensive borrower due diligence including entity investigation, "
                 "litigation scanning, financial verification, and consolidated risk reporting"
             ),
+            category="credit_underwriting",
         )
 
     def get_agents(self) -> list[dict[str, Any]]:
         return [
-            {"name": "Entity Investigator", "goal": "Analyze corporate structure, beneficial ownership, and sanctions screening", "model": "gemini-2.5-flash"},
+            {"name": "Entity Investigator", "goal": "Analyze corporate structure, beneficial ownership, and sanctions screening", "model": "ollama/deepseek-r1:14b"},
             {"name": "Litigation Scanner", "goal": "Search court records, defaults, judgments, liens, and UCC filings", "model": "gemini-2.5-flash"},
             {"name": "Financial Verifier", "goal": "Analyze financial statements, tax returns, and cash flow verification", "model": "gemini-2.5-flash"},
             {"name": "Diligence Reporter", "goal": "Consolidate findings into risk-flagged due diligence report", "model": "gpt-4o"},
@@ -93,7 +95,7 @@ class DueDiligencePipeline(BasePipeline):
             "total_tokens": a1_tokens.get("input", 0) + a1_tokens.get("output", 0),
             "cost": a1_tokens.get("cost", 0.0),
             "calls": 1,
-            "model": "gemini-2.5-flash",
+            "model": "ollama/deepseek-r1:14b",
         })
         total_input_tokens += a1_tokens.get("input", 0)
         total_output_tokens += a1_tokens.get("output", 0)
@@ -207,8 +209,15 @@ class DueDiligencePipeline(BasePipeline):
     # ── Agent Implementations ───────────────────────────────────────
 
     async def _run_entity_investigator(self, query: str, on_progress=None) -> tuple[str, dict]:
-        """Agent 1: Corporate structure, ownership, and sanctions."""
-        provider = get_provider("google")
+        """Agent 1: Corporate structure, ownership, and sanctions.
+
+        Uses Ollama (deepseek-r1:14b) for cost-free first-pass extraction,
+        with automatic fallback to Gemini if Ollama is unreachable.
+        """
+        provider, model = await get_provider_with_fallback(
+            primary_model="deepseek-r1:14b",
+            fallback_model="gemini-2.5-flash",
+        )
 
         system_prompt = (
             "You are a due diligence investigator specializing in entity analysis. "
@@ -226,7 +235,7 @@ class DueDiligencePipeline(BasePipeline):
         return await self._stream_agent_response(
             agent_name="Entity Investigator", provider=provider,
             messages=[{"role": "user", "content": query}],
-            model="gemini-2.5-flash", temperature=0.2, max_tokens=3000,
+            model=model, temperature=0.2, max_tokens=3000,
             system_prompt=system_prompt, on_progress=on_progress,
         )
 

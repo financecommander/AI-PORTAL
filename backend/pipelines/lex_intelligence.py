@@ -312,5 +312,6 @@ def create_lex_intelligence() -> CrewPipeline:
             synthesis_drafter
         ],
         tasks=[task1, task2, task3, task4, task5, task6],
-        verbose=True
+        verbose=True,
+        category="intelligence_core",
     )
