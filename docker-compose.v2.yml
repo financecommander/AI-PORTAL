@@ -23,6 +23,8 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     container_name: fc-portal-backend
+    # Match host user UID so container can read mounted SSH keys
+    user: "1000:1000"
     environment:
       DATABASE_URL: postgresql://${DB_USER:-portal}:${DB_PASSWORD}@db:5432/ai_portal
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
@@ -45,6 +47,7 @@ services:
       OAUTH_REDIRECT_BASE: ${OAUTH_REDIRECT_BASE:-http://localhost:3000}
       TRITON_CHECKPOINT_DIR: /app/triton/checkpoints
       TRITON_PATH: /app/triton
+      HOME: /app
     ports:
       - "8000:8000"
     volumes:
