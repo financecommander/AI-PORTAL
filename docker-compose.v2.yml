@@ -8,7 +8,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # No external port exposure — DB only accessible within Docker network
     expose:
       - "5432"
     healthcheck:
@@ -23,8 +22,6 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     container_name: fc-portal-backend
-    # Match host user UID so container can read mounted SSH keys
-    user: "1000:1000"
     environment:
       DATABASE_URL: postgresql://${DB_USER:-portal}:${DB_PASSWORD}@db:5432/ai_portal
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
@@ -47,13 +44,10 @@ services:
       OAUTH_REDIRECT_BASE: ${OAUTH_REDIRECT_BASE:-http://localhost:3000}
       TRITON_CHECKPOINT_DIR: /app/triton/checkpoints
       TRITON_PATH: /app/triton
-      HOME: /app
-      USER: appuser
-      LOGNAME: appuser
     ports:
       - "8000:8000"
     volumes:
-      - /home/crypticassassin/.ssh:/app/.ssh:ro
+      - /home/crypticassassin/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro
     depends_on:
       db:
         condition: service_healthy
