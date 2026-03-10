@@ -102,9 +102,13 @@ async def _exec_asyncssh(
         port=host.port,
         username=host.username,
         known_hosts=None,  # Accept all host keys (configurable in prod)
+        agent_path=None,   # Don't use SSH agent
+        config=(),         # Don't read SSH config files
     )
     if host.key_file:
         connect_kwargs["client_keys"] = [host.key_file]
+    else:
+        connect_kwargs["client_keys"] = []
 
     try:
         async with asyncssh.connect(**connect_kwargs) as conn:
