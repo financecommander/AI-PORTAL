@@ -48,6 +48,8 @@ services:
       TRITON_CHECKPOINT_DIR: /app/triton/checkpoints
       TRITON_PATH: /app/triton
       HOME: /app
+      USER: appuser
+      LOGNAME: appuser
     ports:
       - "8000:8000"
     volumes:
