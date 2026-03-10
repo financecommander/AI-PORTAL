@@ -27,7 +27,7 @@ from backend.models import User
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-ALLOWED_DOMAINS = {"gradeesolutions.com", "calculusresearch.io"}
+ALLOWED_DOMAINS = {"gradeesolutions.com", "calculusresearch.io", "gmail.com"}
 
 _EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
@@ -212,4 +212,3 @@ async def x_callback(request: OAuthCallbackRequest):
     if not user:
         raise HTTPException(status_code=401, detail="X authentication failed")
     return LoginResponse(access_token=create_user_token(user), refresh_token=_make_refresh(user))
-
