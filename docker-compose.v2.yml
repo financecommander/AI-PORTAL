@@ -47,7 +47,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - /home/crypticassassin/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro
+      - /home/crypticassassin/.ssh/id_ed25519:/mnt/ssh-key/id_ed25519:ro
     depends_on:
       db:
         condition: service_healthy
