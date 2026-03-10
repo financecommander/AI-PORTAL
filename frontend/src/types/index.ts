@@ -188,13 +188,17 @@ export interface PermitRecord {
 }
 
 export interface PermitSearchParams {
+  q?: string;
   query?: string;
   city?: string;
   state?: string;
   permit_type?: string;
   status?: string;
+  lead_tier?: string;
   date_from?: string;
   date_to?: string;
+  min_cost?: number;
+  max_cost?: number;
   limit?: number;
   offset?: number;
   sort?: string;
@@ -206,7 +210,9 @@ export interface PermitStats {
   active_permits: number;
   expired_permits: number;
   avg_valuation: number;
+  avg_lead_score: number;
   top_cities: Array<{ city: string; count: number }>;
   by_type: Array<{ type: string; count: number }>;
+  by_tier?: Record<string, number>;
 }
 
