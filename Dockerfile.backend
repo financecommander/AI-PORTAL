@@ -22,10 +22,7 @@ COPY shared/ ./shared/
 COPY config/ ./config/
 COPY console_hosts.yaml ./
 
-# Run as non-root user for security — limits damage from container escape
-RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
-    && mkdir -p /app/.ssh && chown -R appuser:appuser /app
-USER appuser
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 EXPOSE 8000
 
