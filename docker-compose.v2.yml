@@ -47,6 +47,9 @@ services:
       TRITON_PATH: /app/triton
     ports:
       - "8000:8000"
+    volumes:
+      - ~/.ssh/id_ed25519:/app/.ssh/id_ed25519:ro
+      - ~/.ssh/known_hosts:/app/.ssh/known_hosts:ro
     depends_on:
       db:
         condition: service_healthy
@@ -71,4 +74,3 @@ services:
 volumes:
   pgdata:
     driver: local
-
