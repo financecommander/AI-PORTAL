@@ -1,24 +1,11 @@
 # Console Intelligence — SSH Host Configuration
-# ──────────────────────────────────────────────
-# Each entry defines a host that Console Intelligence can connect to.
-# SSH key-based auth is expected (no passwords).
-#
-# Fields:
-#   alias       (required) — short name used in natural language commands
-#   hostname    (required) — IP or FQDN
-#   username    (optional) — defaults to "root"
-#   port        (optional) — defaults to 22
-#   description (optional) — shown in the UI and given to the LLM
-#   tags        (optional) — used for grouping in the UI
-#   key_file    (optional) — path to SSH private key
-
 - alias: swarm-mainframe
   hostname: 10.142.0.4
   username: crypticassassin
   port: 22
   description: Swarm Mainframe — primary API server (FastAPI v17.0.0)
   tags: [production, api, swarm]
-  key_file: ~/.ssh/id_ed25519
+  key_file: /root/.ssh/id_ed25519
 
 - alias: calculus-web
   hostname: 10.142.0.3
@@ -26,7 +13,7 @@
   port: 22
   description: Calculus Web — frontend web server
   tags: [production, web]
-  key_file: ~/.ssh/id_ed25519
+  key_file: /root/.ssh/id_ed25519
 
 - alias: fc-ai-portal
   hostname: 127.0.0.1
@@ -34,7 +21,7 @@
   port: 22
   description: AI Portal — this server (localhost)
   tags: [production, portal, self]
-  key_file: ~/.ssh/id_ed25519
+  key_file: /root/.ssh/id_ed25519
 
 - alias: swarm-gpu
   hostname: 10.142.0.6
@@ -42,4 +29,4 @@
   port: 22
   description: Swarm GPU — GPU inference and training node
   tags: [production, gpu, inference]
-  key_file: ~/.ssh/id_ed25519
+  key_file: /root/.ssh/id_ed25519
