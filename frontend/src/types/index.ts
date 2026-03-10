@@ -161,21 +161,30 @@ export interface ConsoleEntry {
 // ── LeadOps / Permits ───────────────────────────────────────────
 
 export interface PermitRecord {
-  id: string;
+  id: number;
   permit_number: string;
   address: string;
-  city: string;
-  state: string;
-  zip: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   permit_type: string;
-  status: string;
-  issue_date: string;
+  status?: string;
+  issue_date?: string;
   expiration_date?: string;
-  contractor?: string;
-  owner?: string;
-  valuation?: number;
-  description?: string;
-  tags?: string[];
+  estimated_cost?: number;
+  lead_score: number | null;
+  lead_tier: string;
+  ai_tags: string[];
+  applicant_name?: string;
+  contractor_name?: string;
+  owner_name?: string;
+  fee_paid?: number;
+  work_description?: string;
+  ai_property_type?: string;
+  ai_project_category?: string;
+  ai_summary?: string;
+  lead_rationale?: string;
+  source_jurisdiction?: string;
 }
 
 export interface PermitSearchParams {
@@ -186,8 +195,10 @@ export interface PermitSearchParams {
   status?: string;
   date_from?: string;
   date_to?: string;
-  page?: number;
-  page_size?: number;
+  limit?: number;
+  offset?: number;
+  sort?: string;
+  order?: string;
 }
 
 export interface PermitStats {
