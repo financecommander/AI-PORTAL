@@ -21,9 +21,11 @@ COPY backend/ ./backend/
 COPY shared/ ./shared/
 COPY config/ ./config/
 COPY console_hosts.yaml ./
+COPY entrypoint.sh /entrypoint.sh
 
-RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh && chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
