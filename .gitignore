@@ -40,3 +40,7 @@ Thumbs.db
 htmlcov/
 .coverage
 *.db
+
+# Claude Code
+.claude/
+nul
