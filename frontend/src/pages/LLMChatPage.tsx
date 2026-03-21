@@ -33,8 +33,9 @@ export default function LLMChatPage() {
   const [showScrollPill, setShowScrollPill] = useState(false);
   const loadedConvRef = useRef<string | null>(null);
 
-  // Load model catalog on mount
-  useEffect(() => {
+  const loadModels = useCallback(() => {
+    setLoadingModels(true);
+    setCatalogError(null);
     api
       .request<{ providers: LLMProvider[] }>('/chat/direct/models')
       .then((data) => {
@@ -44,7 +45,7 @@ export default function LLMChatPage() {
           const first = data.providers[0];
           setSelectedProvider(first.id);
           const topModel = first.models.find((m) => m.tier === 'top');
-          setSelectedModel(topModel?.id ?? first.models[0].id);
+          setSelectedModel(topModel?.id ?? first.models[0]?.id ?? null);
         } else {
           setCatalogError('No LLM providers are configured. Contact your administrator.');
         }
@@ -57,6 +58,9 @@ export default function LLMChatPage() {
       })
       .finally(() => setLoadingModels(false));
   }, []);
+
+  // Load model catalog on mount
+  useEffect(() => { loadModels(); }, [loadModels]);
 
   // Load conversation from URL param ?c=<uuid>
   const conversationParam = searchParams.get('c');
@@ -162,7 +166,13 @@ export default function LLMChatPage() {
           {catalogError && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
               <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
-              {catalogError}
+              <span style={{ flex: 1 }}>{catalogError}</span>
+              <button
+                onClick={loadModels}
+                style={{ flexShrink: 0, padding: '4px 12px', background: 'transparent', border: '1px solid var(--cr-danger)', borderRadius: 6, color: 'var(--cr-danger)', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+              >
+                Retry
+              </button>
             </div>
           )}
 
@@ -176,32 +186,34 @@ export default function LLMChatPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
-            {SUGGESTION_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => sendMessage(prompt)}
-                style={{
-                  background: 'var(--cr-panel)',
-                  border: '1px solid var(--cr-border)',
-                  borderRadius: 20,
-                  color: 'var(--cr-text-secondary)',
-                  fontSize: 12,
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  transition: 'all 150ms',
-                  maxWidth: 340,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; e.currentTarget.style.color = 'var(--cr-text)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; e.currentTarget.style.color = 'var(--cr-text-secondary)'; }}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
+          {!catalogError && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 700 }}>
+              {SUGGESTION_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => sendMessage(prompt)}
+                  style={{
+                    background: 'var(--cr-panel)',
+                    border: '1px solid var(--cr-border)',
+                    borderRadius: 20,
+                    color: 'var(--cr-text-secondary)',
+                    fontSize: 12,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    transition: 'all 150ms',
+                    maxWidth: 340,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--cr-green-600)'; e.currentTarget.style.color = 'var(--cr-text)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--cr-border)'; e.currentTarget.style.color = 'var(--cr-text-secondary)'; }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
 
           {error && (
             <div style={{ padding: '8px 14px', background: 'var(--cr-danger-bg)', border: '1px solid var(--cr-danger-border)', borderRadius: 8, color: 'var(--cr-danger)', fontSize: 13, maxWidth: 700, width: '100%' }}>
