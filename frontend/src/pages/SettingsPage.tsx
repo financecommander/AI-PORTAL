@@ -28,10 +28,13 @@ export default function SettingsPage() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.request<{ specialists: Specialist[] }>('/specialists/').then((d) => setSpecialists(d.specialists)).catch(() => {});
-    api.request<{ pipelines: Pipeline[] }>('/api/v2/pipelines/list').then((d) => setPipelines(d.pipelines)).catch(() => {});
+    Promise.all([
+      api.request<{ specialists: Specialist[] }>('/specialists/').then((d) => setSpecialists(d.specialists)),
+      api.request<{ pipelines: Pipeline[] }>('/api/v2/pipelines/list').then((d) => setPipelines(d.pipelines)),
+    ]).catch((e) => setLoadError(e instanceof Error ? e.message : 'Failed to load settings data'));
   }, []);
 
   return (
@@ -39,7 +42,11 @@ export default function SettingsPage() {
       <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: 'var(--cr-text)', marginBottom: 24 }}>
         Settings
       </h1>
-
+      {loadError && (
+        <div style={{ marginBottom: 16, padding: '10px 14px', background: 'var(--cr-danger-bg, #fef2f2)', border: '1px solid var(--cr-danger, #ef4444)', borderRadius: 'var(--cr-radius-sm)', color: 'var(--cr-danger, #b91c1c)', fontSize: 13 }}>
+          {loadError}
+        </div>
+      )}
       <Card title="Account">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {user?.avatar_url ? (

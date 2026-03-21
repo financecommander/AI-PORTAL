@@ -54,6 +54,7 @@ function TrainingDataTab() {
   const [readiness, setReadiness] = useState<DistillationReadiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -64,8 +65,8 @@ function TrainingDataTab() {
         ]);
         setStats(s);
         setReadiness(r);
-      } catch {
-        // silently handle -- stats are optional
+      } catch (e) {
+        setStatsError(e instanceof Error ? e.message : 'Failed to load usage data');
       } finally {
         setLoading(false);
       }
@@ -96,6 +97,12 @@ function TrainingDataTab() {
   };
 
   if (loading) return <SkeletonBlock height={200} />;
+
+  if (statsError) return (
+    <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #ef4444', borderRadius: 8, color: '#b91c1c', fontSize: 13 }}>
+      {statsError}
+    </div>
+  );
 
   const progress = readiness
     ? Math.min(100, Math.round((readiness.exportable / readiness.recommended_min) * 100))

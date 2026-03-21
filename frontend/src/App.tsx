@@ -5,12 +5,12 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import LLMChatPage from './pages/LLMChatPage';
 import ChatPage from './pages/ChatPage';
-import ConsolePage from './pages/ConsolePage';
 import PipelinesPage from './pages/PipelinesPage';
 import UsagePage from './pages/UsagePage';
 import SettingsPage from './pages/SettingsPage';
 import SwarmPage from './pages/SwarmPage';
 import LeadOpsPage from './pages/LeadOpsPage';
+import CodePage from './pages/CodePage';
 
 function LoginGuard() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,19 +22,19 @@ function LoginGuard() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter basename="/portal">
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginGuard />} />
             <Route element={<Layout />}>
               <Route index element={<LLMChatPage />} />
               <Route path="specialists" element={<ChatPage />} />
-              <Route path="console" element={<ConsolePage />} />
               <Route path="pipelines" element={<PipelinesPage />} />
               <Route path="usage" element={<UsagePage />} />
               <Route path="swarm" element={<SwarmPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="leadops" element={<LeadOpsPage />} />
+              <Route path="code" element={<CodePage />} />
             </Route>
           </Routes>
         </AuthProvider>

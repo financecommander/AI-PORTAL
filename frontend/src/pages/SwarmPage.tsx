@@ -206,9 +206,6 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
   const [models, setModels] = useState<ModelsData | null>(null);
   const [swarmUp, setSwarmUp] = useState<boolean | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
-  const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
 
   const fetchAll = useCallback(async () => {
     setRefreshing(true);
@@ -254,16 +251,6 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === 'Alpha007!') {
-      sessionStorage.setItem('swarm_unlocked', '1');
-      onUnlock();
-    } else {
-      setPasswordError('Invalid password');
-      setPassword('');
-    }
-  };
 
   // ── Derive service table rows ──
   const services: ServiceRow[] = (() => {
@@ -374,7 +361,7 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <button
-            onClick={() => setShowPasswordInput(true)}
+            onClick={() => { sessionStorage.setItem('swarm_unlocked', '1'); onUnlock(); }}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '8px 14px', borderRadius: 'var(--cr-radius-sm)', border: 'none',
@@ -595,76 +582,7 @@ function VMStatusDashboard({ onUnlock }: { onUnlock: () => void }) {
         </div>
       </div>
 
-      {/* ── Password Modal ── */}
-      {showPasswordInput && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-          }}
-          onClick={() => { setShowPasswordInput(false); setPasswordError(''); setPassword(''); }}
-        >
-          <form
-            onClick={e => e.stopPropagation()}
-            onSubmit={handlePasswordSubmit}
-            style={{
-              background: 'var(--cr-white)', border: '1px solid var(--cr-border)',
-              borderRadius: 'var(--cr-radius)', padding: '28px', width: '360px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <Lock style={{ width: 20, height: 20, color: 'var(--cr-green-700)' }} />
-              <h2 style={{ color: 'var(--cr-text)', fontSize: '18px', fontWeight: 700, margin: 0 }}>
-                Session Console Access
-              </h2>
-            </div>
-            <p style={{ color: 'var(--cr-text-muted)', fontSize: '13px', margin: '0 0 16px 0' }}>
-              Enter the access password to manage swarm sessions.
-            </p>
-            <input
-              type="password"
-              value={password}
-              onChange={e => { setPassword(e.target.value); setPasswordError(''); }}
-              placeholder="Password"
-              autoFocus
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: 'var(--cr-radius-sm)',
-                border: `1px solid ${passwordError ? 'var(--cr-danger)' : 'var(--cr-border)'}`,
-                background: 'var(--cr-surface)', color: 'var(--cr-text)', fontSize: '14px',
-                marginBottom: passwordError ? '6px' : '16px', boxSizing: 'border-box',
-              }}
-            />
-            {passwordError && (
-              <p style={{ color: 'var(--cr-danger)', fontSize: '12px', margin: '0 0 12px 0' }}>{passwordError}</p>
-            )}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => { setShowPasswordInput(false); setPasswordError(''); setPassword(''); }}
-                style={{
-                  padding: '10px 20px', borderRadius: 'var(--cr-radius-sm)',
-                  border: '1px solid var(--cr-border)', background: 'transparent',
-                  color: 'var(--cr-text-secondary)', fontSize: '14px', cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!password}
-                style={{
-                  padding: '10px 20px', borderRadius: 'var(--cr-radius-sm)', border: 'none',
-                  background: 'var(--cr-green-700)', color: '#fff', fontSize: '14px',
-                  fontWeight: 600, cursor: 'pointer', opacity: !password ? 0.5 : 1,
-                }}
-              >
-                Unlock
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>

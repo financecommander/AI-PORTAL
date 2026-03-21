@@ -38,9 +38,12 @@ export interface ChatResponse {
 
 export interface Pipeline {
   name: string;
+  display_name?: string;
   description: string;
-  agents: string[];
+  agents: Array<{ name: string; goal?: string; backstory?: string; model?: string }>;
   estimated_cost: number;
+  type?: string;
+  category?: string;
 }
 
 export interface PipelineAgent {
@@ -207,12 +210,17 @@ export interface PermitSearchParams {
 
 export interface PermitStats {
   total_permits: number;
-  active_permits: number;
-  expired_permits: number;
-  avg_valuation: number;
   avg_lead_score: number;
-  top_cities: Array<{ city: string; count: number }>;
-  by_type: Array<{ type: string; count: number }>;
-  by_tier?: Record<string, number>;
+  by_city: Record<string, number>;
+  by_tier: Record<string, number>;
+  by_property_type: Record<string, number>;
+  by_project_category: Record<string, number>;
+  last_ingestion: {
+    run_id: string;
+    city: string;
+    records_fetched: number;
+    status: string;
+    created_at: string | null;
+  } | null;
 }
 

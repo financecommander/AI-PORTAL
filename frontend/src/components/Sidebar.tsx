@@ -8,9 +8,9 @@ import {
   BarChart3,
   LogOut,
   Settings,
-  Terminal,
   Monitor,
   Sun,
+  Terminal,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -25,10 +25,10 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { label: 'Console', icon: MessageSquare, path: '/' },
-  { label: 'Intelligence', icon: Terminal, path: '/console' },
   { label: 'Analyst Desks', icon: Bot, path: '/specialists' },
   { label: 'Engines', icon: Layers, path: '/pipelines' },
   { label: 'Swarm Mainframe', icon: Boxes, path: '/swarm' },
+  { label: 'Code', icon: Terminal, path: '/code' },
   { label: 'Metrics', icon: BarChart3, path: '/usage' },
 ];
 

@@ -23,7 +23,7 @@ export function usePermits() {
     setError(null);
     try {
       const result = await api.searchPermits(merged);
-      setPermits(result.results);
+      setPermits(result.data);
       setTotal(result.total);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Search failed');

@@ -89,7 +89,7 @@ class ApiClient {
       this.token = null;
       localStorage.removeItem('fc_token');
       localStorage.removeItem('fc_refresh');
-      window.location.href = '/login';
+      window.location.href = '/portal/login';
       throw new Error('Unauthorized');
     }
 
@@ -283,16 +283,16 @@ class ApiClient {
 
   // ── LeadOps / Permits ────────────────────────────────────────
 
-  async searchPermits(params: PermitSearchParams): Promise<{ results: PermitRecord[]; total: number }> {
+  async searchPermits(params: PermitSearchParams): Promise<{ data: PermitRecord[]; total: number; offset: number; limit: number }> {
     const qs = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
     }
-    return this.request(`/leadops/permits/search?${qs.toString()}`);
+    return this.request(`/api/v2/permits/search?${qs.toString()}`);
   }
 
   async getPermitStats(): Promise<PermitStats> {
-    return this.request('/leadops/permits/stats');
+    return this.request('/api/v2/permits/stats');
   }
 
   connectPipelineWS(
