@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
+import { swarmApi } from '../api/swarmClient';
 import type { ChatMessage, Attachment } from '../types';
 
 interface UseDirectChatReturn {
@@ -31,6 +32,10 @@ export function useDirectChat(
   const stoppedRef = useRef(false);
   const conversationUuidRef = useRef<string | null>(null);
   const creatingConvRef = useRef<Promise<string | null> | null>(null);
+  // Prevents model-change effect from clearing messages when we just loaded a conversation
+  const suppressModelClearRef = useRef(false);
+  // Swarm session ID for Calculus AI provider
+  const swarmSessionIdRef = useRef<string | null>(null);
 
   // Keep ref in sync with state (for use in callbacks without stale closures)
   useEffect(() => {
@@ -49,12 +54,18 @@ export function useDirectChat(
 
     // Only clear if there are messages and the selection actually changed
     if ((providerChanged || modelChanged) && messages.length > 0) {
+      // Skip clear when we just loaded a saved conversation (provider/model come from the loaded data)
+      if (suppressModelClearRef.current) {
+        suppressModelClearRef.current = false;
+        return;
+      }
       setMessages([]);
       setIsStreaming(false);
       setError(null);
       setConversationUuid(null);
       conversationUuidRef.current = null;
       stoppedRef.current = false;
+      swarmSessionIdRef.current = null;
       if (abortRef.current) {
         abortRef.current.abort();
         abortRef.current = null;
@@ -69,6 +80,8 @@ export function useDirectChat(
     setConversationUuid(null);
     conversationUuidRef.current = null;
     creatingConvRef.current = null;
+    swarmSessionIdRef.current = null;
+    suppressModelClearRef.current = false;
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
@@ -98,6 +111,7 @@ export function useDirectChat(
       setConversationUuid(uuid);
       conversationUuidRef.current = uuid;
       setError(null);
+      suppressModelClearRef.current = true; // prevent next provider/model change from wiping these messages
       return { provider: data.provider, model: data.model };
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load conversation');
@@ -110,6 +124,71 @@ export function useDirectChat(
 
     setError(null);
     stoppedRef.current = false;
+
+    // ── Calculus AI: route through Swarm ──────────────────────────────
+    if (provider === 'calculus') {
+      const userMessage: ChatMessage = { role: 'user', content, _id: nextMsgId() };
+      const assistantId = nextMsgId();
+      setMessages((prev) => [
+        ...prev,
+        userMessage,
+        { role: 'assistant', content: '', _id: assistantId },
+      ]);
+      setIsStreaming(true);
+
+      try {
+        // Sync auth token from storage (user may not have visited SwarmPage)
+        swarmApi.setToken(localStorage.getItem('fc_token'));
+
+        // Create a session on the first message
+        if (!swarmSessionIdRef.current) {
+          const session = await swarmApi.createSession({
+            project_name: 'Calculus AI Chat',
+            description: content.slice(0, 200),
+            mode: 'round_table',
+            team_preset: 'finance',
+            max_rounds: 30,
+            created_by: 'portal-direct',
+          });
+          swarmSessionIdRef.current = session.session_id;
+        }
+
+        const result = await swarmApi.sendMessage(swarmSessionIdRef.current, content);
+
+        // Combine all assistant agent messages into one reply
+        const agentMsgs = result.messages.filter((m) => m.role === 'assistant');
+        const combined = agentMsgs
+          .map((m) => {
+            const label = m.caste
+              ? m.caste.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+              : 'Calculus AI';
+            return `**${label}**\n\n${m.content}`;
+          })
+          .join('\n\n---\n\n');
+
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx]._id === assistantId) {
+            updated[lastIdx] = {
+              ...updated[lastIdx],
+              content: combined || 'The swarm returned no response.',
+              cost_usd: result.round_cost,
+            };
+          }
+          return updated;
+        });
+      } catch (err) {
+        if (!stoppedRef.current) {
+          setError(err instanceof Error ? err.message : 'Swarm request failed');
+          setMessages((prev) => prev.filter((m) => m._id !== assistantId));
+        }
+      } finally {
+        setIsStreaming(false);
+      }
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     // Create conversation on first message if none exists (with race-condition guard)
     let uuid = conversationUuidRef.current;

@@ -5,6 +5,7 @@ import type { LLMProvider } from '../../types';
 const PROVIDER_COLORS: Record<string, string> = {
   openai: '#3E9B5F', anthropic: '#F2A41F', google: '#4285F4',
   grok: '#D64545', deepseek: '#7C8CF5', mistral: '#E8853D', groq: '#E8853D',
+  calculus: '#7C3AED',
 };
 
 const TIER_CONFIG: Record<string, { icon: typeof Crown; color: string }> = {

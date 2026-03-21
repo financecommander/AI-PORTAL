@@ -39,10 +39,24 @@ export default function LLMChatPage() {
     api
       .request<{ providers: LLMProvider[] }>('/chat/direct/models')
       .then((data) => {
-        setProviders(data.providers);
+        const calculusProvider: LLMProvider = {
+          id: 'calculus',
+          name: 'Calculus AI',
+          models: [{
+            id: 'calculus-swarm',
+            name: 'Calculus Intelligence',
+            tier: 'top',
+            context: 'Swarm',
+            description: 'Multi-agent swarm. Finance, research, legal & reasoning specialists.',
+            input_price: 0,
+            output_price: 0,
+          }],
+        };
+        const allProviders = [...data.providers, calculusProvider];
+        setProviders(allProviders);
         setCatalogError(null);
-        if (data.providers.length > 0) {
-          const first = data.providers[0];
+        if (allProviders.length > 0) {
+          const first = allProviders[0];
           setSelectedProvider(first.id);
           const topModel = first.models.find((m) => m.tier === 'top');
           setSelectedModel(topModel?.id ?? first.models[0]?.id ?? null);
