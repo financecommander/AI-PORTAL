@@ -4,7 +4,7 @@ This module provides unified pricing data and cost calculation functions
 used by both the Streamlit frontend and FastAPI backend.
 
 Prices are in USD per 1M tokens: (input_price, output_price).
-Last verified: 2026-02-28.
+Last verified: 2026-03-21.
 """
 
 from typing import Optional
@@ -12,20 +12,21 @@ from typing import Optional
 
 # Comprehensive model pricing table
 MODEL_PRICING: dict[str, tuple[float, float]] = {
-    # OpenAI — GPT-5 series (current flagships)
+    # OpenAI — GPT-5 series (current flagships, March 2026)
+    "gpt-5.4": (2.00, 16.00),
+    "gpt-5.4-mini": (0.40, 1.60),
     "gpt-5.2": (1.75, 14.00),
     "gpt-5.2-pro": (21.00, 168.00),
-    "gpt-5": (1.25, 10.00),
-    "gpt-5-nano": (0.05, 0.40),
 
     # OpenAI — GPT-4.1 series (still on API, retired from ChatGPT Feb 13)
     "gpt-4.1": (2.00, 8.00),
     "gpt-4.1-mini": (0.40, 1.60),
     "gpt-4.1-nano": (0.10, 0.40),
 
-    # OpenAI — Reasoning / Legacy
-    "o3-mini": (1.10, 4.40),
+    # OpenAI — Reasoning (o-series)
     "o3": (2.00, 8.00),
+    "o4-mini": (1.10, 4.40),
+    "o3-mini": (1.10, 4.40),   # legacy alias, keep for backward compat
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4-turbo": (10.00, 30.00),
@@ -71,8 +72,10 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
 
     # xAI / Grok — Grok 4 series (current flagships)
     "grok-4": (3.00, 15.00),
-    "grok-4-fast-reasoning": (0.20, 0.50),
-    "grok-4-fast-non-reasoning": (0.20, 0.50),
+    "grok-4.1-fast": (0.20, 0.50),
+    "grok-4.1-fast-reasoning": (0.20, 0.50),
+    "grok-4.1-fast-non-reasoning": (0.20, 0.50),
+    # Legacy ID aliases (keep for backward compat)
     "grok-4-1-fast": (0.20, 0.50),
     "grok-4-1-fast-reasoning": (0.20, 0.50),
     "grok-4-1-fast-non-reasoning": (0.20, 0.50),
@@ -97,16 +100,18 @@ MODEL_PRICING: dict[str, tuple[float, float]] = {
     "mistral-medium-3": (0.40, 2.00),
     "mistral-small-latest": (0.06, 0.18),
 
-    # Groq (Llama) — hosted on Groq LPU
-    "meta-llama/llama-4-maverick-17b-128e-instruct": (0.20, 0.60),
-    "llama-4-maverick": (0.20, 0.60),
+    # Groq LPU — current models (March 2026)
+    "openai/gpt-oss-120b": (0.20, 0.60),   # replaced Maverick (deprecated Feb 20, 2026)
+    "openai/gpt-oss-20b": (0.09, 0.27),
     "meta-llama/llama-4-scout-17b-16e-instruct": (0.11, 0.34),
     "llama-4-scout": (0.11, 0.34),
+    # Deprecated Groq models (keep for historical cost lookups)
+    "meta-llama/llama-4-maverick-17b-128e-instruct": (0.20, 0.60),
+    "llama-4-maverick": (0.20, 0.60),
 
     # Meta / Llama (self-hosted)
     "llama-4-scout-17b-16e-instruct": (0.0, 0.0),
     "llama-4-maverick-17b-128e-instruct": (0.0, 0.0),
-    "llama-4-scout": (0.0, 0.0),
 
     # Ollama (local/self-hosted — always free)
     "deepseek-r1:14b": (0.0, 0.0),

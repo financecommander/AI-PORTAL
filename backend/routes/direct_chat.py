@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# ── Model Catalog (February 2026) ───────────────────────────────
+# ── Model Catalog (March 2026) ──────────────────────────────────
 
 PROVIDERS_CATALOG = [
     {
@@ -27,22 +27,49 @@ PROVIDERS_CATALOG = [
         "name": "OpenAI",
         "models": [
             {
+                "id": "gpt-5.4",
+                "name": "GPT-5.4",
+                "tier": "top",
+                "context": "400K",
+                "description": "Current flagship. Best across coding, reasoning, and agentic tasks.",
+                "input_price": 2.00,
+                "output_price": 16.00,
+            },
+            {
                 "id": "gpt-5.2",
                 "name": "GPT-5.2",
                 "tier": "top",
                 "context": "400K",
-                "description": "Flagship model. Best for coding, agentic tasks, and reasoning.",
+                "description": "Previous frontier. Strong across all domains. $1.75/$14 per 1M.",
                 "input_price": 1.75,
                 "output_price": 14.00,
             },
             {
-                "id": "gpt-5",
-                "name": "GPT-5",
-                "tier": "top",
+                "id": "gpt-5.4-mini",
+                "name": "GPT-5.4 Mini",
+                "tier": "mid",
                 "context": "400K",
-                "description": "Previous flagship. Unified thinking with smart routing.",
-                "input_price": 1.25,
-                "output_price": 10.00,
+                "description": "Efficient mini flagship. Faster and more cost-effective than 5.4.",
+                "input_price": 0.40,
+                "output_price": 1.60,
+            },
+            {
+                "id": "o3",
+                "name": "o3",
+                "tier": "top",
+                "context": "200K",
+                "description": "Flagship reasoning. Extended thinking for complex analysis and math.",
+                "input_price": 2.00,
+                "output_price": 8.00,
+            },
+            {
+                "id": "o4-mini",
+                "name": "o4-mini",
+                "tier": "mid",
+                "context": "200K",
+                "description": "Current small reasoning model. Chain-of-thought for math/logic.",
+                "input_price": 1.10,
+                "output_price": 4.40,
             },
             {
                 "id": "gpt-4.1",
@@ -70,15 +97,6 @@ PROVIDERS_CATALOG = [
                 "description": "Cheapest OpenAI. Fast classification and extraction.",
                 "input_price": 0.10,
                 "output_price": 0.40,
-            },
-            {
-                "id": "o3-mini",
-                "name": "o3-mini",
-                "tier": "mid",
-                "context": "200K",
-                "description": "Reasoning specialist. Chain-of-thought for math/logic.",
-                "input_price": 1.10,
-                "output_price": 4.40,
             },
             {
                 "id": "gpt-4o-mini",
@@ -207,7 +225,7 @@ PROVIDERS_CATALOG = [
                 "output_price": 15.00,
             },
             {
-                "id": "grok-4-1-fast",
+                "id": "grok-4.1-fast",
                 "name": "Grok 4.1 Fast",
                 "tier": "mid",
                 "context": "2M",
@@ -276,23 +294,31 @@ PROVIDERS_CATALOG = [
     },
     {
         "id": "groq",
-        "name": "Groq (Llama)",
+        "name": "Groq (LPU)",
         "models": [
             {
-                "id": "meta-llama/llama-4-maverick-17b-128e-instruct",
-                "name": "Llama 4 Maverick",
+                "id": "openai/gpt-oss-120b",
+                "name": "GPT-OSS 120B",
                 "tier": "top",
                 "context": "128K",
-                "description": "Meta's flagship MoE model via Groq -- 562 tok/s, multimodal",
-                "input_price": 0.20, "output_price": 0.60
+                "description": "OpenAI open-weight via Groq LPU -- 500+ tok/s, replaces Maverick.",
+                "input_price": 0.20, "output_price": 0.60,
             },
             {
                 "id": "meta-llama/llama-4-scout-17b-16e-instruct",
                 "name": "Llama 4 Scout",
                 "tier": "mid",
                 "context": "128K",
-                "description": "Fast general-purpose MoE via Groq -- 594 tok/s, reasoning & code",
-                "input_price": 0.11, "output_price": 0.34
+                "description": "Meta MoE via Groq LPU -- 594 tok/s, multimodal, reasoning & code.",
+                "input_price": 0.11, "output_price": 0.34,
+            },
+            {
+                "id": "openai/gpt-oss-20b",
+                "name": "GPT-OSS 20B",
+                "tier": "budget",
+                "context": "128K",
+                "description": "OpenAI open-weight small via Groq LPU -- 1000+ tok/s, ultra-fast.",
+                "input_price": 0.09, "output_price": 0.27,
             },
         ]
     },
